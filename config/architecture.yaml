@@ -1,0 +1,30 @@
+
+project:
+  name: "application"
+
+backend:
+  language: "java"
+  version: "17"
+  framework: "spring-boot"
+  buildTool: "maven"
+  database: "postgresql"
+  orm: "jpa"
+  dtoMapper: "mapstruct"
+  lombok: true
+  security: "spring-security"
+  logging: "logback"
+  testing:
+    unit: "junit"
+    integration: "spring-boot-test"
+
+frontend:
+  framework: "react"
+  stateManagement: "zustand"
+  uiLibrary: "material-ui"
+
+infrastructure:
+  containerization: "docker"
+  orchestration: "docker-compose"
+  ci_cd: "github-actions"
+
+pattern: "Hexagonal Architecture with Ports and Adapters"

@@ -1,0 +1,3 @@
+com/application/domain/shared/Entity.class
+com/application/domain/shared/ValueObject.class
+com/application/domain/exception/DomainException.class

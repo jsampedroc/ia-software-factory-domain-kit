@@ -1,278 +1,242 @@
 {
-    "domain_model": "{\n  \"domainKit\": {\n    \"name\": \"School Management\",\n    \"description\": \"Dominio para la gesti\u00f3n integral de colegios, incluyendo control de asistencia, administraci\u00f3n de alumnos y facturaci\u00f3n mensual.\",\n    \"boundedContexts\": [\n      {\n        \"name\": \"Student Management\",\n        \"description\": \"Contexto dedicado a la administraci\u00f3n de la informaci\u00f3n de los alumnos y sus familias.\",\n        \"coreEntities\": [\n          {\n            \"name\": \"Student\",\n            \"attributes\": [\"studentId\", \"firstName\", \"lastName\", \"dateOfBirth\", \"nationalId\", \"enrollmentDate\", \"status (ACTIVE, INACTIVE, GRADUATED)\"],\n            \"businessRules\": [\"El alumno debe tener un tutor legal principal asignado al momento de la inscripci\u00f3n.\", \"El estado del alumno determina su elegibilidad para tomar asistencia o ser facturado.\"]\n          },\n          {\n            \"name\": \"LegalGuardian\",\n            \"attributes\": [\"guardianId\", \"firstName\", \"lastName\", \"relationship\", \"email\", \"primaryPhone\", \"secondaryPhone\", \"address\"],\n            \"businessRules\": [\"Debe existir al menos un tutor legal por alumno.\", \"El tutor principal es el responsable de la facturaci\u00f3n.\"]\n          },\n          {\n            \"name\": \"Enrollment\",\n            \"attributes\": [\"enrollmentId\", \"student\", \"gradeLevel\", \"section\", \"academicYear\", \"enrolledDate\"],\n            \"businessRules\": [\"Un alumno solo puede tener una matr\u00edcula activa por a\u00f1o acad\u00e9mico.\", \"La matr\u00edcula debe estar activa para registrar asistencia.\"]\n          }\n        ],\n        \"relationships\": [\"Student (1) -> (*) LegalGuardian (a trav\u00e9s de un objeto de valor 'Guardianship')\", \"Student (1) -> (*) Enrollment (hist\u00f3rico)\", \"Enrollment (1) -> (1) GradeLevel\"]\n      },\n      {\n        \"name\": \"Attendance\",\n        \"description\": \"Contexto para el registro y control diario de la asistencia de los alumnos.\",\n        \"coreEntities\": [\n          {\n            \"name\": \"AttendanceRecord\",\n            \"attributes\": [\"recordId\", \"date\", \"student\", \"status (PRESENT, ABSENT, LATE, EXCUSED)\", \"notes\", \"recordedBy\", \"recordedAt\"],\n            \"businessRules\": [\"Solo se puede registrar asistencia para alumnos con matr\u00edcula activa en la fecha del registro.\", \"No se puede modificar un registro de asistencia despu\u00e9s de 24 horas sin autorizaci\u00f3n especial.\"]\n          },\n          {\n            \"name\": \"AttendanceSummary\",\n            \"attributes\": [\"summaryId\", \"student\", \"month\", \"year\", \"daysPresent\", \"daysAbsent\", \"daysLate\"],\n            \"businessRules\": [\"El resumen se calcula autom\u00e1ticamente a partir de los registros diarios.\", \"Es la fuente de verdad para reportes y posibles descuentos por asistencia en la facturaci\u00f3n.\"]\n          }\n        ],\n        \"relationships\": [\"Student (1) -> (*) AttendanceRecord\", \"Student (1) -> (*) AttendanceSummary (por mes/a\u00f1o)\", \"AttendanceSummary se deriva de m\u00faltiples AttendanceRecord.\"]\n      },\n      {\n        \"name\": \"Billing\",\n        \"description\": \"Contexto encargado de la generaci\u00f3n, emisi\u00f3n y seguimiento de las facturas mensuales.\",\n        \"coreEntities\": [\n          {\n            \"name\": \"Invoice\",\n            \"attributes\": [\"invoiceId\", \"invoiceNumber\", \"student\", \"billingMonth\", \"issueDate\", \"dueDate\", \"subtotal\", \"adjustments (descuentos/recargos)\", \"totalAmount\", \"status (DRAFT, ISSUED, PARTIALLY_PAID, PAID, OVERDUE, CANCELLED)\", \"paymentMethod\"],\n            \"businessRules\": [\"La factura se genera mensualmente basada en la tarifa del grado y la asistencia del mes anterior.\", \"El 'totalAmount' se calcula como: subtotal + adjustments.\", \"Una factura en estado ISSUED no puede cambiar su subtotal o descuentos base.\"]\n          },\n          {\n            \"name\": \"FeeStructure\",\n            \"attributes\": [\"feeId\", \"gradeLevel\", \"effectiveDate\", \"monthlyTuition\", \"enrollmentFee\", \"otherFees\"],\n            \"businessRules\": [\"Solo puede haber una tarifa activa por 'gradeLevel' en un momento dado.\", \"Las facturas nuevas usan la tarifa activa al momento de su generaci\u00f3n.\"]\n          },\n          {\n            \"name\": \"Payment\",\n            \"attributes\": [\"paymentId\", \"invoice\", \"amount\", \"paymentDate\", \"receivedBy\", \"referenceNumber\"],\n            \"businessRules\": [\"El pago no puede exceder el total pendiente de la factura.\", \"Un pago registrado cambia el estado de la factura correspondiente.\"]\n          }\n        ],\n        \"relationships\": [\"Student (1) -> (*) Invoice\", \"Invoice (1) -> (*) Payment\", \"GradeLevel (1) -> (*) FeeStructure (hist\u00f3rico)\", \"FeeStructure se aplica a muchas Invoice.\"]\n      },\n      {\n        \"name\": \"School Administration\",\n        \"description\": \"Contexto para la gesti\u00f3n de la estructura del colegio, grados, aulas y personal.\",\n        \"coreEntities\": [\n          {\n            \"name\": \"School\",\n            \"attributes\": [\"schoolId\", \"name\", \"address\", \"phone\", \"email\", \"academicCalendar\"],\n            \"businessRules\": [\"Es la ra\u00edz agregada principal para toda la configuraci\u00f3n.\"]\n          },\n          {\n            \"name\": \"GradeLevel\",\n            \"attributes\": [\"gradeId\", \"internalCode\", \"name\", \"description\", \"order\"],\n            \"businessRules\": [\"El c\u00f3digo interno debe ser \u00fanico dentro del colegio.\"]\n          },\n          {\n            \"name\": \"Classroom\",\n            \"attributes\": [\"classroomId\", \"identifier\", \"gradeLevel\", \"capacity\", \"primaryTeacher\"],\n            \"businessRules\": [\"Un aula est\u00e1 asignada a un \u00fanico grado/nivel, pero un grado puede tener m\u00faltiples aulas.\"]\n          }\n        ],\n        \"relationships\": [\"School (1) -> (*) GradeLevel\", \"School (1) -> (*) Classroom\", \"GradeLevel (1) -> (*) Classroom\"]\n      }\n    ],\n    \"sharedKernel\": {\n      \"valueObjects\": [\n        {\n          \"name\": \"Money\",\n          \"attributes\": [\"amount\", \"currency\"]\n        },\n        {\n          \"name\": \"PersonName\",\n          \"attributes\": [\"firstName\", \"lastName\"]\n        },\n        {\n          \"name\": \"DateRange\",\n          \"attributes\": [\"startDate\", \"endDate\"]\n        },\n        {\n          \"name\": \"Address\",\n          \"attributes\": [\"street\", \"city\", \"state\", \"postalCode\", \"country\"]\n        }\n      ],\n      \"enums\": [\"StudentStatus\", \"AttendanceStatus\", \"InvoiceStatus\", \"RelationshipType\"]\n    },\n    \"packageBase\": \"com.application\"\n  }\n}",
+    "domain_model": "{\n  \"domainKit\": {\n    \"name\": \"School Management\",\n    \"packageBase\": \"com.application.school\",\n    \"coreDomains\": [\n      {\n        \"name\": \"Student\",\n        \"description\": \"Gestiona la informaci\u00f3n acad\u00e9mica y personal del alumno.\",\n        \"entities\": [\n          {\n            \"name\": \"Student\",\n            \"attributes\": [\"studentId\", \"legalId\", \"firstName\", \"lastName\", \"dateOfBirth\", \"enrollmentDate\", \"status (ACTIVE, INACTIVE, GRADUATED)\"],\n            \"businessRules\": [\"El studentId se genera autom\u00e1ticamente al matricularse.\", \"Un alumno no puede tener m\u00e1s de un registro activo con el mismo legalId.\"]\n          },\n          {\n            \"name\": \"Guardian\",\n            \"attributes\": [\"guardianId\", \"firstName\", \"lastName\", \"email\", \"phoneNumber\", \"relationship\"],\n            \"businessRules\": [\"Un alumno debe tener al menos un tutor/contacto registrado.\"]\n          }\n        ],\n        \"relationships\": [\"Student (1) --- (*) Guardian (Muchos a Muchos, con atributo de relaci\u00f3n)\"]\n      },\n      {\n        \"name\": \"Attendance\",\n        \"description\": \"Control de la asistencia diaria de los alumnos a clases.\",\n        \"entities\": [\n          {\n            \"name\": \"AttendanceRecord\",\n            \"attributes\": [\"recordId\", \"date\", \"checkInTime\", \"checkOutTime\", \"status (PRESENT, ABSENT, LATE, EXCUSED)\"],\n            \"businessRules\": [\"No se puede registrar salida antes de la entrada.\", \"Solo se puede registrar una entrada y una salida por alumno y por d\u00eda.\"]\n          }\n        ],\n        \"relationships\": [\"Student (1) --- (*) AttendanceRecord\"]\n      },\n      {\n        \"name\": \"Billing\",\n        \"description\": \"Gesti\u00f3n de la facturaci\u00f3n mensual por conceptos de matr\u00edcula y pensi\u00f3n.\",\n        \"entities\": [\n          {\n            \"name\": \"Invoice\",\n            \"attributes\": [\"invoiceId\", \"issueDate\", \"dueDate\", \"monthYear\", \"totalAmount\", \"status (PENDING, PAID, OVERDUE, CANCELLED)\", \"paymentDate\"],\n            \"businessRules\": [\"El totalAmount es la suma de los conceptos (InvoiceItem).\", \"Solo se puede generar una factura por alumno y por mes (monthYear).\"]\n          },\n          {\n            \"name\": \"InvoiceItem\",\n            \"attributes\": [\"itemId\", \"concept (TUITION, MONTHLY_FEE, EXTRA_ACTIVITY, OTHER)\", \"description\", \"quantity\", \"unitPrice\", \"subtotal\"],\n            \"businessRules\": [\"El subtotal se calcula como quantity * unitPrice.\"]\n          },\n          {\n            \"name\": \"Payment\",\n            \"attributes\": [\"paymentId\", \"amount\", \"paymentMethod\", \"transactionReference\", \"date\"],\n            \"businessRules\": [\"El monto del pago no puede ser negativo.\"]\n          }\n        ],\n        \"relationships\": [\n          \"Student (1) --- (*) Invoice\",\n          \"Invoice (1) --- (*) InvoiceItem (Agregado)\",\n          \"Invoice (1) --- (*) Payment (Un pago puede abonar a m\u00faltiples facturas y viceversa, relaci\u00f3n compleja para manejar abonos parciales)\"\n        ]\n      },\n      {\n        \"name\": \"Academic\",\n        \"description\": \"Informaci\u00f3n sobre la estructura acad\u00e9mica (Grados, Secciones).\",\n        \"entities\": [\n          {\n            \"name\": \"Grade\",\n            \"attributes\": [\"gradeId\", \"name\", \"level\"],\n            \"businessRules\": [\"El nombre del grado debe ser \u00fanico.\"]\n          },\n          {\n            \"name\": \"Section\",\n            \"attributes\": [\"sectionId\", \"name\", \"capacity\"],\n            \"businessRules\": [\"La capacidad no puede ser negativa.\"]\n          }\n        ],\n        \"relationships\": [\n          \"Grade (1) --- (*) Section\",\n          \"Student (1) --- (1) Section (En un per\u00edodo acad\u00e9mico dado. Para simplificar, relaci\u00f3n directa.)\"\n        ]\n      }\n    ],\n    \"sharedKernel\": {\n      \"name\": \"Shared\",\n      \"valueObjects\": [\n        {\n          \"name\": \"Money\",\n          \"attributes\": [\"amount\", \"currency\"]\n        },\n        {\n          \"name\": \"DateRange\",\n          \"attributes\": [\"startDate\", \"endDate\"]\n        },\n        {\n          \"name\": \"PersonName\",\n          \"attributes\": [\"firstName\", \"lastName\"]\n        }\n      ]\n    },\n    \"invariantsAndPolicies\": [\n      \"Un alumno inactivo no puede registrar nueva asistencia.\",\n      \"No se puede emitir una factura para un alumno inactivo.\",\n      \"El estado de una factura se actualiza autom\u00e1ticamente a PAID cuando la suma de los pagos aplicados es >= totalAmount.\",\n      \"El estado de una factura se actualiza a OVERDUE si la dueDate ha pasado y el estado es PENDING.\"\n    ]\n  }\n}",
     "architecture": {
         "file_inventory": [
             {
-                "path": "com.application/domain/model/studentmanagement/Student.java",
-                "description": "Entidad ra\u00edz del agregado Student. Representa a un alumno con sus atributos b\u00e1sicos y estado."
+                "path": "com/application/school/domain/shared/Money.java",
+                "description": "Value Object para manejar cantidades monetarias con su moneda."
             },
             {
-                "path": "com.application/domain/model/studentmanagement/StudentId.java",
+                "path": "com/application/school/domain/shared/DateRange.java",
+                "description": "Value Object que representa un rango de fechas con inicio y fin."
+            },
+            {
+                "path": "com/application/school/domain/shared/PersonName.java",
+                "description": "Value Object para encapsular el nombre y apellido de una persona."
+            },
+            {
+                "path": "com/application/school/domain/student/model/Student.java",
+                "description": "Entidad ra\u00edz del agregado Student. Gestiona la informaci\u00f3n acad\u00e9mica y personal del alumno."
+            },
+            {
+                "path": "com/application/school/domain/student/model/StudentId.java",
                 "description": "Value Object que representa el identificador \u00fanico de un Student."
             },
             {
-                "path": "com.application/domain/model/studentmanagement/LegalGuardian.java",
-                "description": "Entidad que representa a un tutor legal de un alumno."
+                "path": "com/application/school/domain/student/model/StudentStatus.java",
+                "description": "Enum que define los posibles estados de un Student: ACTIVE, INACTIVE, GRADUATED."
             },
             {
-                "path": "com.application/domain/model/studentmanagement/LegalGuardianId.java",
-                "description": "Value Object que representa el identificador \u00fanico de un LegalGuardian."
+                "path": "com/application/school/domain/student/model/Guardian.java",
+                "description": "Entidad que representa al tutor o contacto de un Student."
             },
             {
-                "path": "com.application/domain/model/studentmanagement/Guardianship.java",
-                "description": "Objeto de Valor que modela la relaci\u00f3n y responsabilidades entre un Student y un LegalGuardian."
+                "path": "com/application/school/domain/student/model/GuardianId.java",
+                "description": "Value Object que representa el identificador \u00fanico de un Guardian."
             },
             {
-                "path": "com.application/domain/model/studentmanagement/Enrollment.java",
-                "description": "Entidad que representa la matr\u00edcula de un alumno en un a\u00f1o acad\u00e9mico y grado espec\u00edfico."
+                "path": "com/application/school/domain/student/repository/StudentRepository.java",
+                "description": "Interfaz del puerto del repositorio para la entidad Student."
             },
             {
-                "path": "com.application/domain/model/studentmanagement/EnrollmentId.java",
-                "description": "Value Object que representa el identificador \u00fanico de una Enrollment."
+                "path": "com/application/school/domain/attendance/model/AttendanceRecord.java",
+                "description": "Entidad ra\u00edz del agregado AttendanceRecord. Controla la asistencia diaria de un alumno."
             },
             {
-                "path": "com.application/domain/model/attendance/AttendanceRecord.java",
-                "description": "Entidad ra\u00edz del agregado Attendance. Registra la asistencia diaria de un alumno."
-            },
-            {
-                "path": "com.application/domain/model/attendance/AttendanceRecordId.java",
+                "path": "com/application/school/domain/attendance/model/AttendanceRecordId.java",
                 "description": "Value Object que representa el identificador \u00fanico de un AttendanceRecord."
             },
             {
-                "path": "com.application/domain/model/attendance/AttendanceSummary.java",
-                "description": "Entidad que resume la asistencia de un alumno para un mes y a\u00f1o dados."
+                "path": "com/application/school/domain/attendance/model/AttendanceStatus.java",
+                "description": "Enum que define los posibles estados de asistencia: PRESENT, ABSENT, LATE, EXCUSED."
             },
             {
-                "path": "com.application/domain/model/attendance/AttendanceSummaryId.java",
-                "description": "Value Object que representa el identificador \u00fanico de un AttendanceSummary."
+                "path": "com/application/school/domain/attendance/repository/AttendanceRepository.java",
+                "description": "Interfaz del puerto del repositorio para la entidad AttendanceRecord."
             },
             {
-                "path": "com.application/domain/model/billing/Invoice.java",
-                "description": "Entidad ra\u00edz del agregado Invoice. Representa una factura mensual emitida a un alumno."
+                "path": "com/application/school/domain/billing/model/Invoice.java",
+                "description": "Entidad ra\u00edz del agregado Invoice. Gestiona la facturaci\u00f3n mensual de un Student."
             },
             {
-                "path": "com.application/domain/model/billing/InvoiceId.java",
+                "path": "com/application/school/domain/billing/model/InvoiceId.java",
                 "description": "Value Object que representa el identificador \u00fanico de una Invoice."
             },
             {
-                "path": "com.application/domain/model/billing/InvoiceNumber.java",
-                "description": "Value Object que representa el n\u00famero de factura, con posible l\u00f3gica de generaci\u00f3n."
+                "path": "com/application/school/domain/billing/model/InvoiceStatus.java",
+                "description": "Enum que define los posibles estados de una factura: PENDING, PAID, OVERDUE, CANCELLED."
             },
             {
-                "path": "com.application/domain/model/billing/FeeStructure.java",
-                "description": "Entidad que define la estructura de tarifas (matr\u00edcula, pensi\u00f3n) para un GradeLevel."
+                "path": "com/application/school/domain/billing/model/InvoiceItem.java",
+                "description": "Entidad que representa un concepto o \u00edtem dentro de una Invoice."
             },
             {
-                "path": "com.application/domain/model/billing/FeeStructureId.java",
-                "description": "Value Object que representa el identificador \u00fanico de una FeeStructure."
+                "path": "com/application/school/domain/billing/model/InvoiceItemId.java",
+                "description": "Value Object que representa el identificador \u00fanico de un InvoiceItem."
             },
             {
-                "path": "com.application/domain/model/billing/Payment.java",
-                "description": "Entidad que representa un pago aplicado a una factura."
+                "path": "com/application/school/domain/billing/model/InvoiceConcept.java",
+                "description": "Enum que define los posibles conceptos de facturaci\u00f3n: TUITION, MONTHLY_FEE, EXTRA_ACTIVITY, OTHER."
             },
             {
-                "path": "com.application/domain/model/billing/PaymentId.java",
+                "path": "com/application/school/domain/billing/model/Payment.java",
+                "description": "Entidad que representa un pago realizado."
+            },
+            {
+                "path": "com/application/school/domain/billing/model/PaymentId.java",
                 "description": "Value Object que representa el identificador \u00fanico de un Payment."
             },
             {
-                "path": "com.application/domain/model/schooladministration/School.java",
-                "description": "Entidad ra\u00edz del agregado School. Representa la instituci\u00f3n educativa."
+                "path": "com/application/school/domain/billing/repository/InvoiceRepository.java",
+                "description": "Interfaz del puerto del repositorio para la entidad Invoice."
             },
             {
-                "path": "com.application/domain/model/schooladministration/SchoolId.java",
-                "description": "Value Object que representa el identificador \u00fanico de un School."
+                "path": "com/application/school/domain/academic/model/Grade.java",
+                "description": "Entidad que representa un Grado acad\u00e9mico."
             },
             {
-                "path": "com.application/domain/model/schooladministration/GradeLevel.java",
-                "description": "Entidad que representa un grado o nivel acad\u00e9mico ofrecido por el colegio."
+                "path": "com/application/school/domain/academic/model/GradeId.java",
+                "description": "Value Object que representa el identificador \u00fanico de un Grade."
             },
             {
-                "path": "com.application/domain/model/schooladministration/GradeLevelId.java",
-                "description": "Value Object que representa el identificador \u00fanico de un GradeLevel."
+                "path": "com/application/school/domain/academic/model/Section.java",
+                "description": "Entidad que representa una Secci\u00f3n dentro de un Grado."
             },
             {
-                "path": "com.application/domain/model/schooladministration/Classroom.java",
-                "description": "Entidad que representa un aula f\u00edsica asignada a un GradeLevel."
+                "path": "com/application/school/domain/academic/model/SectionId.java",
+                "description": "Value Object que representa el identificador \u00fanico de una Section."
             },
             {
-                "path": "com.application/domain/model/schooladministration/ClassroomId.java",
-                "description": "Value Object que representa el identificador \u00fanico de un Classroom."
+                "path": "com/application/school/domain/academic/repository/GradeRepository.java",
+                "description": "Interfaz del puerto del repositorio para la entidad Grade."
             },
             {
-                "path": "com.application/domain/valueobject/Money.java",
-                "description": "Value Object del Shared Kernel para representar montos monetarios con su moneda."
+                "path": "com/application/school/application/student/StudentService.java",
+                "description": "Servicio de aplicaci\u00f3n que orquesta los casos de uso relacionados con Student."
             },
             {
-                "path": "com.application/domain/valueobject/PersonName.java",
-                "description": "Value Object del Shared Kernel para representar el nombre completo de una persona."
+                "path": "com/application/school/application/attendance/AttendanceService.java",
+                "description": "Servicio de aplicaci\u00f3n que orquesta los casos de uso relacionados con Attendance."
             },
             {
-                "path": "com.application/domain/valueobject/DateRange.java",
-                "description": "Value Object del Shared Kernel para representar un rango de fechas (inicio y fin)."
+                "path": "com/application/school/application/billing/BillingService.java",
+                "description": "Servicio de aplicaci\u00f3n que orquesta los casos de uso relacionados con Invoice y Payment."
             },
             {
-                "path": "com.application/domain/valueobject/Address.java",
-                "description": "Value Object del Shared Kernel para representar una direcci\u00f3n postal."
+                "path": "com/application/school/application/academic/AcademicService.java",
+                "description": "Servicio de aplicaci\u00f3n que orquesta los casos de uso relacionados con Grade y Section."
             },
             {
-                "path": "com.application/domain/enums/StudentStatus.java",
-                "description": "Enum del Shared Kernel para los estados posibles de un Student (ACTIVE, INACTIVE, GRADUATED)."
+                "path": "com/application/school/application/dtos/StudentDTO.java",
+                "description": "DTO para la transferencia de datos de la entidad Student."
             },
             {
-                "path": "com.application/domain/enums/AttendanceStatus.java",
-                "description": "Enum del Shared Kernel para los estados de asistencia (PRESENT, ABSENT, LATE, EXCUSED)."
+                "path": "com/application/school/application/dtos/GuardianDTO.java",
+                "description": "DTO para la transferencia de datos de la entidad Guardian."
             },
             {
-                "path": "com.application/domain/enums/InvoiceStatus.java",
-                "description": "Enum del Shared Kernel para los estados de una factura (DRAFT, ISSUED, PARTIALLY_PAID, PAID, OVERDUE, CANCELLED)."
+                "path": "com/application/school/application/dtos/AttendanceRecordDTO.java",
+                "description": "DTO para la transferencia de datos de la entidad AttendanceRecord."
             },
             {
-                "path": "com.application/domain/enums/RelationshipType.java",
-                "description": "Enum del Shared Kernel para el tipo de relaci\u00f3n del tutor legal (PADRE, MADRE, TUTOR, etc.)."
+                "path": "com/application/school/application/dtos/InvoiceDTO.java",
+                "description": "DTO para la transferencia de datos de la entidad Invoice."
             },
             {
-                "path": "com.application/domain/ports/in/StudentService.java",
-                "description": "Puerto de entrada (Interfaz) que define los casos de uso relacionados con la gesti\u00f3n de Students."
+                "path": "com/application/school/application/dtos/InvoiceItemDTO.java",
+                "description": "DTO para la transferencia de datos de la entidad InvoiceItem."
             },
             {
-                "path": "com.application/domain/ports/in/AttendanceService.java",
-                "description": "Puerto de entrada (Interfaz) que define los casos de uso relacionados con el registro de asistencia."
+                "path": "com/application/school/application/dtos/PaymentDTO.java",
+                "description": "DTO para la transferencia de datos de la entidad Payment."
             },
             {
-                "path": "com.application/domain/ports/in/BillingService.java",
-                "description": "Puerto de entrada (Interfaz) que define los casos de uso relacionados con facturaci\u00f3n y pagos."
+                "path": "com/application/school/application/dtos/GradeDTO.java",
+                "description": "DTO para la transferencia de datos de la entidad Grade."
             },
             {
-                "path": "com.application/domain/ports/out/StudentRepository.java",
-                "description": "Puerto de salida (Interfaz) para las operaciones de persistencia de la entidad Student y su agregado."
+                "path": "com/application/school/application/dtos/SectionDTO.java",
+                "description": "DTO para la transferencia de datos de la entidad Section."
             },
             {
-                "path": "com.application/domain/ports/out/AttendanceRepository.java",
-                "description": "Puerto de salida (Interfaz) para las operaciones de persistencia de AttendanceRecord y AttendanceSummary."
+                "path": "com/application/school/application/mappers/StudentMapper.java",
+                "description": "Interfaz MapStruct para mapear entre la entidad Student y sus DTOs."
             },
             {
-                "path": "com.application/domain/ports/out/InvoiceRepository.java",
-                "description": "Puerto de salida (Interfaz) para las operaciones de persistencia de la entidad Invoice y su agregado."
+                "path": "com/application/school/application/mappers/AttendanceMapper.java",
+                "description": "Interfaz MapStruct para mapear entre la entidad AttendanceRecord y sus DTOs."
             },
             {
-                "path": "com.application/domain/ports/out/FeeStructureRepository.java",
-                "description": "Puerto de salida (Interfaz) para las operaciones de persistencia de FeeStructure."
+                "path": "com/application/school/application/mappers/BillingMapper.java",
+                "description": "Interfaz MapStruct para mapear entre las entidades Invoice, InvoiceItem, Payment y sus DTOs."
             },
             {
-                "path": "com.application/domain/ports/out/SchoolRepository.java",
-                "description": "Puerto de salida (Interfaz) para las operaciones de persistencia de la entidad School y su agregado."
+                "path": "com/application/school/application/mappers/AcademicMapper.java",
+                "description": "Interfaz MapStruct para mapear entre las entidades Grade, Section y sus DTOs."
             },
             {
-                "path": "com.application/application/service/StudentServiceImpl.java",
-                "description": "Servicio de aplicaci\u00f3n que implementa los casos de uso definidos en el puerto StudentService."
+                "path": "com/application/school/infrastructure/persistence/jpa/student/JpaStudentRepository.java",
+                "description": "Interfaz JPA Repository (Spring Data) para la entidad Student."
             },
             {
-                "path": "com.application/application/service/AttendanceServiceImpl.java",
-                "description": "Servicio de aplicaci\u00f3n que implementa los casos de uso definidos en el puerto AttendanceService."
+                "path": "com/application/school/infrastructure/persistence/jpa/student/StudentJpaRepositoryAdapter.java",
+                "description": "Adaptador que implementa el puerto StudentRepository usando JpaStudentRepository."
             },
             {
-                "path": "com.application/application/service/BillingServiceImpl.java",
-                "description": "Servicio de aplicaci\u00f3n que implementa los casos de uso definidos en el puerto BillingService."
+                "path": "com/application/school/infrastructure/persistence/jpa/student/StudentJpaEntity.java",
+                "description": "Entidad JPA para persistir el agregado Student en la base de datos."
             },
             {
-                "path": "com.application/application/dto/StudentDTO.java",
-                "description": "DTO para transferir datos de Student hacia/desde la capa de presentaci\u00f3n."
+                "path": "com/application/school/infrastructure/persistence/jpa/attendance/JpaAttendanceRepository.java",
+                "description": "Interfaz JPA Repository (Spring Data) para la entidad AttendanceRecord."
             },
             {
-                "path": "com.application/application/dto/LegalGuardianDTO.java",
-                "description": "DTO para transferir datos de LegalGuardian hacia/desde la capa de presentaci\u00f3n."
+                "path": "com/application/school/infrastructure/persistence/jpa/attendance/AttendanceJpaRepositoryAdapter.java",
+                "description": "Adaptador que implementa el puerto AttendanceRepository usando JpaAttendanceRepository."
             },
             {
-                "path": "com.application/application/dto/AttendanceRecordDTO.java",
-                "description": "DTO para transferir datos de AttendanceRecord hacia/desde la capa de presentaci\u00f3n."
+                "path": "com/application/school/infrastructure/persistence/jpa/attendance/AttendanceJpaEntity.java",
+                "description": "Entidad JPA para persistir el agregado AttendanceRecord en la base de datos."
             },
             {
-                "path": "com.application/application/dto/InvoiceDTO.java",
-                "description": "DTO para transferir datos de Invoice hacia/desde la capa de presentaci\u00f3n."
+                "path": "com/application/school/infrastructure/persistence/jpa/billing/JpaInvoiceRepository.java",
+                "description": "Interfaz JPA Repository (Spring Data) para la entidad Invoice."
             },
             {
-                "path": "com.application/application/dto/PaymentDTO.java",
-                "description": "DTO para transferir datos de Payment hacia/desde la capa de presentaci\u00f3n."
+                "path": "com/application/school/infrastructure/persistence/jpa/billing/InvoiceJpaRepositoryAdapter.java",
+                "description": "Adaptador que implementa el puerto InvoiceRepository usando JpaInvoiceRepository."
             },
             {
-                "path": "com.application/application/mapper/StudentMapper.java",
-                "description": "Interfaz MapStruct para mapear entre entidades Student, agregados y DTOs."
+                "path": "com/application/school/infrastructure/persistence/jpa/billing/InvoiceJpaEntity.java",
+                "description": "Entidad JPA para persistir el agregado Invoice en la base de datos."
             },
             {
-                "path": "com.application/application/mapper/AttendanceMapper.java",
-                "description": "Interfaz MapStruct para mapear entre entidades Attendance, agregados y DTOs."
+                "path": "com/application/school/infrastructure/persistence/jpa/academic/JpaGradeRepository.java",
+                "description": "Interfaz JPA Repository (Spring Data) para la entidad Grade."
             },
             {
-                "path": "com.application/application/mapper/BillingMapper.java",
-                "description": "Interfaz MapStruct para mapear entre entidades Billing, agregados y DTOs."
+                "path": "com/application/school/infrastructure/persistence/jpa/academic/GradeJpaRepositoryAdapter.java",
+                "description": "Adaptador que implementa el puerto GradeRepository usando JpaGradeRepository."
             },
             {
-                "path": "com.application/infrastructure/persistence/jpa/StudentJpaRepository.java",
-                "description": "Interfaz JpaRepository de Spring Data para la entidad persistente StudentEntity."
+                "path": "com/application/school/infrastructure/persistence/jpa/academic/GradeJpaEntity.java",
+                "description": "Entidad JPA para persistir la entidad Grade en la base de datos."
             },
             {
-                "path": "com.application/infrastructure/persistence/jpa/StudentEntity.java",
-                "description": "Entidad JPA que persiste el estado del agregado Student en la base de datos."
+                "path": "com/application/school/infrastructure/web/rest/StudentController.java",
+                "description": "Controlador REST que expone los endpoints para gestionar Students."
             },
             {
-                "path": "com.application/infrastructure/persistence/jpa/AttendanceJpaRepository.java",
-                "description": "Interfaz JpaRepository de Spring Data para la entidad persistente AttendanceRecordEntity."
+                "path": "com/application/school/infrastructure/web/rest/AttendanceController.java",
+                "description": "Controlador REST que expone los endpoints para gestionar AttendanceRecords."
             },
             {
-                "path": "com.application/infrastructure/persistence/jpa/AttendanceRecordEntity.java",
-                "description": "Entidad JPA que persiste el estado del agregado AttendanceRecord en la base de datos."
+                "path": "com/application/school/infrastructure/web/rest/BillingController.java",
+                "description": "Controlador REST que expone los endpoints para gestionar Invoices y Payments."
             },
             {
-                "path": "com.application/infrastructure/persistence/jpa/InvoiceJpaRepository.java",
-                "description": "Interfaz JpaRepository de Spring Data para la entidad persistente InvoiceEntity."
-            },
-            {
-                "path": "com.application/infrastructure/persistence/jpa/InvoiceEntity.java",
-                "description": "Entidad JPA que persiste el estado del agregado Invoice en la base de datos."
-            },
-            {
-                "path": "com.application/infrastructure/persistence/jpa/SchoolJpaRepository.java",
-                "description": "Interfaz JpaRepository de Spring Data para la entidad persistente SchoolEntity."
-            },
-            {
-                "path": "com.application/infrastructure/persistence/jpa/SchoolEntity.java",
-                "description": "Entidad JPA que persiste el estado del agregado School en la base de datos."
-            },
-            {
-                "path": "com.application/infrastructure/persistence/adapter/StudentRepositoryAdapter.java",
-                "description": "Adaptador de infraestructura que implementa el puerto StudentRepository usando JPA."
-            },
-            {
-                "path": "com.application/infrastructure/persistence/adapter/AttendanceRepositoryAdapter.java",
-                "description": "Adaptador de infraestructura que implementa el puerto AttendanceRepository usando JPA."
-            },
-            {
-                "path": "com.application/infrastructure/persistence/adapter/InvoiceRepositoryAdapter.java",
-                "description": "Adaptador de infraestructura que implementa el puerto InvoiceRepository usando JPA."
-            },
-            {
-                "path": "com.application/infrastructure/persistence/adapter/SchoolRepositoryAdapter.java",
-                "description": "Adaptador de infraestructura que implementa el puerto SchoolRepository usando JPA."
-            },
-            {
-                "path": "com.application/infrastructure/web/StudentController.java",
-                "description": "Controlador REST Spring que expone endpoints para operaciones CRUD y de negocio sobre Students."
-            },
-            {
-                "path": "com.application/infrastructure/web/AttendanceController.java",
-                "description": "Controlador REST Spring que expone endpoints para registrar y consultar asistencia."
-            },
-            {
-                "path": "com.application/infrastructure/web/BillingController.java",
-                "description": "Controlador REST Spring que expone endpoints para generar facturas, consultar estados y registrar pagos."
-            },
-            {
-                "path": "com.application/infrastructure/web/SchoolController.java",
-                "description": "Controlador REST Spring que expone endpoints para la gesti\u00f3n de la configuraci\u00f3n del colegio (grados, aulas)."
-            },
-            {
-                "path": "com.application/infrastructure/config/BeanConfiguration.java",
-                "description": "Clase de configuraci\u00f3n Spring para definir beans de servicios, repositorios y mappers."
+                "path": "com/application/school/infrastructure/web/rest/AcademicController.java",
+                "description": "Controlador REST que expone los endpoints para gestionar Grades y Sections."
             }
         ]
     },
@@ -281,76 +245,68 @@
         "backend/src/main/java/com/application/domain/shared/ValueObject.java",
         "backend/src/main/java/com/application/domain/shared/Entity.java",
         "backend/src/main/java/com/application/domain/exception/DomainException.java",
-        "com.application/domain/model/studentmanagement/Student.java",
-        "com.application/domain/model/studentmanagement/StudentId.java",
-        "com.application/domain/model/studentmanagement/LegalGuardian.java",
-        "com.application/domain/model/studentmanagement/LegalGuardianId.java",
-        "com.application/domain/model/studentmanagement/Guardianship.java",
-        "com.application/domain/model/studentmanagement/Enrollment.java",
-        "com.application/domain/model/studentmanagement/EnrollmentId.java",
-        "com.application/domain/model/attendance/AttendanceRecord.java",
-        "com.application/domain/model/attendance/AttendanceRecordId.java",
-        "com.application/domain/model/attendance/AttendanceSummary.java",
-        "com.application/domain/model/attendance/AttendanceSummaryId.java",
-        "com.application/domain/model/billing/Invoice.java",
-        "com.application/domain/model/billing/InvoiceId.java",
-        "com.application/domain/model/billing/InvoiceNumber.java",
-        "com.application/domain/model/billing/FeeStructure.java",
-        "com.application/domain/model/billing/FeeStructureId.java",
-        "com.application/domain/model/billing/Payment.java",
-        "com.application/domain/model/billing/PaymentId.java",
-        "com.application/domain/model/schooladministration/School.java",
-        "com.application/domain/model/schooladministration/SchoolId.java",
-        "com.application/domain/model/schooladministration/GradeLevel.java",
-        "com.application/domain/model/schooladministration/GradeLevelId.java",
-        "com.application/domain/model/schooladministration/Classroom.java",
-        "com.application/domain/model/schooladministration/ClassroomId.java",
-        "com.application/domain/valueobject/Money.java",
-        "com.application/domain/valueobject/PersonName.java",
-        "com.application/domain/valueobject/DateRange.java",
-        "com.application/domain/valueobject/Address.java",
-        "com.application/domain/enums/StudentStatus.java",
-        "com.application/domain/enums/AttendanceStatus.java",
-        "com.application/domain/enums/InvoiceStatus.java",
-        "com.application/domain/enums/RelationshipType.java",
-        "com.application/domain/ports/in/StudentService.java",
-        "com.application/domain/ports/in/AttendanceService.java",
-        "com.application/domain/ports/in/BillingService.java",
-        "com.application/domain/ports/out/StudentRepository.java",
-        "com.application/domain/ports/out/AttendanceRepository.java",
-        "com.application/domain/ports/out/InvoiceRepository.java",
-        "com.application/domain/ports/out/FeeStructureRepository.java",
-        "com.application/domain/ports/out/SchoolRepository.java",
-        "com.application/application/service/StudentServiceImpl.java",
-        "com.application/application/service/AttendanceServiceImpl.java",
-        "com.application/application/service/BillingServiceImpl.java",
-        "com.application/application/dto/StudentDTO.java",
-        "com.application/application/dto/LegalGuardianDTO.java",
-        "com.application/application/dto/AttendanceRecordDTO.java",
-        "com.application/application/dto/InvoiceDTO.java",
-        "com.application/application/dto/PaymentDTO.java",
-        "com.application/application/mapper/StudentMapper.java",
-        "com.application/application/mapper/AttendanceMapper.java",
-        "com.application/application/mapper/BillingMapper.java",
-        "com.application/infrastructure/persistence/jpa/StudentJpaRepository.java",
-        "com.application/infrastructure/persistence/jpa/StudentEntity.java",
-        "com.application/infrastructure/persistence/jpa/AttendanceJpaRepository.java",
-        "com.application/infrastructure/persistence/jpa/AttendanceRecordEntity.java",
-        "com.application/infrastructure/persistence/jpa/InvoiceJpaRepository.java",
-        "com.application/infrastructure/persistence/jpa/InvoiceEntity.java",
-        "com.application/infrastructure/persistence/jpa/SchoolJpaRepository.java",
-        "com.application/infrastructure/persistence/jpa/SchoolEntity.java",
-        "com.application/infrastructure/persistence/adapter/StudentRepositoryAdapter.java",
-        "com.application/infrastructure/persistence/adapter/AttendanceRepositoryAdapter.java",
-        "com.application/infrastructure/persistence/adapter/InvoiceRepositoryAdapter.java",
-        "com.application/infrastructure/persistence/adapter/SchoolRepositoryAdapter.java",
-        "com.application/infrastructure/web/StudentController.java",
-        "com.application/infrastructure/web/AttendanceController.java",
-        "com.application/infrastructure/web/BillingController.java",
-        "com.application/infrastructure/web/SchoolController.java",
-        "com.application/infrastructure/config/BeanConfiguration.java",
-        "backend/Dockerfile",
+        "com/application/school/domain/shared/Money.java",
+        "com/application/school/domain/shared/DateRange.java",
+        "com/application/school/domain/shared/PersonName.java",
+        "com/application/school/domain/student/model/Student.java",
+        "com/application/school/domain/student/model/StudentId.java",
+        "com/application/school/domain/student/model/StudentStatus.java",
+        "com/application/school/domain/student/model/Guardian.java",
+        "com/application/school/domain/student/model/GuardianId.java",
+        "com/application/school/domain/student/repository/StudentRepository.java",
+        "com/application/school/domain/attendance/model/AttendanceRecord.java",
+        "com/application/school/domain/attendance/model/AttendanceRecordId.java",
+        "com/application/school/domain/attendance/model/AttendanceStatus.java",
+        "com/application/school/domain/attendance/repository/AttendanceRepository.java",
+        "com/application/school/domain/billing/model/Invoice.java",
+        "com/application/school/domain/billing/model/InvoiceId.java",
+        "com/application/school/domain/billing/model/InvoiceStatus.java",
+        "com/application/school/domain/billing/model/InvoiceItem.java",
+        "com/application/school/domain/billing/model/InvoiceItemId.java",
+        "com/application/school/domain/billing/model/InvoiceConcept.java",
+        "com/application/school/domain/billing/model/Payment.java",
+        "com/application/school/domain/billing/model/PaymentId.java",
+        "com/application/school/domain/billing/repository/InvoiceRepository.java",
+        "com/application/school/domain/academic/model/Grade.java",
+        "com/application/school/domain/academic/model/GradeId.java",
+        "com/application/school/domain/academic/model/Section.java",
+        "com/application/school/domain/academic/model/SectionId.java",
+        "com/application/school/domain/academic/repository/GradeRepository.java",
+        "com/application/school/application/student/StudentService.java",
+        "com/application/school/application/attendance/AttendanceService.java",
+        "com/application/school/application/billing/BillingService.java",
+        "com/application/school/application/academic/AcademicService.java",
+        "com/application/school/application/dtos/StudentDTO.java",
+        "com/application/school/application/dtos/GuardianDTO.java",
+        "com/application/school/application/dtos/AttendanceRecordDTO.java",
+        "com/application/school/application/dtos/InvoiceDTO.java",
+        "com/application/school/application/dtos/InvoiceItemDTO.java",
+        "com/application/school/application/dtos/PaymentDTO.java",
+        "com/application/school/application/dtos/GradeDTO.java",
+        "com/application/school/application/dtos/SectionDTO.java",
+        "com/application/school/application/mappers/StudentMapper.java",
+        "com/application/school/application/mappers/AttendanceMapper.java",
+        "com/application/school/application/mappers/BillingMapper.java",
+        "com/application/school/application/mappers/AcademicMapper.java",
+        "com/application/school/infrastructure/persistence/jpa/student/JpaStudentRepository.java",
+        "com/application/school/infrastructure/persistence/jpa/student/StudentJpaRepositoryAdapter.java",
+        "com/application/school/infrastructure/persistence/jpa/student/StudentJpaEntity.java",
+        "com/application/school/infrastructure/persistence/jpa/attendance/JpaAttendanceRepository.java",
+        "com/application/school/infrastructure/persistence/jpa/attendance/AttendanceJpaRepositoryAdapter.java",
+        "com/application/school/infrastructure/persistence/jpa/attendance/AttendanceJpaEntity.java",
+        "com/application/school/infrastructure/persistence/jpa/billing/JpaInvoiceRepository.java",
+        "com/application/school/infrastructure/persistence/jpa/billing/InvoiceJpaRepositoryAdapter.java",
+        "com/application/school/infrastructure/persistence/jpa/billing/InvoiceJpaEntity.java",
+        "com/application/school/infrastructure/persistence/jpa/academic/JpaGradeRepository.java",
+        "com/application/school/infrastructure/persistence/jpa/academic/GradeJpaRepositoryAdapter.java",
+        "com/application/school/infrastructure/persistence/jpa/academic/GradeJpaEntity.java",
+        "com/application/school/infrastructure/web/rest/StudentController.java",
+        "com/application/school/infrastructure/web/rest/AttendanceController.java",
+        "com/application/school/infrastructure/web/rest/BillingController.java",
+        "com/application/school/infrastructure/web/rest/AcademicController.java",
+        ".github/workflows/pipeline.yml",
         "docker-compose.yml",
+        "backend/src/main/resources/logback-spring.xml",
         "README.md"
     ]
 }

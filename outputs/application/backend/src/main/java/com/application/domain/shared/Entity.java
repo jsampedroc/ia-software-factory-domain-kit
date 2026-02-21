@@ -1,18 +1,26 @@
 package com.application.domain.shared;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
-
-import java.time.LocalDateTime;
-
-@Data
-@SuperBuilder
-@NoArgsConstructor
-@AllArgsConstructor
 public abstract class Entity<T> {
     protected T id;
-    protected LocalDateTime createdAt;
-    protected LocalDateTime updatedAt;
+
+    public T getId() {
+        return id;
+    }
+
+    public void setId(T id) {
+        this.id = id;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Entity<?> entity = (Entity<?>) o;
+        return id != null && id.equals(entity.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

@@ -1,242 +1,374 @@
 {
-    "domain_model": "{\n  \"domainKit\": {\n    \"name\": \"School Management\",\n    \"packageBase\": \"com.application.school\",\n    \"coreDomains\": [\n      {\n        \"name\": \"Student\",\n        \"description\": \"Gestiona la informaci\u00f3n acad\u00e9mica y personal del alumno.\",\n        \"entities\": [\n          {\n            \"name\": \"Student\",\n            \"attributes\": [\"studentId\", \"legalId\", \"firstName\", \"lastName\", \"dateOfBirth\", \"enrollmentDate\", \"status (ACTIVE, INACTIVE, GRADUATED)\"],\n            \"businessRules\": [\"El studentId se genera autom\u00e1ticamente al matricularse.\", \"Un alumno no puede tener m\u00e1s de un registro activo con el mismo legalId.\"]\n          },\n          {\n            \"name\": \"Guardian\",\n            \"attributes\": [\"guardianId\", \"firstName\", \"lastName\", \"email\", \"phoneNumber\", \"relationship\"],\n            \"businessRules\": [\"Un alumno debe tener al menos un tutor/contacto registrado.\"]\n          }\n        ],\n        \"relationships\": [\"Student (1) --- (*) Guardian (Muchos a Muchos, con atributo de relaci\u00f3n)\"]\n      },\n      {\n        \"name\": \"Attendance\",\n        \"description\": \"Control de la asistencia diaria de los alumnos a clases.\",\n        \"entities\": [\n          {\n            \"name\": \"AttendanceRecord\",\n            \"attributes\": [\"recordId\", \"date\", \"checkInTime\", \"checkOutTime\", \"status (PRESENT, ABSENT, LATE, EXCUSED)\"],\n            \"businessRules\": [\"No se puede registrar salida antes de la entrada.\", \"Solo se puede registrar una entrada y una salida por alumno y por d\u00eda.\"]\n          }\n        ],\n        \"relationships\": [\"Student (1) --- (*) AttendanceRecord\"]\n      },\n      {\n        \"name\": \"Billing\",\n        \"description\": \"Gesti\u00f3n de la facturaci\u00f3n mensual por conceptos de matr\u00edcula y pensi\u00f3n.\",\n        \"entities\": [\n          {\n            \"name\": \"Invoice\",\n            \"attributes\": [\"invoiceId\", \"issueDate\", \"dueDate\", \"monthYear\", \"totalAmount\", \"status (PENDING, PAID, OVERDUE, CANCELLED)\", \"paymentDate\"],\n            \"businessRules\": [\"El totalAmount es la suma de los conceptos (InvoiceItem).\", \"Solo se puede generar una factura por alumno y por mes (monthYear).\"]\n          },\n          {\n            \"name\": \"InvoiceItem\",\n            \"attributes\": [\"itemId\", \"concept (TUITION, MONTHLY_FEE, EXTRA_ACTIVITY, OTHER)\", \"description\", \"quantity\", \"unitPrice\", \"subtotal\"],\n            \"businessRules\": [\"El subtotal se calcula como quantity * unitPrice.\"]\n          },\n          {\n            \"name\": \"Payment\",\n            \"attributes\": [\"paymentId\", \"amount\", \"paymentMethod\", \"transactionReference\", \"date\"],\n            \"businessRules\": [\"El monto del pago no puede ser negativo.\"]\n          }\n        ],\n        \"relationships\": [\n          \"Student (1) --- (*) Invoice\",\n          \"Invoice (1) --- (*) InvoiceItem (Agregado)\",\n          \"Invoice (1) --- (*) Payment (Un pago puede abonar a m\u00faltiples facturas y viceversa, relaci\u00f3n compleja para manejar abonos parciales)\"\n        ]\n      },\n      {\n        \"name\": \"Academic\",\n        \"description\": \"Informaci\u00f3n sobre la estructura acad\u00e9mica (Grados, Secciones).\",\n        \"entities\": [\n          {\n            \"name\": \"Grade\",\n            \"attributes\": [\"gradeId\", \"name\", \"level\"],\n            \"businessRules\": [\"El nombre del grado debe ser \u00fanico.\"]\n          },\n          {\n            \"name\": \"Section\",\n            \"attributes\": [\"sectionId\", \"name\", \"capacity\"],\n            \"businessRules\": [\"La capacidad no puede ser negativa.\"]\n          }\n        ],\n        \"relationships\": [\n          \"Grade (1) --- (*) Section\",\n          \"Student (1) --- (1) Section (En un per\u00edodo acad\u00e9mico dado. Para simplificar, relaci\u00f3n directa.)\"\n        ]\n      }\n    ],\n    \"sharedKernel\": {\n      \"name\": \"Shared\",\n      \"valueObjects\": [\n        {\n          \"name\": \"Money\",\n          \"attributes\": [\"amount\", \"currency\"]\n        },\n        {\n          \"name\": \"DateRange\",\n          \"attributes\": [\"startDate\", \"endDate\"]\n        },\n        {\n          \"name\": \"PersonName\",\n          \"attributes\": [\"firstName\", \"lastName\"]\n        }\n      ]\n    },\n    \"invariantsAndPolicies\": [\n      \"Un alumno inactivo no puede registrar nueva asistencia.\",\n      \"No se puede emitir una factura para un alumno inactivo.\",\n      \"El estado de una factura se actualiza autom\u00e1ticamente a PAID cuando la suma de los pagos aplicados es >= totalAmount.\",\n      \"El estado de una factura se actualiza a OVERDUE si la dueDate ha pasado y el estado es PENDING.\"\n    ]\n  }\n}",
+    "domain_model": "{\n  \"domainKit\": {\n    \"boundedContexts\": [\n      {\n        \"name\": \"SchoolManagement\",\n        \"description\": \"Gestiona la informaci\u00f3n central del colegio, sus aulas y la asignaci\u00f3n de alumnos.\",\n        \"modules\": [\n          {\n            \"name\": \"School\",\n            \"entities\": [\n              {\n                \"name\": \"School\",\n                \"attributes\": [\"id\", \"name\", \"address\", \"phoneNumber\", \"active\"],\n                \"businessRules\": [\"El nombre del colegio es obligatorio y \u00fanico en el sistema.\", \"Solo colegios activos pueden tener aulas activas.\"]\n              },\n              {\n                \"name\": \"Classroom\",\n                \"attributes\": [\"id\", \"gradeLevel\", \"section\", \"academicYear\", \"capacity\", \"tutorTeacherId\", \"schoolId\", \"active\"],\n                \"businessRules\": [\"El identificador de aula debe ser \u00fanico por colegio y a\u00f1o acad\u00e9mico.\", \"La capacidad debe ser un n\u00famero positivo.\", \"Un aula no puede superar su capacidad m\u00e1xima de alumnos.\"]\n              }\n            ]\n          },\n          {\n            \"name\": \"Student\",\n            \"entities\": [\n              {\n                \"name\": \"Student\",\n                \"attributes\": [\"id\", \"legalGuardianId\", \"firstName\", \"lastName\", \"dateOfBirth\", \"identificationNumber\", \"enrollmentDate\", \"active\", \"currentClassroomId\"],\n                \"businessRules\": [\"El n\u00famero de identificaci\u00f3n debe ser \u00fanico.\", \"Un alumno debe estar asociado a un tutor legal registrado.\", \"La fecha de nacimiento debe ser anterior a la fecha de inscripci\u00f3n.\"]\n              },\n              {\n                \"name\": \"LegalGuardian\",\n                \"attributes\": [\"id\", \"firstName\", \"lastName\", \"email\", \"primaryPhone\", \"secondaryPhone\", \"address\"],\n                \"businessRules\": [\"El email y al menos un tel\u00e9fono son obligatorios.\", \"El email debe tener un formato v\u00e1lido.\"]\n              }\n            ]\n          }\n        ]\n      },\n      {\n        \"name\": \"Attendance\",\n        \"description\": \"Registra y controla la asistencia diaria de los alumnos.\",\n        \"modules\": [\n          {\n            \"name\": \"Tracking\",\n            \"entities\": [\n              {\n                \"name\": \"DailyAttendance\",\n                \"attributes\": [\"id\", \"classroomId\", \"date\", \"schoolId\"],\n                \"businessRules\": [\"Solo se puede crear un registro de asistencia diaria por aula y fecha.\", \"La fecha no puede ser futura.\"]\n              },\n              {\n                \"name\": \"AttendanceRecord\",\n                \"attributes\": [\"id\", \"dailyAttendanceId\", \"studentId\", \"status\", \"notes\", \"recordedAt\"],\n                \"businessRules\": [\"El estado debe ser uno de: PRESENT, ABSENT, LATE, EXCUSED.\", \"Un alumno solo puede tener un registro por d\u00eda en un aula espec\u00edfica.\", \"El registro se asocia autom\u00e1ticamente al aula del alumno en esa fecha.\"]\n              }\n            ]\n          }\n        ]\n      },\n      {\n        \"name\": \"Billing\",\n        \"description\": \"Gestiona la facturaci\u00f3n mensual, conceptos de cobro y pagos.\",\n        \"modules\": [\n          {\n            \"name\": \"Invoicing\",\n            \"entities\": [\n              {\n                \"name\": \"BillingConcept\",\n                \"attributes\": [\"id\", \"name\", \"description\", \"defaultAmount\", \"periodicity\", \"applicableFromGrade\", \"applicableToGrade\", \"active\"],\n                \"businessRules\": [\"El nombre del concepto debe ser \u00fanico.\", \"El monto por defecto debe ser mayor o igual a cero.\", \"La periodicidad debe ser: MONTHLY, ANNUAL, ONE_TIME.\"]\n              },\n              {\n                \"name\": \"MonthlyInvoice\",\n                \"attributes\": [\"id\", \"studentId\", \"billingPeriod\", \"issueDate\", \"dueDate\", \"totalAmount\", \"status\", \"schoolId\"],\n                \"businessRules\": [\"El per\u00edodo de facturaci\u00f3n (YYYY-MM) debe ser \u00fanico por alumno.\", \"La fecha de vencimiento debe ser posterior a la de emisi\u00f3n.\", \"El estado inicial es PENDING.\", \"El total se calcula sumando los \u00edtems de la factura.\"]\n              },\n              {\n                \"name\": \"InvoiceItem\",\n                \"attributes\": [\"id\", \"monthlyInvoiceId\", \"billingConceptId\", \"description\", \"quantity\", \"unitPrice\", \"subtotal\"],\n                \"businessRules\": [\"El subtotal se calcula como cantidad * precio unitario.\", \"La cantidad debe ser 1 para conceptos no cuantificables (ej. matr\u00edcula).\"]\n              }\n            ]\n          },\n          {\n            \"name\": \"Payment\",\n            \"entities\": [\n              {\n                \"name\": \"Payment\",\n                \"attributes\": [\"id\", \"monthlyInvoiceId\", \"amount\", \"paymentDate\", \"paymentMethod\", \"transactionReference\", \"confirmed\"],\n                \"businessRules\": [\"El monto del pago debe ser mayor a cero.\", \"El m\u00e9todo de pago debe ser uno de: CASH, BANK_TRANSFER, CREDIT_CARD, DEBIT_CARD.\", \"Un pago confirmado actualiza el estado de la factura asociada.\"]\n              }\n            ]\n          }\n        ]\n      }\n    ],\n    \"sharedKernel\": {\n      \"name\": \"Shared\",\n      \"valueObjects\": [\n        {\n          \"name\": \"Money\",\n          \"attributes\": [\"amount\", \"currency\"],\n          \"businessRules\": [\"El monto no puede ser negativo.\", \"La moneda debe ser un c\u00f3digo ISO 4217 v\u00e1lido (ej. USD).\"]\n        },\n        {\n          \"name\": \"DateRange\",\n          \"attributes\": [\"startDate\", \"endDate\"],\n          \"businessRules\": [\"La fecha de inicio debe ser anterior o igual a la fecha de fin.\"]\n        },\n        {\n          \"name\": \"PersonName\",\n          \"attributes\": [\"firstName\", \"lastName\"],\n          \"businessRules\": [\"El nombre y apellido no pueden estar vac\u00edos.\", \"Deben tener una longitud m\u00e1xima definida.\"]\n        }\n      ]\n    },\n    \"technicalPackage\": \"com.application\"\n  }\n}",
     "architecture": {
         "file_inventory": [
             {
-                "path": "com/application/school/domain/shared/Money.java",
-                "description": "Value Object para manejar cantidades monetarias con su moneda."
+                "path": "backend/src/main/java/com/application/domain/shared/ValueObject.java",
+                "description": "Interfaz base para todos los Value Objects del dominio."
             },
             {
-                "path": "com/application/school/domain/shared/DateRange.java",
-                "description": "Value Object que representa un rango de fechas con inicio y fin."
+                "path": "backend/src/main/java/com/application/domain/shared/Entity.java",
+                "description": "Clase abstracta base para todas las Entidades del dominio."
             },
             {
-                "path": "com/application/school/domain/shared/PersonName.java",
-                "description": "Value Object para encapsular el nombre y apellido de una persona."
+                "path": "backend/src/main/java/com/application/domain/shared/AggregateRoot.java",
+                "description": "Clase abstracta base para todas las Ra\u00edces de Agregado del dominio."
             },
             {
-                "path": "com/application/school/domain/student/model/Student.java",
-                "description": "Entidad ra\u00edz del agregado Student. Gestiona la informaci\u00f3n acad\u00e9mica y personal del alumno."
+                "path": "backend/src/main/java/com/application/domain/exception/DomainException.java",
+                "description": "Excepci\u00f3n base para todas las excepciones del dominio."
             },
             {
-                "path": "com/application/school/domain/student/model/StudentId.java",
-                "description": "Value Object que representa el identificador \u00fanico de un Student."
+                "path": "backend/src/main/java/com/application/domain/shared/valueobject/Money.java",
+                "description": "Value Object para representar cantidades monetarias."
             },
             {
-                "path": "com/application/school/domain/student/model/StudentStatus.java",
-                "description": "Enum que define los posibles estados de un Student: ACTIVE, INACTIVE, GRADUATED."
+                "path": "backend/src/main/java/com/application/domain/shared/valueobject/DateRange.java",
+                "description": "Value Object para representar un rango de fechas."
             },
             {
-                "path": "com/application/school/domain/student/model/Guardian.java",
-                "description": "Entidad que representa al tutor o contacto de un Student."
+                "path": "backend/src/main/java/com/application/domain/shared/valueobject/PersonName.java",
+                "description": "Value Object para representar el nombre de una persona."
             },
             {
-                "path": "com/application/school/domain/student/model/GuardianId.java",
-                "description": "Value Object que representa el identificador \u00fanico de un Guardian."
+                "path": "backend/src/main/java/com/application/domain/SchoolManagement/valueobject/SchoolId.java",
+                "description": "Value Object para el identificador \u00fanico de la entidad School."
             },
             {
-                "path": "com/application/school/domain/student/repository/StudentRepository.java",
-                "description": "Interfaz del puerto del repositorio para la entidad Student."
+                "path": "backend/src/main/java/com/application/domain/SchoolManagement/valueobject/ClassroomId.java",
+                "description": "Value Object para el identificador \u00fanico de la entidad Classroom."
             },
             {
-                "path": "com/application/school/domain/attendance/model/AttendanceRecord.java",
-                "description": "Entidad ra\u00edz del agregado AttendanceRecord. Controla la asistencia diaria de un alumno."
+                "path": "backend/src/main/java/com/application/domain/SchoolManagement/valueobject/StudentId.java",
+                "description": "Value Object para el identificador \u00fanico de la entidad Student."
             },
             {
-                "path": "com/application/school/domain/attendance/model/AttendanceRecordId.java",
-                "description": "Value Object que representa el identificador \u00fanico de un AttendanceRecord."
+                "path": "backend/src/main/java/com/application/domain/SchoolManagement/valueobject/LegalGuardianId.java",
+                "description": "Value Object para el identificador \u00fanico de la entidad LegalGuardian."
             },
             {
-                "path": "com/application/school/domain/attendance/model/AttendanceStatus.java",
-                "description": "Enum que define los posibles estados de asistencia: PRESENT, ABSENT, LATE, EXCUSED."
+                "path": "backend/src/main/java/com/application/domain/Attendance/valueobject/DailyAttendanceId.java",
+                "description": "Value Object para el identificador \u00fanico de la entidad DailyAttendance."
             },
             {
-                "path": "com/application/school/domain/attendance/repository/AttendanceRepository.java",
-                "description": "Interfaz del puerto del repositorio para la entidad AttendanceRecord."
+                "path": "backend/src/main/java/com/application/domain/Attendance/valueobject/AttendanceRecordId.java",
+                "description": "Value Object para el identificador \u00fanico de la entidad AttendanceRecord."
             },
             {
-                "path": "com/application/school/domain/billing/model/Invoice.java",
-                "description": "Entidad ra\u00edz del agregado Invoice. Gestiona la facturaci\u00f3n mensual de un Student."
+                "path": "backend/src/main/java/com/application/domain/Billing/valueobject/BillingConceptId.java",
+                "description": "Value Object para el identificador \u00fanico de la entidad BillingConcept."
             },
             {
-                "path": "com/application/school/domain/billing/model/InvoiceId.java",
-                "description": "Value Object que representa el identificador \u00fanico de una Invoice."
+                "path": "backend/src/main/java/com/application/domain/Billing/valueobject/MonthlyInvoiceId.java",
+                "description": "Value Object para el identificador \u00fanico de la entidad MonthlyInvoice."
             },
             {
-                "path": "com/application/school/domain/billing/model/InvoiceStatus.java",
-                "description": "Enum que define los posibles estados de una factura: PENDING, PAID, OVERDUE, CANCELLED."
+                "path": "backend/src/main/java/com/application/domain/Billing/valueobject/InvoiceItemId.java",
+                "description": "Value Object para el identificador \u00fanico de la entidad InvoiceItem."
             },
             {
-                "path": "com/application/school/domain/billing/model/InvoiceItem.java",
-                "description": "Entidad que representa un concepto o \u00edtem dentro de una Invoice."
+                "path": "backend/src/main/java/com/application/domain/Billing/valueobject/PaymentId.java",
+                "description": "Value Object para el identificador \u00fanico de la entidad Payment."
             },
             {
-                "path": "com/application/school/domain/billing/model/InvoiceItemId.java",
-                "description": "Value Object que representa el identificador \u00fanico de un InvoiceItem."
+                "path": "backend/src/main/java/com/application/domain/SchoolManagement/school/domain/School.java",
+                "description": "Entidad de dominio School."
             },
             {
-                "path": "com/application/school/domain/billing/model/InvoiceConcept.java",
-                "description": "Enum que define los posibles conceptos de facturaci\u00f3n: TUITION, MONTHLY_FEE, EXTRA_ACTIVITY, OTHER."
+                "path": "backend/src/main/java/com/application/domain/SchoolManagement/school/domain/Classroom.java",
+                "description": "Entidad de dominio Classroom."
             },
             {
-                "path": "com/application/school/domain/billing/model/Payment.java",
-                "description": "Entidad que representa un pago realizado."
+                "path": "backend/src/main/java/com/application/domain/SchoolManagement/student/domain/Student.java",
+                "description": "Entidad de dominio Student."
             },
             {
-                "path": "com/application/school/domain/billing/model/PaymentId.java",
-                "description": "Value Object que representa el identificador \u00fanico de un Payment."
+                "path": "backend/src/main/java/com/application/domain/SchoolManagement/student/domain/LegalGuardian.java",
+                "description": "Entidad de dominio LegalGuardian."
             },
             {
-                "path": "com/application/school/domain/billing/repository/InvoiceRepository.java",
-                "description": "Interfaz del puerto del repositorio para la entidad Invoice."
+                "path": "backend/src/main/java/com/application/domain/Attendance/tracking/domain/DailyAttendance.java",
+                "description": "Entidad de dominio DailyAttendance."
             },
             {
-                "path": "com/application/school/domain/academic/model/Grade.java",
-                "description": "Entidad que representa un Grado acad\u00e9mico."
+                "path": "backend/src/main/java/com/application/domain/Attendance/tracking/domain/AttendanceRecord.java",
+                "description": "Entidad de dominio AttendanceRecord."
             },
             {
-                "path": "com/application/school/domain/academic/model/GradeId.java",
-                "description": "Value Object que representa el identificador \u00fanico de un Grade."
+                "path": "backend/src/main/java/com/application/domain/Billing/invoicing/domain/BillingConcept.java",
+                "description": "Entidad de dominio BillingConcept."
             },
             {
-                "path": "com/application/school/domain/academic/model/Section.java",
-                "description": "Entidad que representa una Secci\u00f3n dentro de un Grado."
+                "path": "backend/src/main/java/com/application/domain/Billing/invoicing/domain/MonthlyInvoice.java",
+                "description": "Entidad de dominio MonthlyInvoice."
             },
             {
-                "path": "com/application/school/domain/academic/model/SectionId.java",
-                "description": "Value Object que representa el identificador \u00fanico de una Section."
+                "path": "backend/src/main/java/com/application/domain/Billing/invoicing/domain/InvoiceItem.java",
+                "description": "Entidad de dominio InvoiceItem."
             },
             {
-                "path": "com/application/school/domain/academic/repository/GradeRepository.java",
-                "description": "Interfaz del puerto del repositorio para la entidad Grade."
+                "path": "backend/src/main/java/com/application/domain/Billing/payment/domain/Payment.java",
+                "description": "Entidad de dominio Payment."
             },
             {
-                "path": "com/application/school/application/student/StudentService.java",
-                "description": "Servicio de aplicaci\u00f3n que orquesta los casos de uso relacionados con Student."
+                "path": "backend/src/main/java/com/application/application/SchoolManagement/school/application/create/CreateSchoolCommand.java",
+                "description": "Comando para crear un School."
             },
             {
-                "path": "com/application/school/application/attendance/AttendanceService.java",
-                "description": "Servicio de aplicaci\u00f3n que orquesta los casos de uso relacionados con Attendance."
+                "path": "backend/src/main/java/com/application/application/SchoolManagement/school/application/create/CreateSchoolCommandHandler.java",
+                "description": "Manejador del comando CreateSchoolCommand."
             },
             {
-                "path": "com/application/school/application/billing/BillingService.java",
-                "description": "Servicio de aplicaci\u00f3n que orquesta los casos de uso relacionados con Invoice y Payment."
+                "path": "backend/src/main/java/com/application/application/SchoolManagement/school/application/find/FindSchoolQuery.java",
+                "description": "Consulta para buscar un School."
             },
             {
-                "path": "com/application/school/application/academic/AcademicService.java",
-                "description": "Servicio de aplicaci\u00f3n que orquesta los casos de uso relacionados con Grade y Section."
+                "path": "backend/src/main/java/com/application/application/SchoolManagement/school/application/find/FindSchoolQueryHandler.java",
+                "description": "Manejador de la consulta FindSchoolQuery."
             },
             {
-                "path": "com/application/school/application/dtos/StudentDTO.java",
-                "description": "DTO para la transferencia de datos de la entidad Student."
+                "path": "backend/src/main/java/com/application/application/SchoolManagement/classroom/application/create/CreateClassroomCommand.java",
+                "description": "Comando para crear un Classroom."
             },
             {
-                "path": "com/application/school/application/dtos/GuardianDTO.java",
-                "description": "DTO para la transferencia de datos de la entidad Guardian."
+                "path": "backend/src/main/java/com/application/application/SchoolManagement/classroom/application/create/CreateClassroomCommandHandler.java",
+                "description": "Manejador del comando CreateClassroomCommand."
             },
             {
-                "path": "com/application/school/application/dtos/AttendanceRecordDTO.java",
-                "description": "DTO para la transferencia de datos de la entidad AttendanceRecord."
+                "path": "backend/src/main/java/com/application/application/SchoolManagement/student/application/create/CreateStudentCommand.java",
+                "description": "Comando para crear un Student."
             },
             {
-                "path": "com/application/school/application/dtos/InvoiceDTO.java",
-                "description": "DTO para la transferencia de datos de la entidad Invoice."
+                "path": "backend/src/main/java/com/application/application/SchoolManagement/student/application/create/CreateStudentCommandHandler.java",
+                "description": "Manejador del comando CreateStudentCommand."
             },
             {
-                "path": "com/application/school/application/dtos/InvoiceItemDTO.java",
-                "description": "DTO para la transferencia de datos de la entidad InvoiceItem."
+                "path": "backend/src/main/java/com/application/application/Attendance/tracking/application/record/CreateAttendanceRecordCommand.java",
+                "description": "Comando para crear un AttendanceRecord."
             },
             {
-                "path": "com/application/school/application/dtos/PaymentDTO.java",
-                "description": "DTO para la transferencia de datos de la entidad Payment."
+                "path": "backend/src/main/java/com/application/application/Attendance/tracking/application/record/CreateAttendanceRecordCommandHandler.java",
+                "description": "Manejador del comando CreateAttendanceRecordCommand."
             },
             {
-                "path": "com/application/school/application/dtos/GradeDTO.java",
-                "description": "DTO para la transferencia de datos de la entidad Grade."
+                "path": "backend/src/main/java/com/application/application/Billing/invoicing/application/generate/GenerateMonthlyInvoiceCommand.java",
+                "description": "Comando para generar una MonthlyInvoice."
             },
             {
-                "path": "com/application/school/application/dtos/SectionDTO.java",
-                "description": "DTO para la transferencia de datos de la entidad Section."
+                "path": "backend/src/main/java/com/application/application/Billing/invoicing/application/generate/GenerateMonthlyInvoiceCommandHandler.java",
+                "description": "Manejador del comando GenerateMonthlyInvoiceCommand."
             },
             {
-                "path": "com/application/school/application/mappers/StudentMapper.java",
-                "description": "Interfaz MapStruct para mapear entre la entidad Student y sus DTOs."
+                "path": "backend/src/main/java/com/application/application/Billing/payment/application/process/ProcessPaymentCommand.java",
+                "description": "Comando para procesar un Payment."
             },
             {
-                "path": "com/application/school/application/mappers/AttendanceMapper.java",
-                "description": "Interfaz MapStruct para mapear entre la entidad AttendanceRecord y sus DTOs."
+                "path": "backend/src/main/java/com/application/application/Billing/payment/application/process/ProcessPaymentCommandHandler.java",
+                "description": "Manejador del comando ProcessPaymentCommand."
             },
             {
-                "path": "com/application/school/application/mappers/BillingMapper.java",
-                "description": "Interfaz MapStruct para mapear entre las entidades Invoice, InvoiceItem, Payment y sus DTOs."
+                "path": "backend/src/main/java/com/application/domain/SchoolManagement/school/domain/repository/SchoolRepository.java",
+                "description": "Puerto del repositorio para la entidad School."
             },
             {
-                "path": "com/application/school/application/mappers/AcademicMapper.java",
-                "description": "Interfaz MapStruct para mapear entre las entidades Grade, Section y sus DTOs."
+                "path": "backend/src/main/java/com/application/domain/SchoolManagement/classroom/domain/repository/ClassroomRepository.java",
+                "description": "Puerto del repositorio para la entidad Classroom."
             },
             {
-                "path": "com/application/school/infrastructure/persistence/jpa/student/JpaStudentRepository.java",
-                "description": "Interfaz JPA Repository (Spring Data) para la entidad Student."
+                "path": "backend/src/main/java/com/application/domain/SchoolManagement/student/domain/repository/StudentRepository.java",
+                "description": "Puerto del repositorio para la entidad Student."
             },
             {
-                "path": "com/application/school/infrastructure/persistence/jpa/student/StudentJpaRepositoryAdapter.java",
-                "description": "Adaptador que implementa el puerto StudentRepository usando JpaStudentRepository."
+                "path": "backend/src/main/java/com/application/domain/Attendance/tracking/domain/repository/DailyAttendanceRepository.java",
+                "description": "Puerto del repositorio para la entidad DailyAttendance."
             },
             {
-                "path": "com/application/school/infrastructure/persistence/jpa/student/StudentJpaEntity.java",
-                "description": "Entidad JPA para persistir el agregado Student en la base de datos."
+                "path": "backend/src/main/java/com/application/domain/Attendance/tracking/domain/repository/AttendanceRecordRepository.java",
+                "description": "Puerto del repositorio para la entidad AttendanceRecord."
             },
             {
-                "path": "com/application/school/infrastructure/persistence/jpa/attendance/JpaAttendanceRepository.java",
-                "description": "Interfaz JPA Repository (Spring Data) para la entidad AttendanceRecord."
+                "path": "backend/src/main/java/com/application/domain/Billing/invoicing/domain/repository/MonthlyInvoiceRepository.java",
+                "description": "Puerto del repositorio para la entidad MonthlyInvoice."
             },
             {
-                "path": "com/application/school/infrastructure/persistence/jpa/attendance/AttendanceJpaRepositoryAdapter.java",
-                "description": "Adaptador que implementa el puerto AttendanceRepository usando JpaAttendanceRepository."
+                "path": "backend/src/main/java/com/application/domain/Billing/payment/domain/repository/PaymentRepository.java",
+                "description": "Puerto del repositorio para la entidad Payment."
             },
             {
-                "path": "com/application/school/infrastructure/persistence/jpa/attendance/AttendanceJpaEntity.java",
-                "description": "Entidad JPA para persistir el agregado AttendanceRecord en la base de datos."
+                "path": "backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/school/adapter/SchoolJpaRepository.java",
+                "description": "Interfaz JPA para el repositorio de School."
             },
             {
-                "path": "com/application/school/infrastructure/persistence/jpa/billing/JpaInvoiceRepository.java",
-                "description": "Interfaz JPA Repository (Spring Data) para la entidad Invoice."
+                "path": "backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/school/adapter/SchoolRepositoryImpl.java",
+                "description": "Adaptador del repositorio de School."
             },
             {
-                "path": "com/application/school/infrastructure/persistence/jpa/billing/InvoiceJpaRepositoryAdapter.java",
-                "description": "Adaptador que implementa el puerto InvoiceRepository usando JpaInvoiceRepository."
+                "path": "backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/student/adapter/StudentJpaRepository.java",
+                "description": "Interfaz JPA para el repositorio de Student."
             },
             {
-                "path": "com/application/school/infrastructure/persistence/jpa/billing/InvoiceJpaEntity.java",
-                "description": "Entidad JPA para persistir el agregado Invoice en la base de datos."
+                "path": "backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/student/adapter/StudentRepositoryImpl.java",
+                "description": "Adaptador del repositorio de Student."
             },
             {
-                "path": "com/application/school/infrastructure/persistence/jpa/academic/JpaGradeRepository.java",
-                "description": "Interfaz JPA Repository (Spring Data) para la entidad Grade."
+                "path": "backend/src/main/java/com/application/infrastructure/persistence/Attendance/tracking/adapter/DailyAttendanceJpaRepository.java",
+                "description": "Interfaz JPA para el repositorio de DailyAttendance."
             },
             {
-                "path": "com/application/school/infrastructure/persistence/jpa/academic/GradeJpaRepositoryAdapter.java",
-                "description": "Adaptador que implementa el puerto GradeRepository usando JpaGradeRepository."
+                "path": "backend/src/main/java/com/application/infrastructure/persistence/Attendance/tracking/adapter/DailyAttendanceRepositoryImpl.java",
+                "description": "Adaptador del repositorio de DailyAttendance."
             },
             {
-                "path": "com/application/school/infrastructure/persistence/jpa/academic/GradeJpaEntity.java",
-                "description": "Entidad JPA para persistir la entidad Grade en la base de datos."
+                "path": "backend/src/main/java/com/application/infrastructure/persistence/Billing/invoicing/adapter/MonthlyInvoiceJpaRepository.java",
+                "description": "Interfaz JPA para el repositorio de MonthlyInvoice."
             },
             {
-                "path": "com/application/school/infrastructure/web/rest/StudentController.java",
-                "description": "Controlador REST que expone los endpoints para gestionar Students."
+                "path": "backend/src/main/java/com/application/infrastructure/persistence/Billing/invoicing/adapter/MonthlyInvoiceRepositoryImpl.java",
+                "description": "Adaptador del repositorio de MonthlyInvoice."
             },
             {
-                "path": "com/application/school/infrastructure/web/rest/AttendanceController.java",
-                "description": "Controlador REST que expone los endpoints para gestionar AttendanceRecords."
+                "path": "backend/src/main/java/com/application/infrastructure/persistence/Billing/payment/adapter/PaymentJpaRepository.java",
+                "description": "Interfaz JPA para el repositorio de Payment."
             },
             {
-                "path": "com/application/school/infrastructure/web/rest/BillingController.java",
-                "description": "Controlador REST que expone los endpoints para gestionar Invoices y Payments."
+                "path": "backend/src/main/java/com/application/infrastructure/persistence/Billing/payment/adapter/PaymentRepositoryImpl.java",
+                "description": "Adaptador del repositorio de Payment."
             },
             {
-                "path": "com/application/school/infrastructure/web/rest/AcademicController.java",
-                "description": "Controlador REST que expone los endpoints para gestionar Grades y Sections."
+                "path": "backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/school/entity/SchoolEntity.java",
+                "description": "Entidad JPA para School."
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/school/entity/ClassroomEntity.java",
+                "description": "Entidad JPA para Classroom."
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/student/entity/StudentEntity.java",
+                "description": "Entidad JPA para Student."
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/student/entity/LegalGuardianEntity.java",
+                "description": "Entidad JPA para LegalGuardian."
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/persistence/Attendance/tracking/entity/DailyAttendanceEntity.java",
+                "description": "Entidad JPA para DailyAttendance."
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/persistence/Attendance/tracking/entity/AttendanceRecordEntity.java",
+                "description": "Entidad JPA para AttendanceRecord."
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/persistence/Billing/invoicing/entity/BillingConceptEntity.java",
+                "description": "Entidad JPA para BillingConcept."
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/persistence/Billing/invoicing/entity/MonthlyInvoiceEntity.java",
+                "description": "Entidad JPA para MonthlyInvoice."
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/persistence/Billing/invoicing/entity/InvoiceItemEntity.java",
+                "description": "Entidad JPA para InvoiceItem."
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/persistence/Billing/payment/entity/PaymentEntity.java",
+                "description": "Entidad JPA para Payment."
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/school/mapper/SchoolEntityMapper.java",
+                "description": "Mapper entre la entidad de dominio School y SchoolEntity."
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/student/mapper/StudentEntityMapper.java",
+                "description": "Mapper entre la entidad de dominio Student y StudentEntity."
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/persistence/Attendance/tracking/mapper/DailyAttendanceEntityMapper.java",
+                "description": "Mapper entre la entidad de dominio DailyAttendance y DailyAttendanceEntity."
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/persistence/Billing/invoicing/mapper/MonthlyInvoiceEntityMapper.java",
+                "description": "Mapper entre la entidad de dominio MonthlyInvoice y MonthlyInvoiceEntity."
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/persistence/Billing/payment/mapper/PaymentEntityMapper.java",
+                "description": "Mapper entre la entidad de dominio Payment y PaymentEntity."
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaces/rest/SchoolManagement/school/SchoolController.java",
+                "description": "Controlador REST para operaciones con School."
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaces/rest/SchoolManagement/school/dto/CreateSchoolRequestDTO.java",
+                "description": "DTO de solicitud para crear un School."
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaces/rest/SchoolManagement/school/dto/SchoolResponseDTO.java",
+                "description": "DTO de respuesta para la entidad School."
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaces/rest/SchoolManagement/classroom/ClassroomController.java",
+                "description": "Controlador REST para operaciones con Classroom."
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaces/rest/SchoolManagement/classroom/dto/CreateClassroomRequestDTO.java",
+                "description": "DTO de solicitud para crear un Classroom."
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaces/rest/SchoolManagement/classroom/dto/ClassroomResponseDTO.java",
+                "description": "DTO de respuesta para la entidad Classroom."
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaces/rest/SchoolManagement/student/StudentController.java",
+                "description": "Controlador REST para operaciones con Student."
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaces/rest/SchoolManagement/student/dto/CreateStudentRequestDTO.java",
+                "description": "DTO de solicitud para crear un Student."
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaces/rest/SchoolManagement/student/dto/StudentResponseDTO.java",
+                "description": "DTO de respuesta para la entidad Student."
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaces/rest/Attendance/tracking/AttendanceController.java",
+                "description": "Controlador REST para operaciones de Asistencia."
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaces/rest/Attendance/tracking/dto/CreateAttendanceRecordRequestDTO.java",
+                "description": "DTO de solicitud para crear un AttendanceRecord."
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaces/rest/Attendance/tracking/dto/AttendanceRecordResponseDTO.java",
+                "description": "DTO de respuesta para la entidad AttendanceRecord."
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaces/rest/Billing/invoicing/InvoiceController.java",
+                "description": "Controlador REST para operaciones con Facturas."
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaces/rest/Billing/invoicing/dto/GenerateInvoiceRequestDTO.java",
+                "description": "DTO de solicitud para generar una MonthlyInvoice."
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaces/rest/Billing/invoicing/dto/MonthlyInvoiceResponseDTO.java",
+                "description": "DTO de respuesta para la entidad MonthlyInvoice."
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaces/rest/Billing/payment/PaymentController.java",
+                "description": "Controlador REST para operaciones con Pagos."
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaces/rest/Billing/payment/dto/ProcessPaymentRequestDTO.java",
+                "description": "DTO de solicitud para procesar un Payment."
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaces/rest/Billing/payment/dto/PaymentResponseDTO.java",
+                "description": "DTO de respuesta para la entidad Payment."
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaces/rest/GlobalExceptionHandler.java",
+                "description": "Manejador global de excepciones para los controladores REST."
             }
         ]
     },
@@ -245,68 +377,170 @@
         "backend/src/main/java/com/application/domain/shared/ValueObject.java",
         "backend/src/main/java/com/application/domain/shared/Entity.java",
         "backend/src/main/java/com/application/domain/exception/DomainException.java",
-        "com/application/school/domain/shared/Money.java",
-        "com/application/school/domain/shared/DateRange.java",
-        "com/application/school/domain/shared/PersonName.java",
-        "com/application/school/domain/student/model/Student.java",
-        "com/application/school/domain/student/model/StudentId.java",
-        "com/application/school/domain/student/model/StudentStatus.java",
-        "com/application/school/domain/student/model/Guardian.java",
-        "com/application/school/domain/student/model/GuardianId.java",
-        "com/application/school/domain/student/repository/StudentRepository.java",
-        "com/application/school/domain/attendance/model/AttendanceRecord.java",
-        "com/application/school/domain/attendance/model/AttendanceRecordId.java",
-        "com/application/school/domain/attendance/model/AttendanceStatus.java",
-        "com/application/school/domain/attendance/repository/AttendanceRepository.java",
-        "com/application/school/domain/billing/model/Invoice.java",
-        "com/application/school/domain/billing/model/InvoiceId.java",
-        "com/application/school/domain/billing/model/InvoiceStatus.java",
-        "com/application/school/domain/billing/model/InvoiceItem.java",
-        "com/application/school/domain/billing/model/InvoiceItemId.java",
-        "com/application/school/domain/billing/model/InvoiceConcept.java",
-        "com/application/school/domain/billing/model/Payment.java",
-        "com/application/school/domain/billing/model/PaymentId.java",
-        "com/application/school/domain/billing/repository/InvoiceRepository.java",
-        "com/application/school/domain/academic/model/Grade.java",
-        "com/application/school/domain/academic/model/GradeId.java",
-        "com/application/school/domain/academic/model/Section.java",
-        "com/application/school/domain/academic/model/SectionId.java",
-        "com/application/school/domain/academic/repository/GradeRepository.java",
-        "com/application/school/application/student/StudentService.java",
-        "com/application/school/application/attendance/AttendanceService.java",
-        "com/application/school/application/billing/BillingService.java",
-        "com/application/school/application/academic/AcademicService.java",
-        "com/application/school/application/dtos/StudentDTO.java",
-        "com/application/school/application/dtos/GuardianDTO.java",
-        "com/application/school/application/dtos/AttendanceRecordDTO.java",
-        "com/application/school/application/dtos/InvoiceDTO.java",
-        "com/application/school/application/dtos/InvoiceItemDTO.java",
-        "com/application/school/application/dtos/PaymentDTO.java",
-        "com/application/school/application/dtos/GradeDTO.java",
-        "com/application/school/application/dtos/SectionDTO.java",
-        "com/application/school/application/mappers/StudentMapper.java",
-        "com/application/school/application/mappers/AttendanceMapper.java",
-        "com/application/school/application/mappers/BillingMapper.java",
-        "com/application/school/application/mappers/AcademicMapper.java",
-        "com/application/school/infrastructure/persistence/jpa/student/JpaStudentRepository.java",
-        "com/application/school/infrastructure/persistence/jpa/student/StudentJpaRepositoryAdapter.java",
-        "com/application/school/infrastructure/persistence/jpa/student/StudentJpaEntity.java",
-        "com/application/school/infrastructure/persistence/jpa/attendance/JpaAttendanceRepository.java",
-        "com/application/school/infrastructure/persistence/jpa/attendance/AttendanceJpaRepositoryAdapter.java",
-        "com/application/school/infrastructure/persistence/jpa/attendance/AttendanceJpaEntity.java",
-        "com/application/school/infrastructure/persistence/jpa/billing/JpaInvoiceRepository.java",
-        "com/application/school/infrastructure/persistence/jpa/billing/InvoiceJpaRepositoryAdapter.java",
-        "com/application/school/infrastructure/persistence/jpa/billing/InvoiceJpaEntity.java",
-        "com/application/school/infrastructure/persistence/jpa/academic/JpaGradeRepository.java",
-        "com/application/school/infrastructure/persistence/jpa/academic/GradeJpaRepositoryAdapter.java",
-        "com/application/school/infrastructure/persistence/jpa/academic/GradeJpaEntity.java",
-        "com/application/school/infrastructure/web/rest/StudentController.java",
-        "com/application/school/infrastructure/web/rest/AttendanceController.java",
-        "com/application/school/infrastructure/web/rest/BillingController.java",
-        "com/application/school/infrastructure/web/rest/AcademicController.java",
-        ".github/workflows/pipeline.yml",
-        "docker-compose.yml",
-        "backend/src/main/resources/logback-spring.xml",
-        "README.md"
+        "backend/src/main/java/com/application/domain/shared/AggregateRoot.java",
+        "backend/src/main/java/com/application/domain/shared/valueobject/Money.java",
+        "backend/src/main/java/com/application/domain/shared/valueobject/DateRange.java",
+        "backend/src/main/java/com/application/domain/shared/valueobject/PersonName.java",
+        "backend/src/main/java/com/application/domain/SchoolManagement/valueobject/SchoolId.java",
+        "backend/src/test/java/com/application/domain/SchoolManagement/valueobject/SchoolIdTest.java",
+        "backend/src/main/java/com/application/domain/SchoolManagement/valueobject/ClassroomId.java",
+        "backend/src/main/java/com/application/domain/SchoolManagement/valueobject/StudentId.java",
+        "backend/src/main/java/com/application/domain/SchoolManagement/valueobject/LegalGuardianId.java",
+        "backend/src/main/java/com/application/domain/Attendance/valueobject/DailyAttendanceId.java",
+        "backend/src/main/java/com/application/domain/Attendance/valueobject/AttendanceRecordId.java",
+        "backend/src/main/java/com/application/domain/Billing/valueobject/BillingConceptId.java",
+        "backend/src/main/java/com/application/domain/Billing/valueobject/MonthlyInvoiceId.java",
+        "backend/src/main/java/com/application/domain/Billing/valueobject/InvoiceItemId.java",
+        "backend/src/main/java/com/application/domain/Billing/valueobject/PaymentId.java",
+        "backend/src/main/java/com/application/domain/SchoolManagement/school/domain/School.java",
+        "backend/src/test/java/com/application/domain/SchoolManagement/school/domain/SchoolTest.java",
+        "backend/src/main/java/com/application/domain/SchoolManagement/school/domain/Classroom.java",
+        "backend/src/test/java/com/application/domain/SchoolManagement/school/domain/ClassroomTest.java",
+        "backend/src/main/java/com/application/domain/SchoolManagement/student/domain/Student.java",
+        "backend/src/test/java/com/application/domain/SchoolManagement/student/domain/StudentTest.java",
+        "backend/src/main/java/com/application/domain/SchoolManagement/student/domain/LegalGuardian.java",
+        "backend/src/test/java/com/application/domain/SchoolManagement/student/domain/LegalGuardianTest.java",
+        "backend/src/main/java/com/application/domain/Attendance/tracking/domain/DailyAttendance.java",
+        "backend/src/test/java/com/application/domain/Attendance/tracking/domain/DailyAttendanceTest.java",
+        "backend/src/main/java/com/application/domain/Attendance/tracking/domain/AttendanceRecord.java",
+        "backend/src/test/java/com/application/domain/Attendance/tracking/domain/AttendanceRecordTest.java",
+        "backend/src/main/java/com/application/domain/Billing/invoicing/domain/BillingConcept.java",
+        "backend/src/test/java/com/application/domain/Billing/invoicing/domain/BillingConceptTest.java",
+        "backend/src/main/java/com/application/domain/Billing/invoicing/domain/MonthlyInvoice.java",
+        "backend/src/test/java/com/application/domain/Billing/invoicing/domain/MonthlyInvoiceTest.java",
+        "backend/src/main/java/com/application/domain/Billing/invoicing/domain/InvoiceItem.java",
+        "backend/src/test/java/com/application/domain/Billing/invoicing/domain/InvoiceItemTest.java",
+        "backend/src/main/java/com/application/domain/Billing/payment/domain/Payment.java",
+        "backend/src/test/java/com/application/domain/Billing/payment/domain/PaymentTest.java",
+        "backend/src/main/java/com/application/application/SchoolManagement/school/application/create/CreateSchoolCommand.java",
+        "backend/src/test/java/com/application/application/SchoolManagement/school/application/create/CreateSchoolCommandTest.java",
+        "backend/src/main/java/com/application/application/SchoolManagement/school/application/create/CreateSchoolCommandHandler.java",
+        "backend/src/test/java/com/application/application/SchoolManagement/school/application/create/CreateSchoolCommandHandlerTest.java",
+        "backend/src/main/java/com/application/application/SchoolManagement/school/application/find/FindSchoolQuery.java",
+        "backend/src/test/java/com/application/application/SchoolManagement/school/application/find/FindSchoolQueryTest.java",
+        "backend/src/main/java/com/application/application/SchoolManagement/school/application/find/FindSchoolQueryHandler.java",
+        "backend/src/test/java/com/application/application/SchoolManagement/school/application/find/FindSchoolQueryHandlerTest.java",
+        "backend/src/main/java/com/application/application/SchoolManagement/classroom/application/create/CreateClassroomCommand.java",
+        "backend/src/test/java/com/application/application/SchoolManagement/classroom/application/create/CreateClassroomCommandTest.java",
+        "backend/src/main/java/com/application/application/SchoolManagement/classroom/application/create/CreateClassroomCommandHandler.java",
+        "backend/src/test/java/com/application/application/SchoolManagement/classroom/application/create/CreateClassroomCommandHandlerTest.java",
+        "backend/src/main/java/com/application/application/SchoolManagement/student/application/create/CreateStudentCommand.java",
+        "backend/src/test/java/com/application/application/SchoolManagement/student/application/create/CreateStudentCommandTest.java",
+        "backend/src/main/java/com/application/application/SchoolManagement/student/application/create/CreateStudentCommandHandler.java",
+        "backend/src/test/java/com/application/application/SchoolManagement/student/application/create/CreateStudentCommandHandlerTest.java",
+        "backend/src/main/java/com/application/application/Attendance/tracking/application/record/CreateAttendanceRecordCommand.java",
+        "backend/src/test/java/com/application/application/Attendance/tracking/application/record/CreateAttendanceRecordCommandTest.java",
+        "backend/src/main/java/com/application/application/Attendance/tracking/application/record/CreateAttendanceRecordCommandHandler.java",
+        "backend/src/test/java/com/application/application/Attendance/tracking/application/record/CreateAttendanceRecordCommandHandlerTest.java",
+        "backend/src/main/java/com/application/application/Billing/invoicing/application/generate/GenerateMonthlyInvoiceCommand.java",
+        "backend/src/test/java/com/application/application/Billing/invoicing/application/generate/GenerateMonthlyInvoiceCommandTest.java",
+        "backend/src/main/java/com/application/application/Billing/invoicing/application/generate/GenerateMonthlyInvoiceCommandHandler.java",
+        "backend/src/test/java/com/application/application/Billing/invoicing/application/generate/GenerateMonthlyInvoiceCommandHandlerTest.java",
+        "backend/src/main/java/com/application/application/Billing/payment/application/process/ProcessPaymentCommand.java",
+        "backend/src/test/java/com/application/application/Billing/payment/application/process/ProcessPaymentCommandTest.java",
+        "backend/src/main/java/com/application/application/Billing/payment/application/process/ProcessPaymentCommandHandler.java",
+        "backend/src/test/java/com/application/application/Billing/payment/application/process/ProcessPaymentCommandHandlerTest.java",
+        "backend/src/main/java/com/application/domain/SchoolManagement/school/domain/repository/SchoolRepository.java",
+        "backend/src/test/java/com/application/domain/SchoolManagement/school/domain/repository/SchoolRepositoryTest.java",
+        "backend/src/main/java/com/application/domain/SchoolManagement/classroom/domain/repository/ClassroomRepository.java",
+        "backend/src/test/java/com/application/domain/SchoolManagement/classroom/domain/repository/ClassroomRepositoryTest.java",
+        "backend/src/main/java/com/application/domain/SchoolManagement/student/domain/repository/StudentRepository.java",
+        "backend/src/test/java/com/application/domain/SchoolManagement/student/domain/repository/StudentRepositoryTest.java",
+        "backend/src/main/java/com/application/domain/Attendance/tracking/domain/repository/DailyAttendanceRepository.java",
+        "backend/src/test/java/com/application/domain/Attendance/tracking/domain/repository/DailyAttendanceRepositoryTest.java",
+        "backend/src/main/java/com/application/domain/Attendance/tracking/domain/repository/AttendanceRecordRepository.java",
+        "backend/src/test/java/com/application/domain/Attendance/tracking/domain/repository/AttendanceRecordRepositoryTest.java",
+        "backend/src/main/java/com/application/domain/Billing/invoicing/domain/repository/MonthlyInvoiceRepository.java",
+        "backend/src/test/java/com/application/domain/Billing/invoicing/domain/repository/MonthlyInvoiceRepositoryTest.java",
+        "backend/src/main/java/com/application/domain/Billing/payment/domain/repository/PaymentRepository.java",
+        "backend/src/test/java/com/application/domain/Billing/payment/domain/repository/PaymentRepositoryTest.java",
+        "backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/school/adapter/SchoolJpaRepository.java",
+        "backend/src/test/java/com/application/infrastructure/persistence/SchoolManagement/school/adapter/SchoolJpaRepositoryTest.java",
+        "backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/school/adapter/SchoolRepositoryImpl.java",
+        "backend/src/test/java/com/application/infrastructure/persistence/SchoolManagement/school/adapter/SchoolRepositoryImplTest.java",
+        "backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/student/adapter/StudentJpaRepository.java",
+        "backend/src/test/java/com/application/infrastructure/persistence/SchoolManagement/student/adapter/StudentJpaRepositoryTest.java",
+        "backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/student/adapter/StudentRepositoryImpl.java",
+        "backend/src/test/java/com/application/infrastructure/persistence/SchoolManagement/student/adapter/StudentRepositoryImplTest.java",
+        "backend/src/main/java/com/application/infrastructure/persistence/Attendance/tracking/adapter/DailyAttendanceJpaRepository.java",
+        "backend/src/test/java/com/application/infrastructure/persistence/Attendance/tracking/adapter/DailyAttendanceJpaRepositoryTest.java",
+        "backend/src/main/java/com/application/infrastructure/persistence/Attendance/tracking/adapter/DailyAttendanceRepositoryImpl.java",
+        "backend/src/test/java/com/application/infrastructure/persistence/Attendance/tracking/adapter/DailyAttendanceRepositoryImplTest.java",
+        "backend/src/main/java/com/application/infrastructure/persistence/Billing/invoicing/adapter/MonthlyInvoiceJpaRepository.java",
+        "backend/src/test/java/com/application/infrastructure/persistence/Billing/invoicing/adapter/MonthlyInvoiceJpaRepositoryTest.java",
+        "backend/src/main/java/com/application/infrastructure/persistence/Billing/invoicing/adapter/MonthlyInvoiceRepositoryImpl.java",
+        "backend/src/test/java/com/application/infrastructure/persistence/Billing/invoicing/adapter/MonthlyInvoiceRepositoryImplTest.java",
+        "backend/src/main/java/com/application/infrastructure/persistence/Billing/payment/adapter/PaymentJpaRepository.java",
+        "backend/src/test/java/com/application/infrastructure/persistence/Billing/payment/adapter/PaymentJpaRepositoryTest.java",
+        "backend/src/main/java/com/application/infrastructure/persistence/Billing/payment/adapter/PaymentRepositoryImpl.java",
+        "backend/src/test/java/com/application/infrastructure/persistence/Billing/payment/adapter/PaymentRepositoryImplTest.java",
+        "backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/school/entity/SchoolEntity.java",
+        "backend/src/test/java/com/application/infrastructure/persistence/SchoolManagement/school/entity/SchoolEntityTest.java",
+        "backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/school/entity/ClassroomEntity.java",
+        "backend/src/test/java/com/application/infrastructure/persistence/SchoolManagement/school/entity/ClassroomEntityTest.java",
+        "backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/student/entity/StudentEntity.java",
+        "backend/src/test/java/com/application/infrastructure/persistence/SchoolManagement/student/entity/StudentEntityTest.java",
+        "backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/student/entity/LegalGuardianEntity.java",
+        "backend/src/test/java/com/application/infrastructure/persistence/SchoolManagement/student/entity/LegalGuardianEntityTest.java",
+        "backend/src/main/java/com/application/infrastructure/persistence/Attendance/tracking/entity/DailyAttendanceEntity.java",
+        "backend/src/test/java/com/application/infrastructure/persistence/Attendance/tracking/entity/DailyAttendanceEntityTest.java",
+        "backend/src/main/java/com/application/infrastructure/persistence/Attendance/tracking/entity/AttendanceRecordEntity.java",
+        "backend/src/test/java/com/application/infrastructure/persistence/Attendance/tracking/entity/AttendanceRecordEntityTest.java",
+        "backend/src/main/java/com/application/infrastructure/persistence/Billing/invoicing/entity/BillingConceptEntity.java",
+        "backend/src/test/java/com/application/infrastructure/persistence/Billing/invoicing/entity/BillingConceptEntityTest.java",
+        "backend/src/main/java/com/application/infrastructure/persistence/Billing/invoicing/entity/MonthlyInvoiceEntity.java",
+        "backend/src/test/java/com/application/infrastructure/persistence/Billing/invoicing/entity/MonthlyInvoiceEntityTest.java",
+        "backend/src/main/java/com/application/infrastructure/persistence/Billing/invoicing/entity/InvoiceItemEntity.java",
+        "backend/src/test/java/com/application/infrastructure/persistence/Billing/invoicing/entity/InvoiceItemEntityTest.java",
+        "backend/src/main/java/com/application/infrastructure/persistence/Billing/payment/entity/PaymentEntity.java",
+        "backend/src/test/java/com/application/infrastructure/persistence/Billing/payment/entity/PaymentEntityTest.java",
+        "backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/school/mapper/SchoolEntityMapper.java",
+        "backend/src/test/java/com/application/infrastructure/persistence/SchoolManagement/school/mapper/SchoolEntityMapperTest.java",
+        "backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/student/mapper/StudentEntityMapper.java",
+        "backend/src/test/java/com/application/infrastructure/persistence/SchoolManagement/student/mapper/StudentEntityMapperTest.java",
+        "backend/src/main/java/com/application/infrastructure/persistence/Attendance/tracking/mapper/DailyAttendanceEntityMapper.java",
+        "backend/src/test/java/com/application/infrastructure/persistence/Attendance/tracking/mapper/DailyAttendanceEntityMapperTest.java",
+        "backend/src/main/java/com/application/infrastructure/persistence/Billing/invoicing/mapper/MonthlyInvoiceEntityMapper.java",
+        "backend/src/test/java/com/application/infrastructure/persistence/Billing/invoicing/mapper/MonthlyInvoiceEntityMapperTest.java",
+        "backend/src/main/java/com/application/infrastructure/persistence/Billing/payment/mapper/PaymentEntityMapper.java",
+        "backend/src/test/java/com/application/infrastructure/persistence/Billing/payment/mapper/PaymentEntityMapperTest.java",
+        "backend/src/main/java/com/application/interfaces/rest/SchoolManagement/school/SchoolController.java",
+        "backend/src/test/java/com/application/interfaces/rest/SchoolManagement/school/SchoolControllerTest.java",
+        "backend/src/main/java/com/application/interfaces/rest/SchoolManagement/school/dto/CreateSchoolRequestDTO.java",
+        "backend/src/test/java/com/application/interfaces/rest/SchoolManagement/school/dto/CreateSchoolRequestDTOTest.java",
+        "backend/src/main/java/com/application/interfaces/rest/SchoolManagement/school/dto/SchoolResponseDTO.java",
+        "backend/src/test/java/com/application/interfaces/rest/SchoolManagement/school/dto/SchoolResponseDTOTest.java",
+        "backend/src/main/java/com/application/interfaces/rest/SchoolManagement/classroom/ClassroomController.java",
+        "backend/src/test/java/com/application/interfaces/rest/SchoolManagement/classroom/ClassroomControllerTest.java",
+        "backend/src/main/java/com/application/interfaces/rest/SchoolManagement/classroom/dto/CreateClassroomRequestDTO.java",
+        "backend/src/test/java/com/application/interfaces/rest/SchoolManagement/classroom/dto/CreateClassroomRequestDTOTest.java",
+        "backend/src/main/java/com/application/interfaces/rest/SchoolManagement/classroom/dto/ClassroomResponseDTO.java",
+        "backend/src/test/java/com/application/interfaces/rest/SchoolManagement/classroom/dto/ClassroomResponseDTOTest.java",
+        "backend/src/main/java/com/application/interfaces/rest/SchoolManagement/student/StudentController.java",
+        "backend/src/test/java/com/application/interfaces/rest/SchoolManagement/student/StudentControllerTest.java",
+        "backend/src/main/java/com/application/interfaces/rest/SchoolManagement/student/dto/CreateStudentRequestDTO.java",
+        "backend/src/test/java/com/application/interfaces/rest/SchoolManagement/student/dto/CreateStudentRequestDTOTest.java",
+        "backend/src/main/java/com/application/interfaces/rest/SchoolManagement/student/dto/StudentResponseDTO.java",
+        "backend/src/test/java/com/application/interfaces/rest/SchoolManagement/student/dto/StudentResponseDTOTest.java",
+        "backend/src/main/java/com/application/interfaces/rest/Attendance/tracking/AttendanceController.java",
+        "backend/src/test/java/com/application/interfaces/rest/Attendance/tracking/AttendanceControllerTest.java",
+        "backend/src/main/java/com/application/interfaces/rest/Attendance/tracking/dto/CreateAttendanceRecordRequestDTO.java",
+        "backend/src/test/java/com/application/interfaces/rest/Attendance/tracking/dto/CreateAttendanceRecordRequestDTOTest.java",
+        "backend/src/main/java/com/application/interfaces/rest/Attendance/tracking/dto/AttendanceRecordResponseDTO.java",
+        "backend/src/test/java/com/application/interfaces/rest/Attendance/tracking/dto/AttendanceRecordResponseDTOTest.java",
+        "backend/src/main/java/com/application/interfaces/rest/Billing/invoicing/InvoiceController.java",
+        "backend/src/test/java/com/application/interfaces/rest/Billing/invoicing/InvoiceControllerTest.java",
+        "backend/src/main/java/com/application/interfaces/rest/Billing/invoicing/dto/GenerateInvoiceRequestDTO.java",
+        "backend/src/test/java/com/application/interfaces/rest/Billing/invoicing/dto/GenerateInvoiceRequestDTOTest.java",
+        "backend/src/main/java/com/application/interfaces/rest/Billing/invoicing/dto/MonthlyInvoiceResponseDTO.java",
+        "backend/src/test/java/com/application/interfaces/rest/Billing/invoicing/dto/MonthlyInvoiceResponseDTOTest.java",
+        "backend/src/main/java/com/application/interfaces/rest/Billing/payment/PaymentController.java",
+        "backend/src/test/java/com/application/interfaces/rest/Billing/payment/PaymentControllerTest.java",
+        "backend/src/main/java/com/application/interfaces/rest/Billing/payment/dto/ProcessPaymentRequestDTO.java",
+        "backend/src/test/java/com/application/interfaces/rest/Billing/payment/dto/ProcessPaymentRequestDTOTest.java",
+        "backend/src/main/java/com/application/interfaces/rest/Billing/payment/dto/PaymentResponseDTO.java",
+        "backend/src/test/java/com/application/interfaces/rest/Billing/payment/dto/PaymentResponseDTOTest.java",
+        "backend/src/main/java/com/application/interfaces/rest/GlobalExceptionHandler.java",
+        "backend/src/test/java/com/application/interfaces/rest/GlobalExceptionHandlerTest.java"
     ]
 }

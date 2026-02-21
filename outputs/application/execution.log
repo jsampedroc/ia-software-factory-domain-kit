@@ -1,425 +1,1969 @@
 🚀 --- INICIANDO FACTORÍA INDUSTRIAL: APPLICATION ---
 📦 PAQUETE BASE: com.application
 
-🧠 FASE 1: Inferencia de Dominio (DDD)...
-   [LLM] Ejecutando 'model_domain' con agente 'domain_reasoner' (smart)...
+🧠 FASE 1: Inferencia de Dominio...
 
-📐 FASE 2: Diseño de Inventario (Architect)...
-   [LLM] Ejecutando 'create_inventory' con agente 'architect' (smart)...
+📐 FASE 2: Diseño de Inventario...
 
-🏗️  FASE: BOOTSTRAP (Kernel del Sistema)...
+🏗️  FASE: BOOTSTRAP (Shared Kernel)...
    [BOOT] Fabricando: backend/pom.xml
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
    [BOOT] Fabricando: backend/src/main/java/com/application/domain/shared/ValueObject.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
    [BOOT] Fabricando: backend/src/main/java/com/application/domain/shared/Entity.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
    [BOOT] Fabricando: backend/src/main/java/com/application/domain/exception/DomainException.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
 
-🛠️  FASE 3: Fabricando 59 archivos de negocio...
-   👉 Generando: com/application/school/domain/shared/Money.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/domain/shared/DateRange.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/domain/shared/PersonName.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/domain/student/model/Student.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/domain/student/model/StudentId.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/domain/student/model/StudentStatus.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/domain/student/model/Guardian.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/domain/student/model/GuardianId.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/domain/student/repository/StudentRepository.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/domain/attendance/model/AttendanceRecord.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/domain/attendance/model/AttendanceRecordId.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/domain/attendance/model/AttendanceStatus.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/domain/attendance/repository/AttendanceRepository.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/domain/billing/model/Invoice.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/domain/billing/model/InvoiceId.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/domain/billing/model/InvoiceStatus.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/domain/billing/model/InvoiceItem.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/domain/billing/model/InvoiceItemId.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/domain/billing/model/InvoiceConcept.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/domain/billing/model/Payment.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/domain/billing/model/PaymentId.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/domain/billing/repository/InvoiceRepository.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/domain/academic/model/Grade.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/domain/academic/model/GradeId.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/domain/academic/model/Section.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/domain/academic/model/SectionId.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/domain/academic/repository/GradeRepository.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/application/student/StudentService.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/application/attendance/AttendanceService.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/application/billing/BillingService.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/application/academic/AcademicService.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/application/dtos/StudentDTO.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/application/dtos/GuardianDTO.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/application/dtos/AttendanceRecordDTO.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/application/dtos/InvoiceDTO.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/application/dtos/InvoiceItemDTO.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/application/dtos/PaymentDTO.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/application/dtos/GradeDTO.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/application/dtos/SectionDTO.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/application/mappers/StudentMapper.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/application/mappers/AttendanceMapper.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/application/mappers/BillingMapper.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/application/mappers/AcademicMapper.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/infrastructure/persistence/jpa/student/JpaStudentRepository.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/infrastructure/persistence/jpa/student/StudentJpaRepositoryAdapter.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/infrastructure/persistence/jpa/student/StudentJpaEntity.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/infrastructure/persistence/jpa/attendance/JpaAttendanceRepository.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/infrastructure/persistence/jpa/attendance/AttendanceJpaRepositoryAdapter.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/infrastructure/persistence/jpa/attendance/AttendanceJpaEntity.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/infrastructure/persistence/jpa/billing/JpaInvoiceRepository.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/infrastructure/persistence/jpa/billing/InvoiceJpaRepositoryAdapter.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/infrastructure/persistence/jpa/billing/InvoiceJpaEntity.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/infrastructure/persistence/jpa/academic/JpaGradeRepository.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/infrastructure/persistence/jpa/academic/GradeJpaRepositoryAdapter.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/infrastructure/persistence/jpa/academic/GradeJpaEntity.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/infrastructure/web/rest/StudentController.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/infrastructure/web/rest/AttendanceController.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/infrastructure/web/rest/BillingController.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
-   👉 Generando: com/application/school/infrastructure/web/rest/AcademicController.java
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   🔍 QA Audit...
-   [LLM] Ejecutando 'audit_code' con agente 'qa_agent' (smart)...
-   ⚠️ QA reportó inconsistencias. Corrigiendo...
-   [LLM] Ejecutando 'write_code' con agente 'backend_builder' (cheap)...
-   [System] Verificando integridad del código con Maven...
+🛠️  FASE 3: Fabricando 92 archivos con Auditoría Proactiva...
+   👉 Generando: backend/src/main/java/com/application/domain/shared/AggregateRoot.java
+   ⚠️ QA detectó fallos. Reparando...
+   👉 Generando: backend/src/main/java/com/application/domain/shared/valueobject/Money.java
+   ⚠️ QA detectó fallos. Reparando...
+   👉 Generando: backend/src/main/java/com/application/domain/shared/valueobject/DateRange.java
+   ⚠️ QA detectó fallos. Reparando...
+   👉 Generando: backend/src/main/java/com/application/domain/shared/valueobject/PersonName.java
+   ⚠️ QA detectó fallos. Reparando...
+   👉 Generando: backend/src/main/java/com/application/domain/SchoolManagement/valueobject/SchoolId.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para SchoolId.java...
+   [System] Ejecutando Maven Test en application...
 
-🐳 FASE 4: Generando Infraestructura y Pipeline de CI/CD...
-   [SRE] Fabricando: .github/workflows/pipeline.yml
-   [LLM] Ejecutando 'write_code' con agente 'sre_agent' (smart)...
-   [SRE] Fabricando: docker-compose.yml
-   [LLM] Ejecutando 'write_code' con agente 'sre_agent' (smart)...
-   [SRE] Fabricando: backend/src/main/resources/logback-spring.xml
-   [LLM] Ejecutando 'write_code' con agente 'sre_agent' (smart)...
-   [SRE] Fabricando: README.md
-   [LLM] Ejecutando 'write_code' con agente 'sre_agent' (smart)...
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la existencia de la clase DomainEvent",
+    "details": "El error 'cannot find symbol' en AggregateRoot.java indica que la clase DomainEvent no está definida o no está en...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/domain/SchoolManagement/school/domain/School.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para School.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "file": "AggregateRoot.java",
+    "issue": "Falta la importación o definición de la clase 'DomainEvent'.",
+    "corrective_action": "Verificar que la clase 'DomainEvent' exista en el módulo ...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/domain/SchoolManagement/school/domain/Classroom.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para Classroom.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la existencia de la clase DomainEvent en el paquete correspondiente.",
+    "details": "La clase AggregateRoot hace referencia a DomainEvent, pero el compilador no la enc...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/domain/SchoolManagement/student/domain/Student.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para Student.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject",
+    "details": "El archivo ValueObject.java en 'com.application.domain.Shared' parece tener una clase duplicada o una definición incorrect...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/domain/SchoolManagement/student/domain/LegalGuardian.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para LegalGuardian.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Corregir la definición de ValueObject",
+    "details": "Verificar si 'ValueObject' es una interfaz o clase abstracta. Asegurar que la clase 'com.application.domain.Shared.ValueObj...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/domain/Attendance/tracking/domain/DailyAttendance.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para DailyAttendance.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject en /Shared/ValueObject.java. Asegurar que sea una clase o interfaz correctamente definida y que no exista un duplicado con diferente capital...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/domain/Attendance/tracking/domain/AttendanceRecord.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para AttendanceRecord.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Revisar la implementación de las clases que usan @EqualsAndHashCode de Lombok. Asegurar que todas las clases que no extienden de otra (es decir, extienden directamente de Object) ...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/domain/Billing/invoicing/domain/BillingConcept.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para BillingConcept.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject en el paquete 'com.application.domain.Shared'. El error indica que el archivo existe pero no contiene la clase esperada. Asegurar que ValueO...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/domain/Billing/invoicing/domain/MonthlyInvoice.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para MonthlyInvoice.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Modificar la generación de clases anotadas con @EqualsAndHashCode de Lombok",
+    "details": "Asegurar que las clases que no extienden de otra (es decir, extienden directamente de...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/domain/Billing/invoicing/domain/InvoiceItem.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para InvoiceItem.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject",
+    "details": "El archivo '/Shared/ValueObject.java' existe pero no contiene la clase esperada 'com.application.domain.Shared.ValueObject...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/domain/Billing/payment/domain/Payment.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para Payment.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject",
+    "details": "El archivo ValueObject.java en 'Shared' parece tener una clase duplicada. Confirmar si ValueObject es una interfaz o clase...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/application/SchoolManagement/school/application/create/CreateSchoolCommand.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para CreateSchoolCommand.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject",
+    "details": "El archivo ValueObject.java en 'Shared' parece tener una clase duplicada (error: duplicate class). Confirmar si es una int...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/application/SchoolManagement/school/application/create/CreateSchoolCommandHandler.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para CreateSchoolCommandHandler.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Revisar las clases que usan @EqualsAndHashCode de Lombok y no extienden de otra clase. Agregar la anotación explícita '@EqualsAndHashCode(callSuper=false)' en: DailyAttendance, Sc...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/application/SchoolManagement/school/application/find/FindSchoolQuery.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para FindSchoolQuery.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar y corregir la definición de ValueObject en el módulo Shared. Asegurar que es una clase abstracta o interfaz y que existe en el paquete correcto: com.application.domain.S...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/application/SchoolManagement/school/application/find/FindSchoolQueryHandler.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para FindSchoolQueryHandler.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "file": "AttendanceRecord.java",
+    "line": 12,
+    "issue": "La clase probablemente extiende una clase base (ej. Entity o ValueObject) pero la anotación @EqualsAndHashCode no incluye 'call...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/application/SchoolManagement/classroom/application/create/CreateClassroomCommand.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para CreateClassroomCommand.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject",
+    "details": "El archivo ValueObject.java parece tener una clase duplicada (com.application.domain.shared.ValueObject vs com.application...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/application/SchoolManagement/classroom/application/create/CreateClassroomCommandHandler.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para CreateClassroomCommandHandler.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject en /Shared/ValueObject.java. Asegurar que es una interfaz si las clases ClassroomId, StudentId, BillingConceptId intentan implementarla, o u...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/application/SchoolManagement/student/application/create/CreateStudentCommand.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para CreateStudentCommand.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject en /Shared/ValueObject.java. Asegurar que es una interfaz y que está en el paquete correcto (com.application.domain.shared). Corregir la cap...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/application/SchoolManagement/student/application/create/CreateStudentCommandHandler.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para CreateStudentCommandHandler.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Revisar la implementación de las clases que usan @EqualsAndHashCode de Lombok. Asegurar que las clases que no extienden de otra (es decir, extienden directamente de Object) tengan...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/application/Attendance/tracking/application/record/CreateAttendanceRecordCommand.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para CreateAttendanceRecordCommand.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject",
+    "details": "El archivo '/Users/pe/git/ia-software-factory-domain-kit/outputs/application/backend/src/main/java/com/application/domain/...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/application/Attendance/tracking/application/record/CreateAttendanceRecordCommandHandler.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para CreateAttendanceRecordCommandHandler.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Corregir la definición de la interfaz ValueObject",
+    "details": "El archivo 'PersonName.java' contiene una interfaz pública llamada 'ValueObject', pero el nombre del archivo no...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/application/Billing/invoicing/application/generate/GenerateMonthlyInvoiceCommand.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para GenerateMonthlyInvoiceCommand.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Revisar la implementación de las clases que usan @EqualsAndHashCode de Lombok. Asegurar que todas las clases que no extienden de otra (es decir, extienden directamente de Object) ...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/application/Billing/invoicing/application/generate/GenerateMonthlyInvoiceCommandHandler.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para GenerateMonthlyInvoiceCommandHandler.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Corregir la definición de ValueObject",
+    "details": "Verificar que 'com.application.domain.Shared.ValueObject' sea una clase o interfaz definida correctamente. El error indica ...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/application/Billing/payment/application/process/ProcessPaymentCommand.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para ProcessPaymentCommand.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject",
+    "details": "El archivo ValueObject.java en 'Shared' parece estar mal definido o duplicado. Confirmar si es una interfaz o clase abstra...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/application/Billing/payment/application/process/ProcessPaymentCommandHandler.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para ProcessPaymentCommandHandler.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject en /Shared/ValueObject.java. Asegurar que es una clase o interfaz correctamente definida y que el archivo existe en la ruta esperada.",
+    ...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/domain/SchoolManagement/school/domain/repository/SchoolRepository.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para SchoolRepository.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject",
+    "details": "El archivo ValueObject.java en 'Shared' parece estar mal definido o duplicado. Confirmar si es una interfaz o clase abstra...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/domain/SchoolManagement/classroom/domain/repository/ClassroomRepository.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para ClassroomRepository.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject en /Shared/ValueObject.java. Asegurar que es una clase o interfaz válida y que no hay duplicados por diferencias en mayúsculas/minúsculas en...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/domain/SchoolManagement/student/domain/repository/StudentRepository.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para StudentRepository.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Corregir la ruta del paquete de la clase ValueObject. El archivo está en 'Shared' pero la clase declara 'shared' (diferencia mayúsculas/minúsculas). Mover el archivo a 'shared' o ...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/domain/Attendance/tracking/domain/repository/DailyAttendanceRepository.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para DailyAttendanceRepository.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "file": "com/application/domain/Shared/ValueObject.java",
+    "action": "Verificar que ValueObject sea una clase abstracta o interfaz y que esté en el paquete correcto. Corregir la declaraci...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/domain/Attendance/tracking/domain/repository/AttendanceRecordRepository.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para AttendanceRecordRepository.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject",
+    "details": "El archivo ValueObject.java en 'Shared' no contiene la clase esperada 'com.application.domain.Shared.ValueObject'. Confirm...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/domain/Billing/invoicing/domain/repository/MonthlyInvoiceRepository.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para MonthlyInvoiceRepository.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject",
+    "details": "El archivo ValueObject.java parece tener una clase duplicada (error: duplicate class). Confirmar si es una interfaz o clas...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/domain/Billing/payment/domain/repository/PaymentRepository.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para PaymentRepository.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject",
+    "details": "El archivo ValueObject.java parece tener una clase duplicada (com.application.domain.shared.ValueObject vs com.application...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/school/adapter/SchoolJpaRepository.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para SchoolJpaRepository.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Revisar la definición de ValueObject en el kit de dominio. Si es una interfaz, las clases (BillingConcept, Payment, MonthlyInvoice, LegalGuardian, DailyAttendance, School, Classro...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/school/adapter/SchoolRepositoryImpl.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para SchoolRepositoryImpl.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject en el paquete com.application.domain.Shared. Asegurarse de que sea una clase o interfaz pública y que el archivo fuente esté en el directori...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/student/adapter/StudentJpaRepository.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para StudentJpaRepository.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de la clase 'ValueObject' en 'com.application.domain.Shared.ValueObject'. Confirmar si es una interfaz o una clase abstracta. Corregir la declaración para ...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/student/adapter/StudentRepositoryImpl.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para StudentRepositoryImpl.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Revisar la definición de ValueObject en el kit de dominio. Si es una interfaz, las clases (School, LegalGuardian, Classroom, DailyAttendance, Student, MonthlyInvoice, Payment) no ...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/infrastructure/persistence/Attendance/tracking/adapter/DailyAttendanceJpaRepository.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para DailyAttendanceJpaRepository.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject",
+    "details": "El archivo ValueObject.java parece tener una clase duplicada (com.application.domain.shared.ValueObject vs com.application...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/infrastructure/persistence/Attendance/tracking/adapter/DailyAttendanceRepositoryImpl.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para DailyAttendanceRepositoryImpl.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "file": "AttendanceRecord.java",
+    "line": 12,
+    "issue": "Uso incorrecto de anotación @EqualsAndHashCode en clase que no extiende Object. La clase probablemente extiende ValueObject (in...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/infrastructure/persistence/Billing/invoicing/adapter/MonthlyInvoiceJpaRepository.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para MonthlyInvoiceJpaRepository.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject en /Users/pe/git/ia-software-factory-domain-kit/outputs/application/backend/src/main/java/com/application/domain/Shared/ValueObject.java. As...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/infrastructure/persistence/Billing/invoicing/adapter/MonthlyInvoiceRepositoryImpl.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para MonthlyInvoiceRepositoryImpl.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject",
+    "details": "El archivo ValueObject.java parece tener una clase duplicada (com.application.domain.shared.ValueObject vs com.application...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/infrastructure/persistence/Billing/payment/adapter/PaymentJpaRepository.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para PaymentJpaRepository.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la implementación de ValueObject",
+    "details": "El código genera clases que extienden de ValueObject. Asegurar que ValueObject sea una clase abstracta o interfaz corr...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/infrastructure/persistence/Billing/payment/adapter/PaymentRepositoryImpl.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para PaymentRepositoryImpl.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject en el paquete com.application.domain.Shared. Asegurarse de que es una clase o interfaz pública y que el archivo .java está en el directorio ...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/school/entity/SchoolEntity.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para SchoolEntity.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject",
+    "details": "El archivo ValueObject.java en 'Shared' parece tener una clase duplicada o una definición incorrecta. Confirmar si ValueOb...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/school/entity/ClassroomEntity.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para ClassroomEntity.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject",
+    "details": "El archivo 'Shared/ValueObject.java' parece estar mal definido o duplicado. Confirmar si es una interfaz o clase abstracta...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/student/entity/StudentEntity.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para StudentEntity.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Revisar la definición de ValueObject en el kit de dominio. Si es una interfaz, las clases del dominio (LegalGuardian, AttendanceRecord, Student, Classroom, School, MonthlyInvoice,...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/student/entity/LegalGuardianEntity.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para LegalGuardianEntity.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject en el paquete 'com.application.domain.Shared'. Asegurar que es una clase o interfaz pública y que el archivo fuente está en el directorio co...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/infrastructure/persistence/Attendance/tracking/entity/DailyAttendanceEntity.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para DailyAttendanceEntity.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Revisar las clases Student, Payment, BillingConcept, Classroom, MonthlyInvoice, AttendanceRecord y DailyAttendance.",
+    "details": "Las clases mencionadas están generando método...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/infrastructure/persistence/Attendance/tracking/entity/AttendanceRecordEntity.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para AttendanceRecordEntity.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Corregir la anotación @EqualsAndHashCode en las clases que no extienden de otra clase",
+    "details": "Las clases AttendanceRecord, School, MonthlyInvoice, DailyAttendance, Legal...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/infrastructure/persistence/Billing/invoicing/entity/BillingConceptEntity.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para BillingConceptEntity.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Revisar las clases BillingConcept, MonthlyInvoice, AttendanceRecord, Student, Payment, DailyAttendance y School.",
+    "details": "Las clases mencionadas están generando métodos e...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/infrastructure/persistence/Billing/invoicing/entity/MonthlyInvoiceEntity.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para MonthlyInvoiceEntity.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject en el paquete 'com.application.domain.Shared'. Asegurar que es una clase (no interface) y que está en el directorio correcto: 'Shared/ValueO...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/infrastructure/persistence/Billing/invoicing/entity/InvoiceItemEntity.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para InvoiceItemEntity.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Corregir la definición de ValueObject",
+    "details": "El archivo 'ValueObject.java' en 'com.application.domain.Shared' parece estar mal definido o duplicado. Verificar si es una...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/infrastructure/persistence/Billing/payment/entity/PaymentEntity.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para PaymentEntity.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject",
+    "details": "El archivo ValueObject.java en 'com.application.domain.Shared' no contiene la clase esperada o está mal definida. Confirma...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/school/mapper/SchoolEntityMapper.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para SchoolEntityMapper.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Corregir la ubicación del archivo ValueObject.java",
+    "details": "El archivo 'ValueObject.java' está en '/com/application/domain/Shared/' pero se espera que contenga la clase '...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/infrastructure/persistence/SchoolManagement/student/mapper/StudentEntityMapper.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para StudentEntityMapper.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Revisar las clases que usan @EqualsAndHashCode de Lombok y no extienden java.lang.Object. Agregar la anotación explícita '@EqualsAndHashCode(callSuper=false)' en: AttendanceRecord...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/infrastructure/persistence/Attendance/tracking/mapper/DailyAttendanceEntityMapper.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para DailyAttendanceEntityMapper.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject en el paquete 'com.application.domain.Shared'. Asegurar que es una clase o interfaz pública y que el archivo fuente existe y está en la ruta...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/infrastructure/persistence/Billing/invoicing/mapper/MonthlyInvoiceEntityMapper.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para MonthlyInvoiceEntityMapper.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject en /Shared/ValueObject.java. Asegurar que es una interfaz (interface) y no una clase (class). Si es una interfaz, cambiar 'extends ValueObje...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/infrastructure/persistence/Billing/payment/mapper/PaymentEntityMapper.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para PaymentEntityMapper.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Corregir la ruta del paquete de la clase LegalGuardianId. El archivo está en 'com.application.domain.SchoolManagement.valueobject' pero su contenido declara el paquete 'com.applic...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/interfaces/rest/SchoolManagement/school/SchoolController.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para SchoolController.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject",
+    "details": "El archivo ValueObject.java en 'com.application.domain.Shared' parece estar mal definido o corrupto. Confirmar si es una i...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/interfaces/rest/SchoolManagement/school/dto/CreateSchoolRequestDTO.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para CreateSchoolRequestDTO.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject. Confirmar si es una interfaz o una clase abstracta. Asegurar que las clases como ClassroomId, SchoolId y LegalGuardianId la extienden (si e...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/interfaces/rest/SchoolManagement/school/dto/SchoolResponseDTO.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para SchoolResponseDTO.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "file": "LegalGuardianId.java",
+    "issue": "Clase duplicada en paquetes inconsistentes. El archivo está en 'com.application.domain.SchoolManagement.valueobject' pero declara la clase en 'c...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/interfaces/rest/SchoolManagement/classroom/ClassroomController.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para ClassroomController.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Revisar la definición de ValueObject en el kit de dominio. Si es una interfaz, las clases Classroom, DailyAttendance, Payment, BillingConcept, AttendanceRecord y MonthlyInvoice no...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/interfaces/rest/SchoolManagement/classroom/dto/CreateClassroomRequestDTO.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para CreateClassroomRequestDTO.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de la clase/interface 'ValueObject' en el paquete 'com.application.domain.Shared'. Asegurar que el archivo fuente existe y contiene la definición correcta ...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/interfaces/rest/SchoolManagement/classroom/dto/ClassroomResponseDTO.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para ClassroomResponseDTO.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Corregir la definición de ValueObject",
+    "details": "El archivo 'ValueObject.java' en 'com.application.domain.Shared' parece estar mal definido (posiblemente es una interfaz pe...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/interfaces/rest/SchoolManagement/student/StudentController.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para StudentController.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Corregir la definición de la interfaz ValueObject. Asegurar que el archivo 'ValueObject.java' contiene la declaración 'public interface ValueObject' y que está en el directorio co...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/interfaces/rest/SchoolManagement/student/dto/CreateStudentRequestDTO.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para CreateStudentRequestDTO.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Revisar las clases que usan @EqualsAndHashCode de Lombok y que no extienden de java.lang.Object. Agregar la anotación explícita '@EqualsAndHashCode(callSuper=false)' en las clases...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/interfaces/rest/SchoolManagement/student/dto/StudentResponseDTO.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para StudentResponseDTO.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject en el paquete 'com.application.domain.Shared'. Asegurar que es una interfaz y no una clase, y que el archivo fuente está en el directorio co...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/interfaces/rest/Attendance/tracking/AttendanceController.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para AttendanceController.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Revisar la clase base 'ValueObject' en el dominio. Confirmar si es una interfaz o una clase abstracta. Si es una interfaz, las clases que intentan extenderla (como AttendanceRecor...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/interfaces/rest/Attendance/tracking/dto/CreateAttendanceRecordRequestDTO.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para CreateAttendanceRecordRequestDTO.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject en el paquete com.application.domain.Shared.valueobject. Asegurar que es una clase o interfaz pública y que el archivo fuente existe y está ...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/interfaces/rest/Attendance/tracking/dto/AttendanceRecordResponseDTO.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para AttendanceRecordResponseDTO.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Modificar las clases que usan @EqualsAndHashCode de Lombok",
+    "details": "Agregar la anotación '@EqualsAndHashCode(callSuper=false)' explícitamente en las clases: DailyAttendan...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/interfaces/rest/Billing/invoicing/InvoiceController.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para InvoiceController.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject en el paquete 'com.application.domain.Shared'. Asegurarse de que es una clase o interfaz pública y que el archivo fuente existe y está en el...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/interfaces/rest/Billing/invoicing/dto/GenerateInvoiceRequestDTO.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para GenerateInvoiceRequestDTO.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar la definición de ValueObject",
+    "details": "El archivo ValueObject.java en 'com.application.domain.Shared' parece estar mal definido (no contiene la clase esperada) o...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/interfaces/rest/Billing/invoicing/dto/MonthlyInvoiceResponseDTO.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para MonthlyInvoiceResponseDTO.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Corregir la definición de la clase PersonName. Asegurar que si ValueObject es una interfaz, la clase PersonName la implemente (implements), no la extienda (extends).",
+    "target...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/interfaces/rest/Billing/payment/PaymentController.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para PaymentController.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Verificar y corregir la ubicación del archivo LegalGuardianId.java. El archivo está en 'com.application.domain.SchoolManagement.valueobject' pero su contenido declara la clase en ...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/interfaces/rest/Billing/payment/dto/ProcessPaymentRequestDTO.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para ProcessPaymentRequestDTO.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Revisar la definición de ValueObject en el kit de dominio. Si es una interfaz, las clases (MonthlyInvoice, School, AttendanceRecord, LegalGuardian, Payment, Classroom, DailyAttend...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/interfaces/rest/Billing/payment/dto/PaymentResponseDTO.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para PaymentResponseDTO.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Corregir la definición de ValueObject",
+    "details": "El archivo '/Users/pe/git/ia-software-factory-domain-kit/outputs/application/backend/src/main/java/com/application/domain/S...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+   👉 Generando: backend/src/main/java/com/application/interfaces/rest/GlobalExceptionHandler.java
+   ⚠️ QA detectó fallos. Reparando...
+   🧪 Fabricando Tests para GlobalExceptionHandler.java...
+   [System] Ejecutando Maven Test en application...
+
+🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.
+   [QA Analysis]: [
+  {
+    "action": "Revisar la definición de ValueObject en el kit de dominio. Si es una interfaz, las clases (BillingConcept, AttendanceRecord, Student, DailyAttendance, MonthlyInvoice, LegalGuardia...
+   🩹 Sincronizando: ValueObject.java
+   🩹 Sincronizando: Entity.java
+   🩹 Sincronizando: AggregateRoot.java
+   🩹 Sincronizando: Money.java
+   🩹 Sincronizando: DateRange.java
+   🩹 Sincronizando: PersonName.java
+   🩹 Sincronizando: SchoolId.java
+   🩹 Sincronizando: ClassroomId.java
+   🩹 Sincronizando: StudentId.java
+   🩹 Sincronizando: LegalGuardianId.java
+   🩹 Sincronizando: DailyAttendanceId.java
+   🩹 Sincronizando: AttendanceRecordId.java
+   🩹 Sincronizando: BillingConceptId.java
+   🩹 Sincronizando: MonthlyInvoiceId.java
+   🩹 Sincronizando: InvoiceItemId.java
+   🩹 Sincronizando: PaymentId.java
+
+🐳 FASE 4: Generando Infraestructura, CI/CD y ELK...
 
 ✨ --- PROYECTO FINALIZADO CON ÉXITO ---

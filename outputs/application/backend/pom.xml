@@ -2,25 +2,25 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.2.5</version>
         <relativePath/>
     </parent>
-
     <groupId>com.application</groupId>
     <artifactId>backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>backend</name>
-    <description>School Management System Backend</description>
+    <description>Backend for Academic Management</description>
 
     <properties>
         <java.version>17</java.version>
-        <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
-        <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
-        <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <jacoco.version>0.8.11</jacoco.version>
+        <sonar-maven-plugin.version>3.10.0.2594</sonar-maven-plugin.version>
     </properties>
 
     <dependencies>
@@ -37,32 +37,49 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
-
-        <!-- Database (H2 for development, change for production) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <!-- ELK / Logging -->
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>7.4</version>
+        </dependency>
+        <!-- Database -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <scope>runtime</scope>
+            <scope>test</scope>
         </dependency>
-
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
-
-        <!-- MapStruct -->
-        <dependency>
-            <groupId>org.mapstruct</groupId>
-            <artifactId>mapstruct</artifactId>
-            <version>${org.mapstruct.version}</version>
-        </dependency>
-
-        <!-- Test Dependencies -->
+        <!-- Testing -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>1.19.7</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>1.19.7</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -81,40 +98,10 @@
                     </excludes>
                 </configuration>
             </plugin>
-
-            <!-- Compiler Plugin for MapStruct & Lombok -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
-                <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                            <version>${lombok.version}</version>
-                        </path>
-                        <path>
-                            <groupId>org.mapstruct</groupId>
-                            <artifactId>mapstruct-processor</artifactId>
-                            <version>${org.mapstruct.version}</version>
-                        </path>
-                        <path>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok-mapstruct-binding</artifactId>
-                            <version>${lombok-mapstruct-binding.version}</version>
-                        </path>
-                    </annotationProcessorPaths>
-                </configuration>
-            </plugin>
-
-            <!-- JaCoCo Plugin for Code Coverage -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>${jacoco-maven-plugin.version}</version>
+                <version>${jacoco.version}</version>
                 <executions>
                     <execution>
                         <goals>
@@ -123,13 +110,13 @@
                     </execution>
                     <execution>
                         <id>report</id>
-                        <phase>test</phase>
+                        <phase>prepare-package</phase>
                         <goals>
                             <goal>report</goal>
                         </goals>
                     </execution>
                     <execution>
-                        <id>check</id>
+                        <id>jacoco-check</id>
                         <goals>
                             <goal>check</goal>
                         </goals>
@@ -139,7 +126,12 @@
                                     <element>BUNDLE</element>
                                     <limits>
                                         <limit>
-                                            <counter>LINE</counter>
+                                            <counter>INSTRUCTION</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.80</minimum>
+                                        </limit>
+                                        <limit>
+                                            <counter>BRANCH</counter>
                                             <value>COVEREDRATIO</value>
                                             <minimum>0.80</minimum>
                                         </limit>
@@ -150,7 +142,63 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>${sonar-maven-plugin.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>@{argLine} -Dfile.encoding=UTF-8</argLine>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
+    <profiles>
+        <profile>
+            <id>ci-cd</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>merge-results</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>merge</goal>
+                                </goals>
+                                <configuration>
+                                    <fileSets>
+                                        <fileSet>
+                                            <directory>${project.build.directory}</directory>
+                                            <includes>
+                                                <include>*.exec</include>
+                                            </includes>
+                                        </fileSet>
+                                    </fileSets>
+                                    <destFile>${project.build.directory}/jacoco-merged.exec</destFile>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>post-merge-report</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>report</goal>
+                                </goals>
+                                <configuration>
+                                    <dataFile>${project.build.directory}/jacoco-merged.exec</dataFile>
+                                    <outputDirectory>${project.reporting.outputDirectory}/jacoco-merged</outputDirectory>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

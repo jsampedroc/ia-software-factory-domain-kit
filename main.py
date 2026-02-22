@@ -61,82 +61,62 @@ class SoftwareFactory:
         self.state = PipelineState(self.idea, self.project_name)
 
     def clean_llm_output(self, text):
-        """Limpia bloques markdown y asegura que el contenido sea puro"""
         pattern = r"```(?:java|javascript|jsx|yaml|json|xml|text)?\n?(.*?)\n?```"
         match = re.search(pattern, text, re.DOTALL)
-        content = match.group(1).strip() if match else text.strip()
-        return content
+        return match.group(1).strip() if match else text.strip()
+
+    def run_command(self, cmd, cwd=None):
+        try:
+            res = subprocess.run(cmd, cwd=cwd or self.out_dir, capture_output=True, text=True, timeout=300)
+            return None if res.returncode == 0 else res.stdout + res.stderr
+        except Exception as e: return str(e)
+
+    def sanitize_package_casing(self, content):
+        lines = content.split('\n')
+        for i, line in enumerate(lines):
+            clean_line = line.strip()
+            if clean_line.startswith('package '):
+                lines[i] = line.lower()
+            if clean_line.startswith(f'import {self.base_package.split(".")[0]}'):
+                parts = line.split(' ')
+                if len(parts) > 1:
+                    path_parts = parts[1].split('.')
+                    class_name = path_parts[-1].replace(';', '')
+                    package_parts = [p.lower() for p in path_parts[:-1]]
+                    lines[i] = f"import {'.'.join(package_parts)}.{class_name};"
+        return '\n'.join(lines)
 
     def save_to_disk(self, relative_path, content):
-        """Guarda archivos físicamente y actualiza el StateManager"""
-        full_path = self.out_dir / relative_path
+        p = Path(relative_path)
+        if "src/main/java" in str(p) or "src/test/java" in str(p):
+            filename = p.name
+            parent = str(p.parent).lower()
+            full_path = self.out_dir / parent / filename
+            content = self.sanitize_package_casing(content)
+        else:
+            full_path = self.out_dir / relative_path
+
         full_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(full_path, "w", encoding="utf-8") as f:
-            f.write(content)
+        with open(full_path, "w", encoding="utf-8") as f: f.write(content)
         
         if str(relative_path) not in self.state.generated_files:
             self.state.generated_files.append(str(relative_path))
-            StateManager.save_specs(
-                self.spec_file, self.state.domain_model, 
-                self.state.architecture, self.state.generated_files
-            )
-
-    def run_maven_test(self):
-        """Ejecuta mvn test para validar lógica y cobertura JaCoCo"""
-        print(f"   [System] Ejecutando Maven Test en {self.project_name}...")
-        backend_path = self.out_dir / "backend"
-        if not (backend_path / "pom.xml").exists(): return None
-        
-        try:
-            # Usamos compile primero para detectar errores rápido antes de los tests
-            result = subprocess.run(
-                ["mvn", "clean", "compile", "test", "-DskipTests=false"], 
-                cwd=backend_path, capture_output=True, text=True, timeout=300
-            )
-            if result.returncode != 0:
-                return result.stdout + result.stderr
-            return None
-        except Exception as e:
-            return str(e)
+            StateManager.save_specs(self.spec_file, self.state.domain_model, self.state.architecture, self.state.generated_files)
 
     def run_massive_healing(self, error_log):
-        """
-        Analiza un log de error masivo y re-sincroniza los contratos del Shared Kernel
-        y los Value Objects de Identidad.
-        """
-        print("\n🚨 REPARACIÓN MASIVA: Detectadas inconsistencias de contrato.")
-        
-        # 1. El QA analiza la causa raíz (Capa de arquitectura)
-        analysis = self.executor.run_task(
-            "project_debug", 
-            error_log=error_log[:4000], 
-            base_package=self.base_package
-        )
-        print(f"   [QA Analysis]: {analysis[:200]}...")
-
-        # 2. Identificar archivos críticos a re-generar
+        print("\n🚨 REPARACIÓN MASIVA: Sincronizando contratos y eliminando duplicados...")
+        analysis = self.executor.run_task("project_debug", error_log=error_log[:4000], base_package=self.base_package)
         inventory = self.state.architecture.get("file_inventory", [])
-        critical_files = [f for f in inventory if "shared" in f['path'] or "valueobject" in f['path']]
-        
-        for file_info in critical_files:
-            path = file_info['path']
-            print(f"   🩹 Sincronizando: {Path(path).name}")
-            
-            fix_desc = f"Aplica esta corrección de arquitectura: {analysis}. Asegura que el código sea compatible con el resto del sistema."
-            code = self.executor.run_task(
-                "write_code", context_data=self.state.domain_model, 
-                path=path, desc=fix_desc, base_package=self.base_package
-            )
-            self.save_to_disk(path, self.clean_llm_output(code))
+        for f in [fi for fi in inventory if "valueobject" in fi['path'] or "shared" in fi['path']]:
+            print(f"   🩹 Re-sincronizando: {Path(f['path']).name}")
+            code = self.executor.run_task("write_code", context_data=f"ANALISIS_REPARACION: {analysis}", path=f['path'], desc=f['description'], base_package=self.base_package)
+            self.save_to_disk(f['path'], self.clean_llm_output(code))
 
     def run(self):
-        log_path = self.out_dir / "execution.log"
-        tee = Tee(log_path)
-        sys.stdout = tee 
-
+        sys.stdout = Tee(self.out_dir / "execution.log")
         try:
             print(f"🚀 --- INICIANDO FACTORÍA INDUSTRIAL: {self.project_name.upper()} ---")
-            print(f"📦 PAQUETE BASE: {self.base_package}")
+            if not (self.out_dir / ".git").exists(): self.run_command(["git", "init"])
 
             # FASE 1 & 2: DISEÑO
             if not StateManager.load_specs(self.spec_file, self.state):
@@ -147,86 +127,101 @@ class SoftwareFactory:
                 self.state.architecture = {"file_inventory": json.loads(self.clean_llm_output(res_arch))}
                 StateManager.save_specs(self.spec_file, self.state.domain_model, self.state.architecture, self.state.generated_files)
             else:
-                print(f"✅ Diseño cargado desde caché (Specs).")
+                print(f"✅ Diseño cargado desde caché.")
 
             inventory = self.state.architecture.get("file_inventory", [])
-            inventory_map = "\n".join([f"- {Path(f['path']).name}: {f['path']}" for f in inventory])
+            inv_map = "\n".join([f"- {Path(f['path']).name}: {f['path']}" for f in inventory])
 
-            # FASE: BOOTSTRAP (Kernel del Sistema)
+            # FASE: BOOTSTRAP (Cimientos inyectados con constructor flexible)
             print("\n🏗️  FASE: BOOTSTRAP (Shared Kernel)...")
-            pkg_path = self.base_package_path
-            bootstrap_tasks = [
-                ("backend/pom.xml", f"Pom.xml con Spring Boot 3, JaCoCo, Lombok y MapStruct."),
-                (f"backend/src/main/java/{pkg_path}/domain/shared/ValueObject.java", "INTERFAZ base para Value Objects."),
-                (f"backend/src/main/java/{pkg_path}/domain/shared/Entity.java", "CLASE ABSTRACTA base para entidades: Entity<ID extends ValueObject>."),
-                (f"backend/src/main/java/{pkg_path}/domain/exception/DomainException.java", "RuntimeException base.")
-            ]
-            for path, task_desc in bootstrap_tasks:
-                if path not in self.state.generated_files:
-                    print(f"   [BOOT] Fabricando: {path}")
-                    agent = build_sre_agent() if "pom.xml" in path else build_backend_builder()
-                    code = self.executor.run_task("write_code", context_data=self.state.domain_model, path=path, desc=task_desc, base_package=self.base_package)
-                    self.save_to_disk(path, self.clean_llm_output(code))
+            vo_path = f"backend/src/main/java/{self.base_package_path}/domain/shared/ValueObject.java"
+            en_path = f"backend/src/main/java/{self.base_package_path}/domain/shared/Entity.java"
+            
+            if vo_path not in self.state.generated_files:
+                self.save_to_disk(vo_path, f"package {self.base_package}.domain.shared;\nimport java.io.Serializable;\npublic interface ValueObject extends Serializable {{}}")
+            if en_path not in self.state.generated_files:
+                entity_content = f"""package {self.base_package}.domain.shared;
+import lombok.Getter;
+import java.util.Objects;
 
-            # FASE 3: FABRICACIÓN + QA + AUTO-HEALING
-            print(f"\n🛠️  FASE 3: Fabricando {len(inventory)} archivos con Auditoría Proactiva...")
+@Getter
+public abstract class Entity<ID extends ValueObject> {{
+    protected ID id;
+
+    protected Entity() {{}} // Requerido para Lombok NoArgsConstructor en hijos
+
+    protected Entity(ID id) {{
+        this.id = Objects.requireNonNull(id, "The ID cannot be null");
+    }}
+
+    @Override
+    public boolean equals(Object o) {{
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Entity<?> entity = (Entity<?>) o;
+        return Objects.equals(id, entity.id);
+    }}
+
+    @Override
+    public int hashCode() {{
+        return Objects.hash(id);
+    }}
+}}"""
+                self.save_to_disk(en_path, entity_content)
+
+            # FASE 3: FABRICACIÓN
+            print(f"\n🛠️  FASE 3: Fabricando {len(inventory)} archivos...")
             for file_info in inventory:
                 path, desc = file_info['path'], file_info['description']
                 if path in self.state.generated_files: continue
+                
+                if "sharedkernel" in path.lower() or "shared/valueobject" in path.lower(): continue
 
-                print(f"   👉 Generando: {path}")
+                print(f"   👉 {path}")
                 agent = build_frontend_builder() if (".js" in path or ".jsx" in path) else build_backend_builder()
-                context = f"BASE PACKAGE: {self.base_package}\nMAPA PROYECTO:\n{inventory_map}\n\nDOMAIN KIT:\n{self.state.domain_model}"
+                ctx = f"BASE: {self.base_package}\nPAQUETE_SHARED: {self.base_package}.domain.shared\nMAP: {inv_map}\nDOMAIN: {self.state.domain_model}"
                 
-                # 1. Generación de Código
-                code = self.executor.run_task("write_code", context_data=context, path=path, desc=desc, base_package=self.base_package)
-                code = self.clean_llm_output(code)
-                
-                # 2. Auditoría QA Previa
-                qa_res = self.executor.run_task("audit_code", context_data=code, path=path, base_package=self.base_package)
-                if "APROBADO" not in qa_res.upper():
-                    print(f"   ⚠️ QA detectó fallos. Reparando...")
-                    code = self.executor.run_task("write_code", context_data=f"ERROR QA: {qa_res}\nCODE: {code}", path=path, desc=desc, base_package=self.base_package)
-                    code = self.clean_llm_output(code)
-
+                code = self.clean_llm_output(self.executor.run_task("write_code", context_data=ctx, path=path, desc=desc, base_package=self.base_package))
                 self.save_to_disk(path, code)
 
-                # 3. Generación de Tests
-                if path.endswith(".java") and ("domain" in path.lower() or "application" in path.lower()) and "shared" not in path:
-                    print(f"   🧪 Fabricando Tests para {Path(path).name}...")
-                    test_path = path.replace("src/main/java", "src/test/java").replace(".java", "Test.java")
-                    test_code = self.executor.run_task("write_tests", context_data=context, path=path, base_package=self.base_package)
-                    self.save_to_disk(test_path, self.clean_llm_output(test_code))
+                if path.endswith(".java") and ("domain" in path or "application" in path):
+                    # Generar Test
+                    test_p = path.replace("src/main/java", "src/test/java").replace(".java", "Test.java")
+                    t_code = self.clean_llm_output(self.executor.run_task("write_tests", context_data=ctx, path=path, base_package=self.base_package))
+                    self.save_to_disk(test_p, t_code)
 
-                    # 4. Auto-Healing Real con Maven
-                    error_log = self.run_maven_test()
-                    if error_log:
-                        # Si el error es masivo (>50 errores), disparamos la reparación de arquitectura
-                        if error_log.count("[ERROR]") > 15:
-                            self.run_massive_healing(error_log)
-                        else:
-                            print(f"   🩹 Reparando fallo puntual en {Path(path).name}...")
-                            fixed_code = self.executor.run_task("heal_code", context_data=context, path=path, error_log=error_log[:2000], base_package=self.base_package)
-                            self.save_to_disk(path, self.clean_llm_output(fixed_code))
+                    # Maven Check
+                    err = self.run_command(["mvn", "clean", "compile", "test", "-DskipTests=false"], cwd=self.out_dir / "backend")
+                    if err:
+                        if err.count("[ERROR]") > 15: 
+                            self.run_massive_healing(err)
+                            continue
+                        print(f"   🩹 Auto-Healing puntual...")
+                        fixed = self.clean_llm_output(self.executor.run_task("heal_code", context_data=ctx, path=path, error_log=err[:2500], base_package=self.base_package))
+                        self.save_to_disk(path, fixed)
+                
+                self.run_command(["git", "add", "."])
+                self.run_command(["git", "commit", "-m", f"feat: add {Path(path).name}"])
 
-            # FASE 4: CI/CD & OBSERVABILIDAD
-            print("\n🐳 FASE 4: Generando Infraestructura, CI/CD y ELK...")
-            # ... (Lógica de infraestructura igual) ...
+            # FASE 4: INFRAESTRUCTURA
+            print("\n🐳 FASE 4: Generando Infraestructura y CI/CD...")
+            infra = [("backend/pom.xml", "POM con Spring Boot 3, JaCoCo y ELK."), (".github/workflows/pipeline.yml", "CI Pipeline."), ("docker-compose.yml", "ELK + DB.")]
+            for p, d in infra:
+                if p not in self.state.generated_files:
+                    code = self.executor.run_task("write_code", context_data=self.state.domain_model, path=p, desc=d, base_package=self.base_package, agent_override="sre_agent")
+                    self.save_to_disk(p, self.clean_llm_output(code))
 
             self.state.status = "COMPLETED"
-            print(f"\n✨ --- PROYECTO FINALIZADO CON ÉXITO ---")
+            print(f"\n✨ PROYECTO FINALIZADO CON ÉXITO")
 
         except Exception as e:
             self.state.status = "FAILED"
-            print(f"❌ Error Crítico: {e}")
-            import traceback; traceback.print_exc()
+            print(f"❌ Error: {e}"); import traceback; traceback.print_exc()
         finally:
             generate_report(self.state, self.out_dir)
-            sys.stdout = sys.__stdout__
+            sys.stdout.flush(); sys.stdout = sys.__stdout__
             if 'tee' in locals(): tee.close()
 
 if __name__ == "__main__":
-    input_idea = " ".join(sys.argv[1:]).strip()
-    if not input_idea: sys.exit(1)
-    factory = SoftwareFactory(input_idea)
-    factory.run()
+    idea = " ".join(sys.argv[1:]).strip()
+    if idea: SoftwareFactory(idea).run()

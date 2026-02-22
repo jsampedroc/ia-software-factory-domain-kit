@@ -1,14 +1,15 @@
 package com.application.domain.shared;
+import lombok.Getter;
+import java.util.Objects;
 
-public abstract class Entity<T> {
-    protected T id;
+@Getter
+public abstract class Entity<ID extends ValueObject> {
+    protected ID id;
 
-    public T getId() {
-        return id;
-    }
+    protected Entity() {} // Requerido para Lombok NoArgsConstructor en hijos
 
-    public void setId(T id) {
-        this.id = id;
+    protected Entity(ID id) {
+        this.id = Objects.requireNonNull(id, "The ID cannot be null");
     }
 
     @Override
@@ -16,11 +17,11 @@ public abstract class Entity<T> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Entity<?> entity = (Entity<?>) o;
-        return id != null && id.equals(entity.id);
+        return Objects.equals(id, entity.id);
     }
 
     @Override
     public int hashCode() {
-        return getClass().hashCode();
+        return Objects.hash(id);
     }
 }

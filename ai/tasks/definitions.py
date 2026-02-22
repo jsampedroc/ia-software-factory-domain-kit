@@ -3,57 +3,51 @@
 TASKS = {
     "model_domain": {
         "agent": "domain_reasoner",
-        "description": "Analiza la idea '{idea}' y genera un Domain Kit profesional. REGLA: El paquete base técnico es '{base_package}'.",
-        "expected_output": "Markdown con el Domain Kit."
+        "description": "Analiza la idea '{idea}' y genera el Domain Kit. Paquete base: '{base_package}'.",
+        "expected_output": "Markdown con el ADN del negocio."
     },
     "create_inventory": {
         "agent": "architect",
         "description": """
-        Diseña el inventario de archivos para una Arquitectura Hexagonal de Gama Alta.
-        REGLAS CRÍTICAS (INNEGOCIABLES):
-        1. DEBES incluir las piezas del Shared Kernel en: 'backend/src/main/java/{base_package_path}/domain/shared/':
-           - ValueObject.java (Interfaz)
-           - Entity.java (Clase abstracta)
-           - AggregateRoot.java (Clase abstracta)
-        2. DEBES incluir: 'backend/src/main/java/{base_package_path}/domain/exception/DomainException.java'.
-        3. Identificadores: CADA entidad debe tener su ID en 'backend/src/main/java/{base_package_path}/domain/valueobject/'.
-        4. DTOs: Incluye RequestDTO y ResponseDTO por cada controlador.
-        Devuelve JSON: [{{'path': '...', 'description': '...'}}].
+        Genera el inventario para Arquitectura Hexagonal. 
+        REGLAS INNEGOCIABLES:
+        1. PAQUETES: Usa ÚNICAMENTE '{base_package}.domain.model', '{base_package}.domain.valueobject' y '{base_package}.infrastructure'.
+        2. PROHIBIDO: No generes nada en un paquete llamado 'sharedkernel' o similar.
+        3. CLASES BASE: NO incluyas ValueObject.java ni Entity.java, el sistema ya los inyecta.
+        4. RUTA: Empieza siempre por 'backend/src/main/java/{base_package_path}/'.
+        Devuelve JSON puro: [{{'path': '...', 'description': '...'}}].
         """,
-        "expected_output": "JSON de inventario completo siguiendo Maven Standard."
+        "expected_output": "JSON de inventario alineado."
     },
     "write_code": {
         "agent": "backend_builder",
-        "description": "Implementa el código del archivo '{path}' ({desc}). REGLA: El paquete debe ser '{base_package}'. Usa Java 17 y Lombok. Si implementas un ValueObject, DEBE ser un 'record' que implemente la interfaz 'ValueObject'.",
+        "description": """
+        Implementa el código para '{path}' ({desc}).
+        REGLA CRÍTICA DE HERENCIA:
+        - Si es una Entidad que extiende de 'Entity<ID>', NO declares el campo 'id' (ya se hereda).
+        - No llames a super() en constructores si usas Lombok @NoArgsConstructor. 
+        - Asegúrate de que el paquete raíz sea '{base_package}'.
+        """,
         "expected_output": "Código fuente puro."
     },
     "write_tests": {
         "agent": "backend_builder",
-        "description": "Genera tests unitarios JUnit 5 + Mockito para '{path}'. Paquete: '{base_package}'.",
-        "expected_output": "Código de test."
+        "description": "Genera tests JUnit 5 para '{path}'. Paquete: '{base_package}'. Usa Mockito.",
+        "expected_output": "Código JUnit 5."
     },
     "audit_code": {
         "agent": "qa_agent",
-        "description": "Audita el archivo '{path}'. RECHAZA si no usa el paquete raíz '{base_package}' o si un ValueObject no implementa 'ValueObject'.",
-        "expected_output": "Aprobación o lista de errores."
+        "description": "Audita '{path}'. RECHAZA si el código declara un campo 'id' que ya debería heredarse de Entity.",
+        "expected_output": "APROBADO o errores."
     },
     "heal_code": {
         "agent": "backend_builder",
-        "description": "REPARACIÓN: El archivo '{path}' falló. ERROR: '{error_log}'. Analiza si el error es por un import faltante o un genérico mal definido y corrígelo.",
+        "description": "REPARACIÓN: El archivo '{path}' falló. ERROR: '{error_log}'. Corrige el código respetando la herencia de '{base_package}.domain.shared.Entity'.",
         "expected_output": "Código corregido."
     },
     "project_debug": {
         "agent": "qa_agent",
-        "description": """
-        Analiza el LOG DE ERROR GLOBAL de Maven: '{error_log}'.
-        Tu misión es identificar las inconsistencias de contratos.
-        Busca especialmente:
-        1. ¿ValueObject es una interface pero el código intenta extenderla como clase?
-        2. ¿Entity<T> requiere que T extienda de algo que los IDs no tienen?
-        3. ¿Faltan DTOs que el Arquitecto definió pero el Builder no creó?
-        
-        Devuelve una LISTA DE ACCIONES CORRECTIVAS para el Builder.
-        """,
-        "expected_output": "Lista técnica de correcciones estructurales."
-    },
+        "description": "Analiza el fallo masivo: '{error_log}'. Identifica qué archivos están declarando duplicados de 'id' o tienen problemas de constructor.",
+        "expected_output": "Guía de reparación."
+    }
 }

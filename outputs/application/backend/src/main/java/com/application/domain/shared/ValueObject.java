@@ -1,4 +1,3 @@
 package com.application.domain.shared;
-
-public interface ValueObject {
-}
+import java.io.Serializable;
+public interface ValueObject extends Serializable {}

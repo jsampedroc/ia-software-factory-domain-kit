@@ -1,6 +1,7 @@
 package com.application.school.domain.attendance.model;
 
-import com.application.school.domain.shared.DateRange;
+import com.application.school.domain.shared.valueobject.DateRange;
+import com.application.school.domain.shared.enumeration.AttendanceStatus;
 import com.application.school.domain.student.model.StudentId;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 @Data
@@ -29,18 +31,12 @@ public class AttendanceRecord {
         return checkOutTime.isBefore(checkInTime);
     }
 
-    public boolean isForSameDay(AttendanceRecord other) {
-        if (other == null || other.getDate() == null || this.date == null) {
-            return false;
-        }
-        return this.date.equals(other.getDate());
+    public boolean isSameDay(LocalDate otherDate) {
+        return date != null && date.equals(otherDate);
     }
 
-    public boolean isDateInRange(DateRange range) {
-        if (range == null) {
-            return false;
-        }
-        return !this.date.isBefore(range.getStartDate()) && !this.date.isAfter(range.getEndDate());
+    public boolean isWithinDateRange(DateRange range) {
+        return range != null && range.contains(date);
     }
 
     public void markAsPresent() {
@@ -60,9 +56,6 @@ public class AttendanceRecord {
     }
 
     public void registerCheckIn(LocalTime time) {
-        if (time == null) {
-            throw new IllegalArgumentException("Check-in time cannot be null");
-        }
         this.checkInTime = time;
         if (this.status == null) {
             this.status = AttendanceStatus.PRESENT;
@@ -70,12 +63,13 @@ public class AttendanceRecord {
     }
 
     public void registerCheckOut(LocalTime time) {
-        if (time == null) {
-            throw new IllegalArgumentException("Check-out time cannot be null");
-        }
         if (this.checkInTime != null && time.isBefore(this.checkInTime)) {
-            throw new IllegalStateException("Check-out time cannot be before check-in time");
+            throw new IllegalArgumentException("Check-out time cannot be before check-in time.");
         }
         this.checkOutTime = time;
+    }
+
+    public boolean isComplete() {
+        return checkInTime != null && checkOutTime != null;
     }
 }

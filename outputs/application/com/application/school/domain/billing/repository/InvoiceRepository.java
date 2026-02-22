@@ -13,7 +13,6 @@ public interface InvoiceRepository {
     Optional<Invoice> findById(InvoiceId invoiceId);
     List<Invoice> findByStudentId(StudentId studentId);
     Optional<Invoice> findByStudentIdAndMonthYear(StudentId studentId, YearMonth monthYear);
-    List<Invoice> findAll();
+    boolean existsByStudentIdAndMonthYear(StudentId studentId, YearMonth monthYear);
     void delete(Invoice invoice);
-    boolean existsById(InvoiceId invoiceId);
 }

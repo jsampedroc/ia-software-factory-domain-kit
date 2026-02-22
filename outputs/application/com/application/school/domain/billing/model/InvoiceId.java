@@ -1,28 +1,29 @@
 package com.application.school.domain.billing.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
+import lombok.Value;
 import java.util.UUID;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@Value
 public class InvoiceId {
-    private UUID value;
+    UUID value;
 
-    public static InvoiceId generate() {
-        return InvoiceId.builder()
-                .value(UUID.randomUUID())
-                .build();
+    private InvoiceId(UUID value) {
+        this.value = value;
     }
 
-    public static InvoiceId fromString(String uuid) {
-        return InvoiceId.builder()
-                .value(UUID.fromString(uuid))
-                .build();
+    public static InvoiceId generate() {
+        return new InvoiceId(UUID.randomUUID());
+    }
+
+    public static InvoiceId fromString(String value) {
+        return new InvoiceId(UUID.fromString(value));
+    }
+
+    public static InvoiceId fromUUID(UUID value) {
+        return new InvoiceId(value);
+    }
+
+    public String toString() {
+        return value.toString();
     }
 }

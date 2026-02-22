@@ -10,9 +10,9 @@ import java.util.Optional;
 
 public interface AttendanceRepository {
     AttendanceRecord save(AttendanceRecord attendanceRecord);
-    Optional<AttendanceRecord> findById(AttendanceRecordId id);
+    Optional<AttendanceRecord> findById(AttendanceRecordId attendanceRecordId);
     List<AttendanceRecord> findByStudentIdAndDateBetween(StudentId studentId, LocalDate startDate, LocalDate endDate);
-    List<AttendanceRecord> findByDate(LocalDate date);
+    List<AttendanceRecord> findByStudentId(StudentId studentId);
     boolean existsByStudentIdAndDate(StudentId studentId, LocalDate date);
     void delete(AttendanceRecord attendanceRecord);
 }

@@ -12,13 +12,13 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Grade {
-    private GradeId gradeId;
+    private GradeId id;
     private String name;
     private Integer level;
 
     public static Grade create(String name, Integer level) {
         return Grade.builder()
-                .gradeId(new GradeId(UUID.randomUUID()))
+                .id(new GradeId(UUID.randomUUID()))
                 .name(name)
                 .level(level)
                 .build();

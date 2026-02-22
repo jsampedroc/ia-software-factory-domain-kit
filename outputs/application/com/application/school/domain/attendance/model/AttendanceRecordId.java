@@ -15,14 +15,10 @@ public class AttendanceRecordId {
     private UUID value;
 
     public static AttendanceRecordId generate() {
-        return AttendanceRecordId.builder()
-                .value(UUID.randomUUID())
-                .build();
+        return new AttendanceRecordId(UUID.randomUUID());
     }
 
     public static AttendanceRecordId fromString(String uuid) {
-        return AttendanceRecordId.builder()
-                .value(UUID.fromString(uuid))
-                .build();
+        return new AttendanceRecordId(UUID.fromString(uuid));
     }
 }

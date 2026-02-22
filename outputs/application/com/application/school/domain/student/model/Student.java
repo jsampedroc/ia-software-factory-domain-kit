@@ -1,6 +1,7 @@
 package com.application.school.domain.student.model;
 
-import com.application.school.domain.shared.PersonName;
+import com.application.school.domain.shared.valueobject.PersonalName;
+import com.application.school.domain.shared.enumeration.StudentStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,7 +18,7 @@ import java.util.List;
 public class Student {
     private StudentId studentId;
     private String legalId;
-    private PersonName name;
+    private PersonalName name;
     private LocalDate dateOfBirth;
     private LocalDate enrollmentDate;
     private StudentStatus status;
@@ -25,21 +26,19 @@ public class Student {
     private List<Guardian> guardians = new ArrayList<>();
 
     public void addGuardian(Guardian guardian) {
-        if (guardian == null) {
-            throw new IllegalArgumentException("Guardian cannot be null");
+        if (guardian != null) {
+            this.guardians.add(guardian);
         }
-        this.guardians.add(guardian);
     }
 
     public void removeGuardian(GuardianId guardianId) {
-        if (guardianId == null) {
-            throw new IllegalArgumentException("GuardianId cannot be null");
+        if (guardianId != null) {
+            this.guardians.removeIf(g -> g.getGuardianId().equals(guardianId));
         }
-        this.guardians.removeIf(g -> g.getGuardianId().equals(guardianId));
     }
 
-    public boolean isActive() {
-        return this.status == StudentStatus.ACTIVE;
+    public void activate() {
+        this.status = StudentStatus.ACTIVE;
     }
 
     public void deactivate() {
@@ -50,9 +49,11 @@ public class Student {
         this.status = StudentStatus.GRADUATED;
     }
 
-    public void validateLegalIdUniqueness(StudentRepository repository) {
-        if (repository.existsByLegalIdAndNotId(this.legalId, this.studentId)) {
-            throw new IllegalStateException("A student with the same legalId already exists.");
-        }
+    public boolean hasActiveStatus() {
+        return this.status == StudentStatus.ACTIVE;
+    }
+
+    public boolean hasAtLeastOneGuardian() {
+        return this.guardians != null && !this.guardians.isEmpty();
     }
 }

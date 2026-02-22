@@ -1,23 +1,20 @@
 package com.application.school.application.billing;
 
+import com.application.school.application.billing.dto.GenerateInvoiceCommand;
+import com.application.school.application.billing.dto.InvoiceResponse;
+import com.application.school.application.billing.dto.RegisterPaymentCommand;
 import com.application.school.domain.billing.model.Invoice;
 import com.application.school.domain.billing.model.InvoiceId;
-import com.application.school.domain.billing.model.InvoiceStatus;
 import com.application.school.domain.billing.model.Payment;
 import com.application.school.domain.billing.repository.InvoiceRepository;
 import com.application.school.domain.student.model.StudentId;
 import com.application.school.domain.student.repository.StudentRepository;
-import com.application.school.application.dtos.InvoiceDTO;
-import com.application.school.application.dtos.PaymentDTO;
-import com.application.school.application.mappers.BillingMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,129 +24,172 @@ public class BillingService {
 
     private final InvoiceRepository invoiceRepository;
     private final StudentRepository studentRepository;
-    private final BillingMapper billingMapper;
-
-    @Transactional(readOnly = true)
-    public List<InvoiceDTO> getInvoicesByStudent(StudentId studentId) {
-        log.debug("Fetching invoices for student: {}", studentId);
-        List<Invoice> invoices = invoiceRepository.findByStudentId(studentId);
-        return invoices.stream()
-                .map(billingMapper::toDto)
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public Optional<InvoiceDTO> getInvoiceById(InvoiceId invoiceId) {
-        log.debug("Fetching invoice by id: {}", invoiceId);
-        return invoiceRepository.findById(invoiceId)
-                .map(billingMapper::toDto);
-    }
 
     @Transactional
-    public InvoiceDTO createInvoice(InvoiceDTO invoiceDto) {
-        log.info("Creating invoice for student: {}", invoiceDto.getStudentId());
-        StudentId studentId = new StudentId(invoiceDto.getStudentId());
+    public InvoiceResponse generateInvoice(GenerateInvoiceCommand command) {
+        log.info("Generating invoice for student: {} monthYear: {}", command.getStudentId(), command.getMonthYear());
 
-        // Business rule: Cannot create invoice for inactive student
-        studentRepository.findById(studentId).ifPresent(student -> {
-            if (!student.isActive()) {
-                throw new IllegalStateException("Cannot create invoice for an inactive student.");
-            }
-        });
+        StudentId studentId = new StudentId(command.getStudentId());
+        studentRepository.findById(studentId)
+                .orElseThrow(() -> new IllegalArgumentException("Student not found with id: " + command.getStudentId()));
 
-        // Business rule: Only one invoice per student per monthYear
-        Optional<Invoice> existingInvoice = invoiceRepository.findByStudentIdAndMonthYear(
-                studentId,
-                invoiceDto.getMonthYear()
-        );
-        if (existingInvoice.isPresent()) {
-            throw new IllegalStateException(
-                    String.format("An invoice already exists for student %s and month %s",
-                            studentId.getValue(),
-                            invoiceDto.getMonthYear())
-            );
+        List<Invoice> existingInvoices = invoiceRepository.findByStudentIdAndMonthYear(studentId, command.getMonthYear());
+        if (!existingInvoices.isEmpty()) {
+            throw new IllegalStateException("An invoice already exists for student " + command.getStudentId() +
+                    " and monthYear " + command.getMonthYear());
         }
 
-        Invoice invoice = billingMapper.toDomain(invoiceDto);
-        invoice.calculateTotal(); // Ensure total is calculated from items
-        invoice.updateStatus(); // Set initial status based on due date
+        Invoice invoice = Invoice.create(
+                studentId,
+                command.getMonthYear(),
+                command.getDueDate(),
+                command.getItems().stream()
+                        .map(item -> Invoice.ItemDetail.builder()
+                                .description(item.getDescription())
+                                .quantity(item.getQuantity())
+                                .unitPrice(item.getUnitPrice())
+                                .build())
+                        .collect(Collectors.toList())
+        );
 
         Invoice savedInvoice = invoiceRepository.save(invoice);
-        log.info("Invoice created with id: {}", savedInvoice.getInvoiceId());
-        return billingMapper.toDto(savedInvoice);
+        log.info("Invoice generated with id: {}", savedInvoice.getId().getValue());
+
+        return InvoiceResponse.builder()
+                .invoiceId(savedInvoice.getId().getValue())
+                .studentId(savedInvoice.getStudentId().getValue())
+                .issueDate(savedInvoice.getIssueDate())
+                .dueDate(savedInvoice.getDueDate())
+                .monthYear(savedInvoice.getMonthYear())
+                .totalAmount(savedInvoice.getTotalAmount())
+                .status(savedInvoice.getStatus())
+                .items(savedInvoice.getItems().stream()
+                        .map(item -> InvoiceResponse.ItemDetail.builder()
+                                .description(item.getDescription())
+                                .quantity(item.getQuantity())
+                                .unitPrice(item.getUnitPrice())
+                                .subtotal(item.getSubtotal())
+                                .build())
+                        .collect(Collectors.toList()))
+                .build();
     }
 
     @Transactional
-    public InvoiceDTO updateInvoiceStatus(InvoiceId invoiceId, InvoiceStatus newStatus) {
-        log.info("Updating status for invoice: {} to {}", invoiceId, newStatus);
+    public InvoiceResponse registerPayment(RegisterPaymentCommand command) {
+        log.info("Registering payment for invoice: {}", command.getInvoiceId());
+
+        InvoiceId invoiceId = new InvoiceId(command.getInvoiceId());
         Invoice invoice = invoiceRepository.findById(invoiceId)
-                .orElseThrow(() -> new IllegalArgumentException("Invoice not found: " + invoiceId));
+                .orElseThrow(() -> new IllegalArgumentException("Invoice not found with id: " + command.getInvoiceId()));
 
-        // Business rule: Cannot modify a cancelled or paid invoice
-        if (invoice.getStatus() == InvoiceStatus.CANCELLED || invoice.getStatus() == InvoiceStatus.PAID) {
-            throw new IllegalStateException("Cannot modify a cancelled or paid invoice.");
-        }
+        Payment payment = Payment.create(
+                command.getAmount(),
+                command.getPaymentMethod(),
+                command.getReference()
+        );
 
-        invoice.setStatus(newStatus);
+        invoice.registerPayment(payment);
         Invoice updatedInvoice = invoiceRepository.save(invoice);
-        return billingMapper.toDto(updatedInvoice);
-    }
+        log.info("Payment registered for invoice: {}", updatedInvoice.getId().getValue());
 
-    @Transactional
-    public PaymentDTO registerPayment(PaymentDTO paymentDto) {
-        log.info("Registering payment: {}", paymentDto);
-        Payment payment = billingMapper.toDomain(paymentDto);
-
-        // Business rule: Payment amount cannot be negative
-        if (payment.getAmount().isNegative()) {
-            throw new IllegalArgumentException("Payment amount cannot be negative.");
-        }
-
-        // Apply payment to specified invoices
-        List<InvoiceId> invoiceIds = paymentDto.getAppliedInvoiceIds().stream()
-                .map(InvoiceId::new)
-                .collect(Collectors.toList());
-
-        List<Invoice> invoices = invoiceRepository.findAllById(invoiceIds);
-        if (invoices.isEmpty()) {
-            throw new IllegalArgumentException("No valid invoices found for payment application.");
-        }
-
-        // Apply payment logic (simplified: assign full payment to first invoice)
-        // In a real scenario, you would have a more complex allocation strategy
-        Invoice primaryInvoice = invoices.get(0);
-        primaryInvoice.applyPayment(payment);
-        primaryInvoice.updateStatus(); // Re-evaluate status after payment
-
-        invoiceRepository.save(primaryInvoice);
-        // Note: In a full implementation, you would save the payment entity via a PaymentRepository
-        // and update all affected invoices.
-
-        log.info("Payment registered and applied to invoice: {}", primaryInvoice.getInvoiceId());
-        return billingMapper.toDto(payment);
-    }
-
-    @Transactional
-    public void processOverdueInvoices() {
-        log.info("Processing overdue invoices");
-        List<Invoice> pendingInvoices = invoiceRepository.findByStatus(InvoiceStatus.PENDING);
-        LocalDate today = LocalDate.now();
-
-        pendingInvoices.stream()
-                .filter(invoice -> invoice.getDueDate().isBefore(today))
-                .forEach(invoice -> {
-                    invoice.setStatus(InvoiceStatus.OVERDUE);
-                    invoiceRepository.save(invoice);
-                    log.debug("Invoice {} marked as OVERDUE", invoice.getInvoiceId());
-                });
+        return InvoiceResponse.builder()
+                .invoiceId(updatedInvoice.getId().getValue())
+                .studentId(updatedInvoice.getStudentId().getValue())
+                .issueDate(updatedInvoice.getIssueDate())
+                .dueDate(updatedInvoice.getDueDate())
+                .monthYear(updatedInvoice.getMonthYear())
+                .totalAmount(updatedInvoice.getTotalAmount())
+                .status(updatedInvoice.getStatus())
+                .paymentDate(updatedInvoice.getPaymentDate())
+                .items(updatedInvoice.getItems().stream()
+                        .map(item -> InvoiceResponse.ItemDetail.builder()
+                                .description(item.getDescription())
+                                .quantity(item.getQuantity())
+                                .unitPrice(item.getUnitPrice())
+                                .subtotal(item.getSubtotal())
+                                .build())
+                        .collect(Collectors.toList()))
+                .payments(updatedInvoice.getPayments().stream()
+                        .map(p -> InvoiceResponse.PaymentDetail.builder()
+                                .paymentId(p.getId().getValue())
+                                .amount(p.getAmount())
+                                .paymentMethod(p.getPaymentMethod())
+                                .transactionDate(p.getTransactionDate())
+                                .reference(p.getReference())
+                                .build())
+                        .collect(Collectors.toList()))
+                .build();
     }
 
     @Transactional(readOnly = true)
-    public List<InvoiceDTO> getOverdueInvoices() {
-        log.debug("Fetching overdue invoices");
-        List<Invoice> overdueInvoices = invoiceRepository.findByStatus(InvoiceStatus.OVERDUE);
-        return overdueInvoices.stream()
-                .map(billingMapper::toDto)
+    public List<InvoiceResponse> getInvoicesByStudent(String studentIdStr) {
+        log.info("Fetching invoices for student: {}", studentIdStr);
+        StudentId studentId = new StudentId(studentIdStr);
+        List<Invoice> invoices = invoiceRepository.findByStudentId(studentId);
+        return invoices.stream()
+                .map(invoice -> InvoiceResponse.builder()
+                        .invoiceId(invoice.getId().getValue())
+                        .studentId(invoice.getStudentId().getValue())
+                        .issueDate(invoice.getIssueDate())
+                        .dueDate(invoice.getDueDate())
+                        .monthYear(invoice.getMonthYear())
+                        .totalAmount(invoice.getTotalAmount())
+                        .status(invoice.getStatus())
+                        .paymentDate(invoice.getPaymentDate())
+                        .items(invoice.getItems().stream()
+                                .map(item -> InvoiceResponse.ItemDetail.builder()
+                                        .description(item.getDescription())
+                                        .quantity(item.getQuantity())
+                                        .unitPrice(item.getUnitPrice())
+                                        .subtotal(item.getSubtotal())
+                                        .build())
+                                .collect(Collectors.toList()))
+                        .payments(invoice.getPayments().stream()
+                                .map(p -> InvoiceResponse.PaymentDetail.builder()
+                                        .paymentId(p.getId().getValue())
+                                        .amount(p.getAmount())
+                                        .paymentMethod(p.getPaymentMethod())
+                                        .transactionDate(p.getTransactionDate())
+                                        .reference(p.getReference())
+                                        .build())
+                                .collect(Collectors.toList()))
+                        .build())
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public InvoiceResponse getInvoiceById(String invoiceIdStr) {
+        log.info("Fetching invoice by id: {}", invoiceIdStr);
+        InvoiceId invoiceId = new InvoiceId(invoiceIdStr);
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new IllegalArgumentException("Invoice not found with id: " + invoiceIdStr));
+
+        return InvoiceResponse.builder()
+                .invoiceId(invoice.getId().getValue())
+                .studentId(invoice.getStudentId().getValue())
+                .issueDate(invoice.getIssueDate())
+                .dueDate(invoice.getDueDate())
+                .monthYear(invoice.getMonthYear())
+                .totalAmount(invoice.getTotalAmount())
+                .status(invoice.getStatus())
+                .paymentDate(invoice.getPaymentDate())
+                .items(invoice.getItems().stream()
+                        .map(item -> InvoiceResponse.ItemDetail.builder()
+                                .description(item.getDescription())
+                                .quantity(item.getQuantity())
+                                .unitPrice(item.getUnitPrice())
+                                .subtotal(item.getSubtotal())
+                                .build())
+                        .collect(Collectors.toList()))
+                .payments(invoice.getPayments().stream()
+                        .map(p -> InvoiceResponse.PaymentDetail.builder()
+                                .paymentId(p.getId().getValue())
+                                .amount(p.getAmount())
+                                .paymentMethod(p.getPaymentMethod())
+                                .transactionDate(p.getTransactionDate())
+                                .reference(p.getReference())
+                                .build())
+                        .collect(Collectors.toList()))
+                .build();
     }
 }

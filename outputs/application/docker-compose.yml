@@ -3,7 +3,7 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: school-management-postgres
+    container_name: school-postgres
     environment:
       POSTGRES_DB: school_management
       POSTGRES_USER: school_user
@@ -15,7 +15,7 @@ services:
     networks:
       - school-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U school_user -d school_management"]
+      test: ["CMD-SHELL", "pg_isready -U school_user"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -24,30 +24,30 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: school-management-backend
+    container_name: school-backend
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/school_management
       SPRING_DATASOURCE_USERNAME: school_user
       SPRING_DATASOURCE_PASSWORD: school_password
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_PROFILES_ACTIVE: docker
+      LOGGING_LEVEL_COM_APPLICATION: DEBUG
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
       LOGSTASH_HOST: logstash
       LOGSTASH_PORT: 5000
-      JAVA_OPTS: "-Xmx512m -Xms256m"
     ports:
       - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
-      logstash:
-        condition: service_started
+      elasticsearch:
+        condition: service_healthy
     networks:
       - school-network
     restart: unless-stopped
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
-    container_name: school-management-elasticsearch
+    container_name: school-elasticsearch
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
@@ -66,38 +66,32 @@ services:
 
   logstash:
     image: docker.elastic.co/logstash/logstash:8.13.0
-    container_name: school-management-logstash
+    container_name: school-logstash
     volumes:
-      - ./logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
     ports:
-      - "5000:5000/tcp"
-      - "5000:5000/udp"
+      - "5000:5000"
     environment:
-      LS_JAVA_OPTS: "-Xmx256m -Xms128m"
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
     depends_on:
-      elasticsearch:
-        condition: service_healthy
+      - elasticsearch
     networks:
       - school-network
-    command: logstash -f /usr/share/logstash/pipeline/logstash.conf
+    restart: unless-stopped
 
   kibana:
     image: docker.elastic.co/kibana/kibana:8.13.0
-    container_name: school-management-kibana
+    container_name: school-kibana
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
     ports:
       - "5601:5601"
     depends_on:
-      elasticsearch:
-        condition: service_healthy
+      - elasticsearch
     networks:
       - school-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+    restart: unless-stopped
 
 volumes:
   postgres_data:

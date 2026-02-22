@@ -15,14 +15,10 @@ public class InvoiceItemId {
     private UUID value;
 
     public static InvoiceItemId generate() {
-        return InvoiceItemId.builder()
-                .value(UUID.randomUUID())
-                .build();
+        return new InvoiceItemId(UUID.randomUUID());
     }
 
     public static InvoiceItemId fromString(String uuid) {
-        return InvoiceItemId.builder()
-                .value(UUID.fromString(uuid))
-                .build();
+        return new InvoiceItemId(UUID.fromString(uuid));
     }
 }

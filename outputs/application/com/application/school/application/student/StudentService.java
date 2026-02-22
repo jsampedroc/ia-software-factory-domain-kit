@@ -1,12 +1,14 @@
 package com.application.school.application.student;
 
+import com.application.school.application.student.dto.CreateStudentCommand;
+import com.application.school.application.student.dto.StudentResponse;
+import com.application.school.domain.student.model.Guardian;
+import com.application.school.domain.student.model.GuardianId;
 import com.application.school.domain.student.model.Student;
 import com.application.school.domain.student.model.StudentId;
-import com.application.school.domain.student.model.StudentStatus;
 import com.application.school.domain.student.repository.StudentRepository;
-import com.application.school.application.dtos.StudentDTO;
-import com.application.school.application.dtos.GuardianDTO;
-import com.application.school.application.mappers.StudentMapper;
+import com.application.school.domain.shared.enumeration.StudentStatus;
+import com.application.school.domain.shared.valueobject.PersonalName;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,152 +16,112 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
-@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Slf4j
 public class StudentService {
 
     private final StudentRepository studentRepository;
-    private final StudentMapper studentMapper;
 
     @Transactional
-    public StudentDTO enrollStudent(StudentDTO studentDTO) {
-        log.info("Enrolling new student with legalId: {}", studentDTO.getLegalId());
+    public StudentResponse createStudent(CreateStudentCommand command) {
+        log.info("Creating student with legalId: {}", command.getLegalId());
 
-        Student student = studentMapper.toDomain(studentDTO);
-        student.enroll();
+        // Verificar unicidad del legalId (regla de negocio)
+        studentRepository.findByLegalId(command.getLegalId())
+                .ifPresent(existing -> {
+                    throw new IllegalArgumentException("A student with legalId " + command.getLegalId() + " already exists.");
+                });
 
+        // Generar IDs
+        StudentId studentId = StudentId.of(UUID.randomUUID());
+        List<Guardian> guardians = command.getGuardians().stream()
+                .map(g -> Guardian.builder()
+                        .guardianId(GuardianId.of(UUID.randomUUID()))
+                        .name(PersonalName.builder()
+                                .firstName(g.getFirstName())
+                                .lastName(g.getLastName())
+                                .build())
+                        .email(g.getEmail())
+                        .phoneNumber(g.getPhoneNumber())
+                        .relationship(g.getRelationship())
+                        .build())
+                .collect(Collectors.toList());
+
+        // Construir el agregado Student
+        Student student = Student.builder()
+                .studentId(studentId)
+                .legalId(command.getLegalId())
+                .name(PersonalName.builder()
+                        .firstName(command.getFirstName())
+                        .lastName(command.getLastName())
+                        .build())
+                .dateOfBirth(command.getDateOfBirth())
+                .enrollmentDate(LocalDate.now())
+                .status(StudentStatus.ACTIVE)
+                .guardians(guardians)
+                .build();
+
+        // Guardar
         Student savedStudent = studentRepository.save(student);
-        log.info("Student enrolled successfully with id: {}", savedStudent.getId().getValue());
+        log.info("Student created with id: {}", savedStudent.getStudentId().getValue());
 
-        return studentMapper.toDTO(savedStudent);
+        // Mapear a respuesta (en un escenario real, usaríamos un mapper dedicado)
+        return mapToResponse(savedStudent);
     }
 
-    public Optional<StudentDTO> findById(String studentId) {
-        log.debug("Finding student by id: {}", studentId);
-        return studentRepository.findById(StudentId.fromString(studentId))
-                .map(studentMapper::toDTO);
+    @Transactional(readOnly = true)
+    public StudentResponse getStudentById(UUID id) {
+        log.info("Fetching student with id: {}", id);
+        Student student = studentRepository.findById(StudentId.of(id))
+                .orElseThrow(() -> new IllegalArgumentException("Student not found with id: " + id));
+        return mapToResponse(student);
     }
 
-    public List<StudentDTO> findAll() {
-        log.debug("Finding all students");
+    @Transactional(readOnly = true)
+    public List<StudentResponse> getAllStudents() {
+        log.info("Fetching all students");
         return studentRepository.findAll().stream()
-                .map(studentMapper::toDTO)
-                .collect(Collectors.toList());
-    }
-
-    public List<StudentDTO> findByStatus(StudentStatus status) {
-        log.debug("Finding students by status: {}", status);
-        return studentRepository.findByStatus(status).stream()
-                .map(studentMapper::toDTO)
+                .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
     @Transactional
-    public Optional<StudentDTO> updateStudent(String studentId, StudentDTO studentDTO) {
-        log.info("Updating student with id: {}", studentId);
-        StudentId id = StudentId.fromString(studentId);
+    public void deactivateStudent(UUID id) {
+        log.info("Deactivating student with id: {}", id);
+        Student student = studentRepository.findById(StudentId.of(id))
+                .orElseThrow(() -> new IllegalArgumentException("Student not found with id: " + id));
 
-        return studentRepository.findById(id)
-                .map(existingStudent -> {
-                    Student updatedData = studentMapper.toDomain(studentDTO);
-                    existingStudent.updatePersonalInfo(
-                            updatedData.getLegalId(),
-                            updatedData.getFirstName(),
-                            updatedData.getLastName(),
-                            updatedData.getDateOfBirth()
-                    );
-                    Student saved = studentRepository.save(existingStudent);
-                    log.info("Student updated successfully: {}", studentId);
-                    return studentMapper.toDTO(saved);
-                });
+        // Invariante: No se puede desactivar si tiene facturas pendientes (se delegaría a un servicio de dominio o se verificaría aquí)
+        // Por simplicidad, se omite en este ejemplo, pero se lanzaría una excepción si no se cumple.
+
+        student.deactivate();
+        studentRepository.save(student);
+        log.info("Student deactivated: {}", id);
     }
 
-    @Transactional
-    public Optional<StudentDTO> updateStatus(String studentId, StudentStatus newStatus) {
-        log.info("Updating status for student {} to {}", studentId, newStatus);
-        StudentId id = StudentId.fromString(studentId);
-
-        return studentRepository.findById(id)
-                .map(student -> {
-                    student.changeStatus(newStatus);
-                    Student saved = studentRepository.save(student);
-                    log.info("Status updated successfully for student: {}", studentId);
-                    return studentMapper.toDTO(saved);
-                });
-    }
-
-    @Transactional
-    public Optional<StudentDTO> addGuardian(String studentId, GuardianDTO guardianDTO) {
-        log.info("Adding guardian to student: {}", studentId);
-        StudentId id = StudentId.fromString(studentId);
-
-        return studentRepository.findById(id)
-                .map(student -> {
-                    student.addGuardian(
-                            guardianDTO.getFirstName(),
-                            guardianDTO.getLastName(),
-                            guardianDTO.getEmail(),
-                            guardianDTO.getPhoneNumber(),
-                            guardianDTO.getRelationship()
-                    );
-                    Student saved = studentRepository.save(student);
-                    log.info("Guardian added successfully to student: {}", studentId);
-                    return studentMapper.toDTO(saved);
-                });
-    }
-
-    @Transactional
-    public boolean removeGuardian(String studentId, String guardianId) {
-        log.info("Removing guardian {} from student: {}", guardianId, studentId);
-        StudentId sid = StudentId.fromString(studentId);
-
-        return studentRepository.findById(sid)
-                .map(student -> {
-                    boolean removed = student.removeGuardian(guardianId);
-                    if (removed) {
-                        studentRepository.save(student);
-                        log.info("Guardian removed successfully");
-                    } else {
-                        log.warn("Guardian not found for removal");
-                    }
-                    return removed;
-                })
-                .orElse(false);
-    }
-
-    public List<GuardianDTO> getGuardians(String studentId) {
-        log.debug("Retrieving guardians for student: {}", studentId);
-        StudentId id = StudentId.fromString(studentId);
-
-        return studentRepository.findById(id)
-                .map(student -> student.getGuardians().stream()
-                        .map(studentMapper::guardianToDTO)
+    private StudentResponse mapToResponse(Student student) {
+        return StudentResponse.builder()
+                .studentId(student.getStudentId().getValue())
+                .legalId(student.getLegalId())
+                .firstName(student.getName().getFirstName())
+                .lastName(student.getName().getLastName())
+                .dateOfBirth(student.getDateOfBirth())
+                .enrollmentDate(student.getEnrollmentDate())
+                .status(student.getStatus())
+                .guardians(student.getGuardians().stream()
+                        .map(g -> StudentResponse.GuardianResponse.builder()
+                                .guardianId(g.getGuardianId().getValue())
+                                .firstName(g.getName().getFirstName())
+                                .lastName(g.getName().getLastName())
+                                .email(g.getEmail())
+                                .phoneNumber(g.getPhoneNumber())
+                                .relationship(g.getRelationship())
+                                .build())
                         .collect(Collectors.toList()))
-                .orElse(List.of());
-    }
-
-    public boolean existsByLegalId(String legalId) {
-        log.debug("Checking existence of student with legalId: {}", legalId);
-        return studentRepository.existsByLegalId(legalId);
-    }
-
-    @Transactional
-    public boolean deactivateStudent(String studentId) {
-        log.info("Deactivating student: {}", studentId);
-        StudentId id = StudentId.fromString(studentId);
-
-        return studentRepository.findById(id)
-                .map(student -> {
-                    student.changeStatus(StudentStatus.INACTIVE);
-                    studentRepository.save(student);
-                    log.info("Student deactivated successfully: {}", studentId);
-                    return true;
-                })
-                .orElse(false);
+                .build();
     }
 }

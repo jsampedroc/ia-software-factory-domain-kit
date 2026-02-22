@@ -1,22 +1,20 @@
 package com.application.school.application.attendance;
 
+import com.application.school.application.attendance.dto.RegisterAttendanceCommand;
+import com.application.school.application.attendance.dto.AttendanceResponse;
 import com.application.school.domain.attendance.model.AttendanceRecord;
 import com.application.school.domain.attendance.model.AttendanceRecordId;
-import com.application.school.domain.attendance.model.AttendanceStatus;
 import com.application.school.domain.attendance.repository.AttendanceRepository;
 import com.application.school.domain.student.model.StudentId;
 import com.application.school.domain.student.repository.StudentRepository;
-import com.application.school.application.dtos.AttendanceRecordDTO;
-import com.application.school.application.mappers.AttendanceMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,93 +24,123 @@ public class AttendanceService {
 
     private final AttendanceRepository attendanceRepository;
     private final StudentRepository studentRepository;
-    private final AttendanceMapper attendanceMapper;
 
     @Transactional
-    public AttendanceRecordDTO registerCheckIn(StudentId studentId, LocalDate date, LocalDateTime checkInTime) {
-        log.info("Registering check-in for student {} on date {}", studentId, date);
+    public AttendanceResponse registerAttendance(RegisterAttendanceCommand command) {
+        log.info("Registering attendance for studentId: {} on date: {}", command.getStudentId(), command.getDate());
 
-        var student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new IllegalArgumentException("Student not found with id: " + studentId));
-        if (!student.isActive()) {
-            throw new IllegalStateException("Cannot register attendance for inactive student: " + studentId);
+        // Validar que el estudiante exista
+        StudentId studentId = new StudentId(command.getStudentId());
+        studentRepository.findById(studentId)
+                .orElseThrow(() -> new IllegalArgumentException("Student not found with id: " + command.getStudentId()));
+
+        // Verificar que no exista ya un registro para el mismo estudiante y fecha
+        LocalDate attendanceDate = command.getDate();
+        boolean existingRecord = attendanceRepository.existsByStudentIdAndDate(studentId, attendanceDate);
+        if (existingRecord) {
+            throw new IllegalStateException("Attendance record already exists for student " + command.getStudentId() + " on date " + attendanceDate);
         }
 
-        Optional<AttendanceRecord> existingRecord = attendanceRepository.findByStudentIdAndDate(studentId, date);
-        if (existingRecord.isPresent()) {
-            throw new IllegalStateException("Attendance record already exists for student " + studentId + " on date " + date);
-        }
-
-        AttendanceRecord newRecord = AttendanceRecord.builder()
-                .recordId(AttendanceRecordId.generate())
+        // Crear el agregado AttendanceRecord
+        AttendanceRecordId recordId = new AttendanceRecordId(UUID.randomUUID());
+        AttendanceRecord attendanceRecord = AttendanceRecord.builder()
+                .recordId(recordId)
                 .studentId(studentId)
-                .date(date)
-                .checkInTime(checkInTime)
-                .status(AttendanceStatus.PRESENT)
+                .date(attendanceDate)
+                .checkInTime(command.getCheckInTime())
+                .checkOutTime(command.getCheckOutTime())
+                .status(command.getStatus())
                 .build();
 
-        AttendanceRecord savedRecord = attendanceRepository.save(newRecord);
-        log.debug("Check-in registered successfully with recordId: {}", savedRecord.getRecordId());
-        return attendanceMapper.toDTO(savedRecord);
-    }
+        // Validar reglas de negocio internas del agregado (ej: checkOut no antes de checkIn)
+        attendanceRecord.validate();
 
-    @Transactional
-    public AttendanceRecordDTO registerCheckOut(StudentId studentId, LocalDate date, LocalDateTime checkOutTime) {
-        log.info("Registering check-out for student {} on date {}", studentId, date);
+        // Persistir
+        AttendanceRecord savedRecord = attendanceRepository.save(attendanceRecord);
+        log.info("Attendance record saved with id: {}", savedRecord.getRecordId().getValue());
 
-        AttendanceRecord record = attendanceRepository.findByStudentIdAndDate(studentId, date)
-                .orElseThrow(() -> new IllegalArgumentException("No attendance record found for student " + studentId + " on date " + date));
-
-        if (record.getCheckOutTime() != null) {
-            throw new IllegalStateException("Check-out already registered for student " + studentId + " on date " + date);
-        }
-        if (checkOutTime.isBefore(record.getCheckInTime())) {
-            throw new IllegalArgumentException("Check-out time cannot be before check-in time");
-        }
-
-        record.setCheckOutTime(checkOutTime);
-        AttendanceRecord updatedRecord = attendanceRepository.save(record);
-        log.debug("Check-out registered successfully for recordId: {}", updatedRecord.getRecordId());
-        return attendanceMapper.toDTO(updatedRecord);
+        // Retornar respuesta
+        return AttendanceResponse.builder()
+                .recordId(savedRecord.getRecordId().getValue())
+                .studentId(savedRecord.getStudentId().getValue())
+                .date(savedRecord.getDate())
+                .checkInTime(savedRecord.getCheckInTime())
+                .checkOutTime(savedRecord.getCheckOutTime())
+                .status(savedRecord.getStatus())
+                .build();
     }
 
     @Transactional(readOnly = true)
-    public List<AttendanceRecordDTO> getAttendanceByStudent(StudentId studentId, LocalDate startDate, LocalDate endDate) {
-        log.info("Fetching attendance for student {} between {} and {}", studentId, startDate, endDate);
-        List<AttendanceRecord> records = attendanceRepository.findByStudentIdAndDateRange(studentId, startDate, endDate);
+    public List<AttendanceResponse> getAttendanceByStudent(UUID studentId) {
+        log.info("Fetching attendance records for studentId: {}", studentId);
+        StudentId domainStudentId = new StudentId(studentId);
+
+        List<AttendanceRecord> records = attendanceRepository.findByStudentId(domainStudentId);
         return records.stream()
-                .map(attendanceMapper::toDTO)
+                .map(record -> AttendanceResponse.builder()
+                        .recordId(record.getRecordId().getValue())
+                        .studentId(record.getStudentId().getValue())
+                        .date(record.getDate())
+                        .checkInTime(record.getCheckInTime())
+                        .checkOutTime(record.getCheckOutTime())
+                        .status(record.getStatus())
+                        .build())
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public List<AttendanceRecordDTO> getAttendanceByDate(LocalDate date) {
-        log.info("Fetching attendance for date {}", date);
+    public List<AttendanceResponse> getAttendanceByDate(LocalDate date) {
+        log.info("Fetching attendance records for date: {}", date);
         List<AttendanceRecord> records = attendanceRepository.findByDate(date);
         return records.stream()
-                .map(attendanceMapper::toDTO)
+                .map(record -> AttendanceResponse.builder()
+                        .recordId(record.getRecordId().getValue())
+                        .studentId(record.getStudentId().getValue())
+                        .date(record.getDate())
+                        .checkInTime(record.getCheckInTime())
+                        .checkOutTime(record.getCheckOutTime())
+                        .status(record.getStatus())
+                        .build())
                 .collect(Collectors.toList());
     }
 
     @Transactional
-    public AttendanceRecordDTO updateAttendanceStatus(AttendanceRecordId recordId, AttendanceStatus newStatus) {
-        log.info("Updating status for record {} to {}", recordId, newStatus);
-        AttendanceRecord record = attendanceRepository.findById(recordId)
+    public AttendanceResponse updateCheckOut(UUID recordId, RegisterAttendanceCommand command) {
+        log.info("Updating checkOut for attendance recordId: {}", recordId);
+        AttendanceRecordId domainRecordId = new AttendanceRecordId(recordId);
+
+        AttendanceRecord record = attendanceRepository.findById(domainRecordId)
                 .orElseThrow(() -> new IllegalArgumentException("Attendance record not found with id: " + recordId));
 
-        record.setStatus(newStatus);
+        // Actualizar checkOut
+        record.updateCheckOut(command.getCheckOutTime());
         AttendanceRecord updatedRecord = attendanceRepository.save(record);
-        log.debug("Status updated successfully for recordId: {}", updatedRecord.getRecordId());
-        return attendanceMapper.toDTO(updatedRecord);
+
+        return AttendanceResponse.builder()
+                .recordId(updatedRecord.getRecordId().getValue())
+                .studentId(updatedRecord.getStudentId().getValue())
+                .date(updatedRecord.getDate())
+                .checkInTime(updatedRecord.getCheckInTime())
+                .checkOutTime(updatedRecord.getCheckOutTime())
+                .status(updatedRecord.getStatus())
+                .build();
     }
 
-    @Transactional
-    public void deleteAttendanceRecord(AttendanceRecordId recordId) {
-        log.info("Deleting attendance record {}", recordId);
-        if (!attendanceRepository.existsById(recordId)) {
-            throw new IllegalArgumentException("Attendance record not found with id: " + recordId);
+    @Transactional(readOnly = true)
+    public Double calculateMonthlyAttendanceRate(UUID studentId, int year, int month) {
+        log.info("Calculating monthly attendance rate for studentId: {}, year: {}, month: {}", studentId, year, month);
+        StudentId domainStudentId = new StudentId(studentId);
+
+        List<AttendanceRecord> monthlyRecords = attendanceRepository.findByStudentIdAndMonth(domainStudentId, year, month);
+        if (monthlyRecords.isEmpty()) {
+            return 0.0;
         }
-        attendanceRepository.deleteById(recordId);
-        log.debug("Attendance record deleted successfully");
+
+        long totalDays = monthlyRecords.size();
+        long presentDays = monthlyRecords.stream()
+                .filter(record -> record.getStatus().isPresent())
+                .count();
+
+        return (presentDays * 100.0) / totalDays;
     }
 }

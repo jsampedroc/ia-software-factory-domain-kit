@@ -9,8 +9,9 @@ import java.util.Optional;
 public interface GradeRepository {
     Grade save(Grade grade);
     Optional<Grade> findById(GradeId gradeId);
+    Optional<Grade> findByName(String name);
     List<Grade> findAll();
     void deleteById(GradeId gradeId);
     boolean existsById(GradeId gradeId);
-    Optional<Grade> findByName(String name);
+    boolean existsByName(String name);
 }

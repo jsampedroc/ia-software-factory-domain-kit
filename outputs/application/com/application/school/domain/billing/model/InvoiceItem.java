@@ -1,12 +1,12 @@
 package com.application.school.domain.billing.model;
 
-import com.application.school.domain.shared.Money;
+import com.application.school.domain.shared.valueobject.Money;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -14,19 +14,30 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class InvoiceItem {
     private InvoiceItemId id;
-    private InvoiceConcept concept;
     private String description;
     private Integer quantity;
     private Money unitPrice;
     private Money subtotal;
-    private LocalDateTime createdAt;
 
     public void calculateSubtotal() {
         if (quantity == null || unitPrice == null) {
             this.subtotal = null;
             return;
         }
-        // Asumiendo que Money tiene un método multiply
-        this.subtotal = unitPrice.multiply(quantity);
+        this.subtotal = Money.builder()
+                .amount(unitPrice.getAmount().multiply(new java.math.BigDecimal(quantity)))
+                .currency(unitPrice.getCurrency())
+                .build();
+    }
+
+    public static InvoiceItem create(String description, Integer quantity, Money unitPrice) {
+        InvoiceItem item = InvoiceItem.builder()
+                .id(new InvoiceItemId(UUID.randomUUID()))
+                .description(description)
+                .quantity(quantity)
+                .unitPrice(unitPrice)
+                .build();
+        item.calculateSubtotal();
+        return item;
     }
 }

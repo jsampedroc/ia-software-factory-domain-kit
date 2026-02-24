@@ -2,54 +2,84 @@
 import os
 from ai.llm.llm_config import build_llm_client, get_model_config
 from ai.llm.grounding import build_grounded_prompt
-from ai.agents.factory import AgentFactory
-from ai.tasks.definitions import TASKS
+
+# Modular Agent and Task imports
+import ai.agents as agents
+import ai.tasks as tasks
 
 class TaskExecutor:
     def __init__(self):
         """
-        Inicializa el cliente de IA una sola vez para reutilizar la conexión.
+        Initializes the AI client once to reuse the connection.
+        In an industrial factory, connection pooling is vital for performance.
         """
         self.client = build_llm_client()
 
     def run_task(self, task_key, context_data="", agent_override=None, **kwargs):
         """
-        Ejecuta una tarea del manual de procedimientos resolviendo el agente y 
-        formateando la descripción dinámicamente.
+        Executes a task by dynamically resolving the agent and the task 
+        specification from individual files in ai/agents/ and ai/tasks/.
         """
-        if task_key not in TASKS:
-            raise ValueError(f"❌ La tarea '{task_key}' no existe en ai/tasks/definitions.py")
-
-        task_def = TASKS[task_key]
+        # Late import to prevent circular dependency issues
+        import ai.tasks as tasks
         
-        # 1. RESOLUCIÓN DE AGENTE
+        # 1. TASK MAPPING (Resolves logic from ai/tasks/ folder)
+        task_map = {
+            "model_domain": tasks.build_domain_model_task,
+            "create_inventory": tasks.build_architecture_task,
+            "write_code": tasks.build_code_generation_task,
+            "write_tests": tasks.build_write_tests_task,
+            "audit_code": tasks.build_audit_code_task,
+            "heal_code": tasks.build_heal_code_task,
+            "project_debug": tasks.build_project_debug_task,
+            "create_skeleton": tasks.build_create_skeleton_task
+        }
+
+        if task_key not in task_map:
+            raise ValueError(f"❌ Task '{task_key}' is not mapped in TaskExecutor.")
+
+        # 2. ARGUMENT PREPARATION
+        # Merge context data and dynamic kwargs (base_package, idea, etc.)
+        task_args = kwargs.copy()
+        task_args['context_data'] = context_data
+
+        # 3. BUILD TASK DEFINITION
+        task_def = task_map[task_key](**task_args)
+        
+        # 4. AGENT RESOLUTION
+        # Use override if provided; otherwise, use the default agent assigned to the task
         role_key = agent_override if agent_override else task_def['agent']
-        agent_config = AgentFactory.build_agent(role_key)
         
-        # 2. FORMATEO DINÁMICO (Remplaza {idea}, {base_package}, etc.)
-        try:
-            task_prompt = task_def['description'].format(**kwargs)
-        except KeyError as e:
-            print(f"⚠️ Warning: Falta el argumento {e} para la tarea '{task_key}'")
-            task_prompt = task_def['description']
-
-        # 3. CONFIGURACIÓN DEL MODELO (Tiers: smart vs cheap)
+        agent_map = {
+            "domain_reasoner": agents.build_domain_reasoner,
+            "architect": agents.build_software_architect,
+            "backend_builder": agents.build_backend_builder,
+            "qa_agent": agents.build_qa_agent,
+            "sre_agent": agents.build_sre_agent,
+            "frontend_builder": agents.build_frontend_builder
+        }
+        
+        if role_key not in agent_map:
+            raise ValueError(f"❌ Agent '{role_key}' is not defined in ai.agents.")
+            
+        agent_config = agent_map[role_key]()
+        
+        # 5. SYSTEM RULES CONSOLIDATION
+        system_rules = agent_config.get('system') or f"You are a {agent_config['role']}. {agent_config['backstory']}"
+        
+        # 6. LLM CONFIGURATION (Smart vs. Cheap)
         model_params = get_model_config(agent_config["tier"])
         
-        # 4. CONSOLIDACIÓN DE REGLAS (System Rules)
-        # CORRECCIÓN: Usamos directamente la llave 'system' definida en definitions.py
-        system_rules = agent_config['system']
-        
-        # 5. CONSTRUCCIÓN DEL PROMPT BLINDADO (Grounding)
+        # 7. GROUNDED PROMPT CONSTRUCTION
         full_prompt = build_grounded_prompt(
             system_rules=system_rules,
             context_data=context_data,
-            task_prompt=task_prompt
+            task_prompt=task_def['description']
         )
 
-        # 6. LLAMADA A LA API
+        # 8. API INVOCATION
         try:
-            print(f"   [LLM] Ejecutando '{task_key}' con agente '{role_key}' ({agent_config['tier']})...")
+            print(f"   [LLM] Running '{task_key}' via '{role_key}' ({agent_config['tier']})...")
             response = self.client.chat.completions.create(
                 messages=[{"role": "user", "content": full_prompt}],
                 **model_params
@@ -57,9 +87,9 @@ class TaskExecutor:
             
             content = response.choices[0].message.content
             if not content:
-                raise ValueError("La IA devolvió una respuesta vacía.")
+                raise ValueError("The AI returned an empty response.")
                 
             return content
 
         except Exception as e:
-            return f"❌ Error en TaskExecutor: {str(e)}"
+            return f"❌ TaskExecutor Error: {str(e)}"

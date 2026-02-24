@@ -1,242 +1,414 @@
 {
-    "domain_model": "{\n  \"domainKit\": {\n    \"name\": \"School Management\",\n    \"packageBase\": \"com.application.school\",\n    \"coreDomains\": [\n      {\n        \"name\": \"Student\",\n        \"description\": \"Gestiona la informaci\u00f3n acad\u00e9mica y personal del alumno.\",\n        \"entities\": [\n          {\n            \"name\": \"Student\",\n            \"attributes\": [\"studentId\", \"legalId\", \"firstName\", \"lastName\", \"dateOfBirth\", \"enrollmentDate\", \"status (ACTIVE, INACTIVE, GRADUATED)\"],\n            \"businessRules\": [\"El studentId se genera autom\u00e1ticamente al matricularse.\", \"Un alumno no puede tener m\u00e1s de un registro activo con el mismo legalId.\"]\n          },\n          {\n            \"name\": \"Guardian\",\n            \"attributes\": [\"guardianId\", \"firstName\", \"lastName\", \"email\", \"phoneNumber\", \"relationship\"],\n            \"businessRules\": [\"Un alumno debe tener al menos un tutor/contacto registrado.\"]\n          }\n        ],\n        \"relationships\": [\"Student (1) --- (*) Guardian (Muchos a Muchos, con atributo de relaci\u00f3n)\"]\n      },\n      {\n        \"name\": \"Attendance\",\n        \"description\": \"Control de la asistencia diaria de los alumnos a clases.\",\n        \"entities\": [\n          {\n            \"name\": \"AttendanceRecord\",\n            \"attributes\": [\"recordId\", \"date\", \"checkInTime\", \"checkOutTime\", \"status (PRESENT, ABSENT, LATE, EXCUSED)\"],\n            \"businessRules\": [\"No se puede registrar salida antes de la entrada.\", \"Solo se puede registrar una entrada y una salida por alumno y por d\u00eda.\"]\n          }\n        ],\n        \"relationships\": [\"Student (1) --- (*) AttendanceRecord\"]\n      },\n      {\n        \"name\": \"Billing\",\n        \"description\": \"Gesti\u00f3n de la facturaci\u00f3n mensual por conceptos de matr\u00edcula y pensi\u00f3n.\",\n        \"entities\": [\n          {\n            \"name\": \"Invoice\",\n            \"attributes\": [\"invoiceId\", \"issueDate\", \"dueDate\", \"monthYear\", \"totalAmount\", \"status (PENDING, PAID, OVERDUE, CANCELLED)\", \"paymentDate\"],\n            \"businessRules\": [\"El totalAmount es la suma de los conceptos (InvoiceItem).\", \"Solo se puede generar una factura por alumno y por mes (monthYear).\"]\n          },\n          {\n            \"name\": \"InvoiceItem\",\n            \"attributes\": [\"itemId\", \"concept (TUITION, MONTHLY_FEE, EXTRA_ACTIVITY, OTHER)\", \"description\", \"quantity\", \"unitPrice\", \"subtotal\"],\n            \"businessRules\": [\"El subtotal se calcula como quantity * unitPrice.\"]\n          },\n          {\n            \"name\": \"Payment\",\n            \"attributes\": [\"paymentId\", \"amount\", \"paymentMethod\", \"transactionReference\", \"date\"],\n            \"businessRules\": [\"El monto del pago no puede ser negativo.\"]\n          }\n        ],\n        \"relationships\": [\n          \"Student (1) --- (*) Invoice\",\n          \"Invoice (1) --- (*) InvoiceItem (Agregado)\",\n          \"Invoice (1) --- (*) Payment (Un pago puede abonar a m\u00faltiples facturas y viceversa, relaci\u00f3n compleja para manejar abonos parciales)\"\n        ]\n      },\n      {\n        \"name\": \"Academic\",\n        \"description\": \"Informaci\u00f3n sobre la estructura acad\u00e9mica (Grados, Secciones).\",\n        \"entities\": [\n          {\n            \"name\": \"Grade\",\n            \"attributes\": [\"gradeId\", \"name\", \"level\"],\n            \"businessRules\": [\"El nombre del grado debe ser \u00fanico.\"]\n          },\n          {\n            \"name\": \"Section\",\n            \"attributes\": [\"sectionId\", \"name\", \"capacity\"],\n            \"businessRules\": [\"La capacidad no puede ser negativa.\"]\n          }\n        ],\n        \"relationships\": [\n          \"Grade (1) --- (*) Section\",\n          \"Student (1) --- (1) Section (En un per\u00edodo acad\u00e9mico dado. Para simplificar, relaci\u00f3n directa.)\"\n        ]\n      }\n    ],\n    \"sharedKernel\": {\n      \"name\": \"Shared\",\n      \"valueObjects\": [\n        {\n          \"name\": \"Money\",\n          \"attributes\": [\"amount\", \"currency\"]\n        },\n        {\n          \"name\": \"DateRange\",\n          \"attributes\": [\"startDate\", \"endDate\"]\n        },\n        {\n          \"name\": \"PersonName\",\n          \"attributes\": [\"firstName\", \"lastName\"]\n        }\n      ]\n    },\n    \"invariantsAndPolicies\": [\n      \"Un alumno inactivo no puede registrar nueva asistencia.\",\n      \"No se puede emitir una factura para un alumno inactivo.\",\n      \"El estado de una factura se actualiza autom\u00e1ticamente a PAID cuando la suma de los pagos aplicados es >= totalAmount.\",\n      \"El estado de una factura se actualiza a OVERDUE si la dueDate ha pasado y el estado es PENDING.\"\n    ]\n  }\n}",
+    "domain_model": "# Domain Kit: Sistema de Gesti\u00f3n de Red de Cl\u00ednicas Dentales\n\n## 1. Lenguaje Ubicuo (Glosario)\n\n- **Cl\u00ednica**: Establecimiento f\u00edsico donde se realizan tratamientos dentales.\n- **Paciente**: Persona que recibe atenci\u00f3n dental en la cl\u00ednica.\n- **Odont\u00f3logo**: Profesional calificado que realiza tratamientos dentales.\n- **Tratamiento**: Procedimiento dental espec\u00edfico aplicado a un paciente.\n- **Cita**: Reserva de tiempo para que un paciente sea atendido por un odont\u00f3logo.\n- **Historial M\u00e9dico**: Registro completo de la salud dental del paciente.\n- **Consultorio**: Espacio f\u00edsico dentro de la cl\u00ednica donde se atiende a pacientes.\n- **Especialidad**: \u00c1rea de especializaci\u00f3n de un odont\u00f3logo (ortodoncia, periodoncia, etc.).\n- **Factura**: Documento que detalla los servicios prestados y su costo.\n- **Plan de Tratamiento**: Secuencia planificada de procedimientos para un paciente.\n\n## 2. Entidades y Atributos\n\n### Paciente (Patient)\n- patientId: UUID\n- dni: String\n- nombre: String\n- apellido: String\n- fechaNacimiento: LocalDate\n- telefono: String\n- email: String\n- direccion: String\n- fechaRegistro: LocalDateTime\n- activo: Boolean\n\n### Odont\u00f3logo (Dentist)\n- dentistId: UUID\n- licenciaMedica: String\n- nombre: String\n- apellido: String\n- telefono: String\n- email: String\n- fechaContratacion: LocalDate\n- activo: Boolean\n\n### Cl\u00ednica (Clinic)\n- clinicId: UUID\n- codigo: String\n- nombre: String\n- direccion: String\n- telefono: String\n- email: String\n- horarioApertura: LocalTime\n- horarioCierre: LocalTime\n- activa: Boolean\n\n### Cita (Appointment)\n- appointmentId: UUID\n- fechaHora: LocalDateTime\n- duracionMinutos: Integer\n- estado: AppointmentStatus (PROGRAMADA, CONFIRMADA, EN_CURSO, COMPLETADA, CANCELADA)\n- motivo: String\n- notas: String\n\n### Tratamiento (Treatment)\n- treatmentId: UUID\n- codigo: String\n- nombre: String\n- descripcion: String\n- duracionEstimadaMinutos: Integer\n- costoBase: BigDecimal\n- activo: Boolean\n\n### Historial M\u00e9dico (MedicalHistory)\n- historyId: UUID\n- fechaCreacion: LocalDateTime\n- ultimaActualizacion: LocalDateTime\n- alergias: String\n- condicionesMedicas: String\n- medicamentos: String\n- observacionesGenerales: String\n\n### Consultorio (ConsultingRoom)\n- roomId: UUID\n- numero: String\n- nombre: String\n- equipamiento: String\n- disponible: Boolean\n\n### Especialidad (Specialty)\n- specialtyId: UUID\n- codigo: String\n- nombre: String\n- descripcion: String\n\n### Factura (Invoice)\n- invoiceId: UUID\n- numeroFactura: String\n- fechaEmision: LocalDate\n- fechaVencimiento: LocalDate\n- subtotal: BigDecimal\n- impuestos: BigDecimal\n- total: BigDecimal\n- estado: InvoiceStatus (PENDIENTE, PAGADA, VENCIDA, CANCELADA)\n- metodoPago: PaymentMethod (EFECTIVO, TARJETA, TRANSFERENCIA)\n\n### Plan de Tratamiento (TreatmentPlan)\n- planId: UUID\n- fechaCreacion: LocalDate\n- fechaInicio: LocalDate\n- fechaFinEstimada: LocalDate\n- estado: PlanStatus (BORRADOR, ACTIVO, COMPLETADO, CANCELADO)\n- costoTotalEstimado: BigDecimal\n\n## 3. Relaciones\n\n### Relaciones 1:N\n- **Cl\u00ednica** (1) \u2192 **Consultorios** (N)\n- **Cl\u00ednica** (1) \u2192 **Odont\u00f3logos** (N) - asignaci\u00f3n laboral\n- **Paciente** (1) \u2192 **Historial M\u00e9dico** (1) - relaci\u00f3n uno a uno\n- **Paciente** (1) \u2192 **Citas** (N)\n- **Paciente** (1) \u2192 **Facturas** (N)\n- **Paciente** (1) \u2192 **Planes de Tratamiento** (N)\n- **Odont\u00f3logo** (1) \u2192 **Citas** (N)\n- **Odont\u00f3logo** (1) \u2192 **Especialidades** (N) - mediante tabla intermedia\n- **Plan de Tratamiento** (1) \u2192 **Tratamientos** (N) - mediante tabla intermedia\n- **Cita** (1) \u2192 **Tratamientos** (N) - mediante tabla intermedia\n\n### Relaciones N:N\n- **Odont\u00f3logos** (N) \u2194 **Especialidades** (N) - tabla intermedia: DentistSpecialty\n- **Citas** (N) \u2194 **Tratamientos** (N) - tabla intermedia: AppointmentTreatment\n- **Planes de Tratamiento** (N) \u2194 **Tratamientos** (N) - tabla intermedia: PlanTreatment\n- **Odont\u00f3logos** (N) \u2194 **Cl\u00ednicas** (N) - para horarios rotativos - tabla intermedia: DentistClinicSchedule\n\n## 4. Reglas de Negocio Cr\u00edticas\n\n### Gesti\u00f3n de Citas\n1. Una cita debe programarse con al menos 24 horas de anticipaci\u00f3n.\n2. Un odont\u00f3logo no puede tener m\u00e1s de una cita simult\u00e1nea.\n3. Un paciente no puede tener m\u00e1s de 3 citas pendientes al mismo tiempo.\n4. Las citas canceladas con menos de 24 horas de anticipaci\u00f3n generan un cargo del 20%.\n5. La duraci\u00f3n m\u00ednima de una cita es de 15 minutos y m\u00e1xima de 180 minutos.\n\n### Gesti\u00f3n de Pacientes\n1. Todo paciente debe tener un historial m\u00e9dico creado en su primer registro.\n2. Los datos m\u00e9dicos sensibles solo son accesibles para odont\u00f3logos asignados.\n3. Un paciente inactivo por m\u00e1s de 2 a\u00f1os debe ser archivado autom\u00e1ticamente.\n4. Se requiere consentimiento informado para tratamientos complejos.\n\n### Gesti\u00f3n de Odont\u00f3logos\n1. La licencia m\u00e9dica debe estar vigente para poder atender pacientes.\n2. Un odont\u00f3logo solo puede atender en una cl\u00ednica a la vez.\n3. Debe haber al menos un odont\u00f3logo de guardia por cl\u00ednica durante horario laboral.\n4. Las especialidades deben estar certificadas por el colegio profesional.\n\n### Gesti\u00f3n de Tratamientos\n1. El costo de tratamiento no puede modificarse una vez iniciado el plan.\n2. Tratamientos complejos requieren aprobaci\u00f3n de dos odont\u00f3logos especialistas.\n3. Los materiales utilizados en tratamientos deben ser registrados en lote y fecha de caducidad.\n4. Tratamientos con anestesia general requieren evaluaci\u00f3n preoperatoria.\n\n### Gesti\u00f3n Financiera\n1. Las facturas se generan autom\u00e1ticamente al completar cada tratamiento.\n2. Descuentos superiores al 15% requieren autorizaci\u00f3n del gerente de cl\u00ednica.\n3. Pacientes con facturas vencidas por m\u00e1s de 60 d\u00edas no pueden agendar nuevas citas.\n4. Los pagos se aplican en orden cronol\u00f3gico de facturas vencidas.\n\n### Seguridad y Compliance\n1. Registro de acceso a historiales m\u00e9dicos debe ser auditado.\n2. Datos personales deben encriptarse seg\u00fan regulaciones de protecci\u00f3n de datos.\n3. Backup autom\u00e1tico de historiales m\u00e9dicos cada 24 horas.\n4. Notificaci\u00f3n obligatoria en casos de alergias o condiciones cr\u00edticas.\n\n### Operaciones de Cl\u00ednica\n1. Consultorios deben desinfectarse entre cada paciente (tiempo m\u00ednimo: 15 minutos).\n2. Inventario de materiales cr\u00edticos debe mantenerse sobre el 20% de capacidad.\n3. Incidentes m\u00e9dicos deben reportarse dentro de las primeras 2 horas.\n4. Calendario de mantenimiento de equipos debe cumplirse estrictamente.",
     "architecture": {
         "file_inventory": [
             {
-                "path": "com/application/school/domain/shared/Money.java",
-                "description": "Value Object para manejar cantidades monetarias con su moneda."
+                "path": "backend/src/main/java/com/application/domain/model/Clinic.java",
+                "description": "Entidad de dominio para Cl\u00ednica"
             },
             {
-                "path": "com/application/school/domain/shared/DateRange.java",
-                "description": "Value Object que representa un rango de fechas con inicio y fin."
+                "path": "backend/src/main/java/com/application/domain/model/Patient.java",
+                "description": "Entidad de dominio para Paciente"
             },
             {
-                "path": "com/application/school/domain/shared/PersonName.java",
-                "description": "Value Object para encapsular el nombre y apellido de una persona."
+                "path": "backend/src/main/java/com/application/domain/model/Dentist.java",
+                "description": "Entidad de dominio para Odont\u00f3logo"
             },
             {
-                "path": "com/application/school/domain/student/model/Student.java",
-                "description": "Entidad ra\u00edz del agregado Student. Gestiona la informaci\u00f3n acad\u00e9mica y personal del alumno."
+                "path": "backend/src/main/java/com/application/domain/model/Appointment.java",
+                "description": "Entidad de dominio para Cita"
             },
             {
-                "path": "com/application/school/domain/student/model/StudentId.java",
-                "description": "Value Object que representa el identificador \u00fanico de un Student."
+                "path": "backend/src/main/java/com/application/domain/model/Treatment.java",
+                "description": "Entidad de dominio para Tratamiento"
             },
             {
-                "path": "com/application/school/domain/student/model/StudentStatus.java",
-                "description": "Enum que define los posibles estados de un Student: ACTIVE, INACTIVE, GRADUATED."
+                "path": "backend/src/main/java/com/application/domain/model/MedicalHistory.java",
+                "description": "Entidad de dominio para Historial M\u00e9dico"
             },
             {
-                "path": "com/application/school/domain/student/model/Guardian.java",
-                "description": "Entidad que representa al tutor o contacto de un Student."
+                "path": "backend/src/main/java/com/application/domain/model/ConsultingRoom.java",
+                "description": "Entidad de dominio para Consultorio"
             },
             {
-                "path": "com/application/school/domain/student/model/GuardianId.java",
-                "description": "Value Object que representa el identificador \u00fanico de un Guardian."
+                "path": "backend/src/main/java/com/application/domain/model/Specialty.java",
+                "description": "Entidad de dominio para Especialidad"
             },
             {
-                "path": "com/application/school/domain/student/repository/StudentRepository.java",
-                "description": "Interfaz del puerto del repositorio para la entidad Student."
+                "path": "backend/src/main/java/com/application/domain/model/Invoice.java",
+                "description": "Entidad de dominio para Factura"
             },
             {
-                "path": "com/application/school/domain/attendance/model/AttendanceRecord.java",
-                "description": "Entidad ra\u00edz del agregado AttendanceRecord. Controla la asistencia diaria de un alumno."
+                "path": "backend/src/main/java/com/application/domain/model/TreatmentPlan.java",
+                "description": "Entidad de dominio para Plan de Tratamiento"
             },
             {
-                "path": "com/application/school/domain/attendance/model/AttendanceRecordId.java",
-                "description": "Value Object que representa el identificador \u00fanico de un AttendanceRecord."
+                "path": "backend/src/main/java/com/application/domain/valueobject/ClinicId.java",
+                "description": "Value Object para ID de Cl\u00ednica"
             },
             {
-                "path": "com/application/school/domain/attendance/model/AttendanceStatus.java",
-                "description": "Enum que define los posibles estados de asistencia: PRESENT, ABSENT, LATE, EXCUSED."
+                "path": "backend/src/main/java/com/application/domain/valueobject/PatientId.java",
+                "description": "Value Object para ID de Paciente"
             },
             {
-                "path": "com/application/school/domain/attendance/repository/AttendanceRepository.java",
-                "description": "Interfaz del puerto del repositorio para la entidad AttendanceRecord."
+                "path": "backend/src/main/java/com/application/domain/valueobject/DentistId.java",
+                "description": "Value Object para ID de Odont\u00f3logo"
             },
             {
-                "path": "com/application/school/domain/billing/model/Invoice.java",
-                "description": "Entidad ra\u00edz del agregado Invoice. Gestiona la facturaci\u00f3n mensual de un Student."
+                "path": "backend/src/main/java/com/application/domain/valueobject/AppointmentId.java",
+                "description": "Value Object para ID de Cita"
             },
             {
-                "path": "com/application/school/domain/billing/model/InvoiceId.java",
-                "description": "Value Object que representa el identificador \u00fanico de una Invoice."
+                "path": "backend/src/main/java/com/application/domain/valueobject/TreatmentId.java",
+                "description": "Value Object para ID de Tratamiento"
             },
             {
-                "path": "com/application/school/domain/billing/model/InvoiceStatus.java",
-                "description": "Enum que define los posibles estados de una factura: PENDING, PAID, OVERDUE, CANCELLED."
+                "path": "backend/src/main/java/com/application/domain/valueobject/MedicalHistoryId.java",
+                "description": "Value Object para ID de Historial M\u00e9dico"
             },
             {
-                "path": "com/application/school/domain/billing/model/InvoiceItem.java",
-                "description": "Entidad que representa un concepto o \u00edtem dentro de una Invoice."
+                "path": "backend/src/main/java/com/application/domain/valueobject/ConsultingRoomId.java",
+                "description": "Value Object para ID de Consultorio"
             },
             {
-                "path": "com/application/school/domain/billing/model/InvoiceItemId.java",
-                "description": "Value Object que representa el identificador \u00fanico de un InvoiceItem."
+                "path": "backend/src/main/java/com/application/domain/valueobject/SpecialtyId.java",
+                "description": "Value Object para ID de Especialidad"
             },
             {
-                "path": "com/application/school/domain/billing/model/InvoiceConcept.java",
-                "description": "Enum que define los posibles conceptos de facturaci\u00f3n: TUITION, MONTHLY_FEE, EXTRA_ACTIVITY, OTHER."
+                "path": "backend/src/main/java/com/application/domain/valueobject/InvoiceId.java",
+                "description": "Value Object para ID de Factura"
             },
             {
-                "path": "com/application/school/domain/billing/model/Payment.java",
-                "description": "Entidad que representa un pago realizado."
+                "path": "backend/src/main/java/com/application/domain/valueobject/TreatmentPlanId.java",
+                "description": "Value Object para ID de Plan de Tratamiento"
             },
             {
-                "path": "com/application/school/domain/billing/model/PaymentId.java",
-                "description": "Value Object que representa el identificador \u00fanico de un Payment."
+                "path": "backend/src/main/java/com/application/domain/valueobject/AppointmentStatus.java",
+                "description": "Value Object para Estado de Cita"
             },
             {
-                "path": "com/application/school/domain/billing/repository/InvoiceRepository.java",
-                "description": "Interfaz del puerto del repositorio para la entidad Invoice."
+                "path": "backend/src/main/java/com/application/domain/valueobject/InvoiceStatus.java",
+                "description": "Value Object para Estado de Factura"
             },
             {
-                "path": "com/application/school/domain/academic/model/Grade.java",
-                "description": "Entidad que representa un Grado acad\u00e9mico."
+                "path": "backend/src/main/java/com/application/domain/valueobject/PaymentMethod.java",
+                "description": "Value Object para M\u00e9todo de Pago"
             },
             {
-                "path": "com/application/school/domain/academic/model/GradeId.java",
-                "description": "Value Object que representa el identificador \u00fanico de un Grade."
+                "path": "backend/src/main/java/com/application/domain/valueobject/PlanStatus.java",
+                "description": "Value Object para Estado de Plan"
             },
             {
-                "path": "com/application/school/domain/academic/model/Section.java",
-                "description": "Entidad que representa una Secci\u00f3n dentro de un Grado."
+                "path": "backend/src/main/java/com/application/domain/port/ClinicRepositoryPort.java",
+                "description": "Puerto de repositorio para Cl\u00ednica"
             },
             {
-                "path": "com/application/school/domain/academic/model/SectionId.java",
-                "description": "Value Object que representa el identificador \u00fanico de una Section."
+                "path": "backend/src/main/java/com/application/domain/port/PatientRepositoryPort.java",
+                "description": "Puerto de repositorio para Paciente"
             },
             {
-                "path": "com/application/school/domain/academic/repository/GradeRepository.java",
-                "description": "Interfaz del puerto del repositorio para la entidad Grade."
+                "path": "backend/src/main/java/com/application/domain/port/DentistRepositoryPort.java",
+                "description": "Puerto de repositorio para Odont\u00f3logo"
             },
             {
-                "path": "com/application/school/application/student/StudentService.java",
-                "description": "Servicio de aplicaci\u00f3n que orquesta los casos de uso relacionados con Student."
+                "path": "backend/src/main/java/com/application/domain/port/AppointmentRepositoryPort.java",
+                "description": "Puerto de repositorio para Cita"
             },
             {
-                "path": "com/application/school/application/attendance/AttendanceService.java",
-                "description": "Servicio de aplicaci\u00f3n que orquesta los casos de uso relacionados con Attendance."
+                "path": "backend/src/main/java/com/application/domain/port/TreatmentRepositoryPort.java",
+                "description": "Puerto de repositorio para Tratamiento"
             },
             {
-                "path": "com/application/school/application/billing/BillingService.java",
-                "description": "Servicio de aplicaci\u00f3n que orquesta los casos de uso relacionados con Invoice y Payment."
+                "path": "backend/src/main/java/com/application/domain/port/MedicalHistoryRepositoryPort.java",
+                "description": "Puerto de repositorio para Historial M\u00e9dico"
             },
             {
-                "path": "com/application/school/application/academic/AcademicService.java",
-                "description": "Servicio de aplicaci\u00f3n que orquesta los casos de uso relacionados con Grade y Section."
+                "path": "backend/src/main/java/com/application/domain/port/ConsultingRoomRepositoryPort.java",
+                "description": "Puerto de repositorio para Consultorio"
             },
             {
-                "path": "com/application/school/application/dtos/StudentDTO.java",
-                "description": "DTO para la transferencia de datos de la entidad Student."
+                "path": "backend/src/main/java/com/application/domain/port/SpecialtyRepositoryPort.java",
+                "description": "Puerto de repositorio para Especialidad"
             },
             {
-                "path": "com/application/school/application/dtos/GuardianDTO.java",
-                "description": "DTO para la transferencia de datos de la entidad Guardian."
+                "path": "backend/src/main/java/com/application/domain/port/InvoiceRepositoryPort.java",
+                "description": "Puerto de repositorio para Factura"
             },
             {
-                "path": "com/application/school/application/dtos/AttendanceRecordDTO.java",
-                "description": "DTO para la transferencia de datos de la entidad AttendanceRecord."
+                "path": "backend/src/main/java/com/application/domain/port/TreatmentPlanRepositoryPort.java",
+                "description": "Puerto de repositorio para Plan de Tratamiento"
             },
             {
-                "path": "com/application/school/application/dtos/InvoiceDTO.java",
-                "description": "DTO para la transferencia de datos de la entidad Invoice."
+                "path": "backend/src/main/java/com/application/application/service/ClinicService.java",
+                "description": "Servicio de aplicaci\u00f3n para Cl\u00ednica"
             },
             {
-                "path": "com/application/school/application/dtos/InvoiceItemDTO.java",
-                "description": "DTO para la transferencia de datos de la entidad InvoiceItem."
+                "path": "backend/src/main/java/com/application/application/service/PatientService.java",
+                "description": "Servicio de aplicaci\u00f3n para Paciente"
             },
             {
-                "path": "com/application/school/application/dtos/PaymentDTO.java",
-                "description": "DTO para la transferencia de datos de la entidad Payment."
+                "path": "backend/src/main/java/com/application/application/service/DentistService.java",
+                "description": "Servicio de aplicaci\u00f3n para Odont\u00f3logo"
             },
             {
-                "path": "com/application/school/application/dtos/GradeDTO.java",
-                "description": "DTO para la transferencia de datos de la entidad Grade."
+                "path": "backend/src/main/java/com/application/application/service/AppointmentService.java",
+                "description": "Servicio de aplicaci\u00f3n para Cita"
             },
             {
-                "path": "com/application/school/application/dtos/SectionDTO.java",
-                "description": "DTO para la transferencia de datos de la entidad Section."
+                "path": "backend/src/main/java/com/application/application/service/TreatmentService.java",
+                "description": "Servicio de aplicaci\u00f3n para Tratamiento"
             },
             {
-                "path": "com/application/school/application/mappers/StudentMapper.java",
-                "description": "Interfaz MapStruct para mapear entre la entidad Student y sus DTOs."
+                "path": "backend/src/main/java/com/application/application/service/MedicalHistoryService.java",
+                "description": "Servicio de aplicaci\u00f3n para Historial M\u00e9dico"
             },
             {
-                "path": "com/application/school/application/mappers/AttendanceMapper.java",
-                "description": "Interfaz MapStruct para mapear entre la entidad AttendanceRecord y sus DTOs."
+                "path": "backend/src/main/java/com/application/application/service/ConsultingRoomService.java",
+                "description": "Servicio de aplicaci\u00f3n para Consultorio"
             },
             {
-                "path": "com/application/school/application/mappers/BillingMapper.java",
-                "description": "Interfaz MapStruct para mapear entre las entidades Invoice, InvoiceItem, Payment y sus DTOs."
+                "path": "backend/src/main/java/com/application/application/service/SpecialtyService.java",
+                "description": "Servicio de aplicaci\u00f3n para Especialidad"
             },
             {
-                "path": "com/application/school/application/mappers/AcademicMapper.java",
-                "description": "Interfaz MapStruct para mapear entre las entidades Grade, Section y sus DTOs."
+                "path": "backend/src/main/java/com/application/application/service/InvoiceService.java",
+                "description": "Servicio de aplicaci\u00f3n para Factura"
             },
             {
-                "path": "com/application/school/infrastructure/persistence/jpa/student/JpaStudentRepository.java",
-                "description": "Interfaz JPA Repository (Spring Data) para la entidad Student."
+                "path": "backend/src/main/java/com/application/application/service/TreatmentPlanService.java",
+                "description": "Servicio de aplicaci\u00f3n para Plan de Tratamiento"
             },
             {
-                "path": "com/application/school/infrastructure/persistence/jpa/student/StudentJpaRepositoryAdapter.java",
-                "description": "Adaptador que implementa el puerto StudentRepository usando JpaStudentRepository."
+                "path": "backend/src/main/java/com/application/application/dto/ClinicDTO.java",
+                "description": "DTO para Cl\u00ednica"
             },
             {
-                "path": "com/application/school/infrastructure/persistence/jpa/student/StudentJpaEntity.java",
-                "description": "Entidad JPA para persistir el agregado Student en la base de datos."
+                "path": "backend/src/main/java/com/application/application/dto/PatientDTO.java",
+                "description": "DTO para Paciente"
             },
             {
-                "path": "com/application/school/infrastructure/persistence/jpa/attendance/JpaAttendanceRepository.java",
-                "description": "Interfaz JPA Repository (Spring Data) para la entidad AttendanceRecord."
+                "path": "backend/src/main/java/com/application/application/dto/DentistDTO.java",
+                "description": "DTO para Odont\u00f3logo"
             },
             {
-                "path": "com/application/school/infrastructure/persistence/jpa/attendance/AttendanceJpaRepositoryAdapter.java",
-                "description": "Adaptador que implementa el puerto AttendanceRepository usando JpaAttendanceRepository."
+                "path": "backend/src/main/java/com/application/application/dto/AppointmentDTO.java",
+                "description": "DTO para Cita"
             },
             {
-                "path": "com/application/school/infrastructure/persistence/jpa/attendance/AttendanceJpaEntity.java",
-                "description": "Entidad JPA para persistir el agregado AttendanceRecord en la base de datos."
+                "path": "backend/src/main/java/com/application/application/dto/TreatmentDTO.java",
+                "description": "DTO para Tratamiento"
             },
             {
-                "path": "com/application/school/infrastructure/persistence/jpa/billing/JpaInvoiceRepository.java",
-                "description": "Interfaz JPA Repository (Spring Data) para la entidad Invoice."
+                "path": "backend/src/main/java/com/application/application/dto/MedicalHistoryDTO.java",
+                "description": "DTO para Historial M\u00e9dico"
             },
             {
-                "path": "com/application/school/infrastructure/persistence/jpa/billing/InvoiceJpaRepositoryAdapter.java",
-                "description": "Adaptador que implementa el puerto InvoiceRepository usando JpaInvoiceRepository."
+                "path": "backend/src/main/java/com/application/application/dto/ConsultingRoomDTO.java",
+                "description": "DTO para Consultorio"
             },
             {
-                "path": "com/application/school/infrastructure/persistence/jpa/billing/InvoiceJpaEntity.java",
-                "description": "Entidad JPA para persistir el agregado Invoice en la base de datos."
+                "path": "backend/src/main/java/com/application/application/dto/SpecialtyDTO.java",
+                "description": "DTO para Especialidad"
             },
             {
-                "path": "com/application/school/infrastructure/persistence/jpa/academic/JpaGradeRepository.java",
-                "description": "Interfaz JPA Repository (Spring Data) para la entidad Grade."
+                "path": "backend/src/main/java/com/application/application/dto/InvoiceDTO.java",
+                "description": "DTO para Factura"
             },
             {
-                "path": "com/application/school/infrastructure/persistence/jpa/academic/GradeJpaRepositoryAdapter.java",
-                "description": "Adaptador que implementa el puerto GradeRepository usando JpaGradeRepository."
+                "path": "backend/src/main/java/com/application/application/dto/TreatmentPlanDTO.java",
+                "description": "DTO para Plan de Tratamiento"
             },
             {
-                "path": "com/application/school/infrastructure/persistence/jpa/academic/GradeJpaEntity.java",
-                "description": "Entidad JPA para persistir la entidad Grade en la base de datos."
+                "path": "backend/src/main/java/com/application/infrastructure/adapter/ClinicJpaAdapter.java",
+                "description": "Adaptador JPA para Cl\u00ednica"
             },
             {
-                "path": "com/application/school/infrastructure/web/rest/StudentController.java",
-                "description": "Controlador REST que expone los endpoints para gestionar Students."
+                "path": "backend/src/main/java/com/application/infrastructure/adapter/PatientJpaAdapter.java",
+                "description": "Adaptador JPA para Paciente"
             },
             {
-                "path": "com/application/school/infrastructure/web/rest/AttendanceController.java",
-                "description": "Controlador REST que expone los endpoints para gestionar AttendanceRecords."
+                "path": "backend/src/main/java/com/application/infrastructure/adapter/DentistJpaAdapter.java",
+                "description": "Adaptador JPA para Odont\u00f3logo"
             },
             {
-                "path": "com/application/school/infrastructure/web/rest/BillingController.java",
-                "description": "Controlador REST que expone los endpoints para gestionar Invoices y Payments."
+                "path": "backend/src/main/java/com/application/infrastructure/adapter/AppointmentJpaAdapter.java",
+                "description": "Adaptador JPA para Cita"
             },
             {
-                "path": "com/application/school/infrastructure/web/rest/AcademicController.java",
-                "description": "Controlador REST que expone los endpoints para gestionar Grades y Sections."
+                "path": "backend/src/main/java/com/application/infrastructure/adapter/TreatmentJpaAdapter.java",
+                "description": "Adaptador JPA para Tratamiento"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/adapter/MedicalHistoryJpaAdapter.java",
+                "description": "Adaptador JPA para Historial M\u00e9dico"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/adapter/ConsultingRoomJpaAdapter.java",
+                "description": "Adaptador JPA para Consultorio"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/adapter/SpecialtyJpaAdapter.java",
+                "description": "Adaptador JPA para Especialidad"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/adapter/InvoiceJpaAdapter.java",
+                "description": "Adaptador JPA para Factura"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/adapter/TreatmentPlanJpaAdapter.java",
+                "description": "Adaptador JPA para Plan de Tratamiento"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/entity/ClinicEntity.java",
+                "description": "Entidad JPA para Cl\u00ednica"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/entity/PatientEntity.java",
+                "description": "Entidad JPA para Paciente"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/entity/DentistEntity.java",
+                "description": "Entidad JPA para Odont\u00f3logo"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/entity/AppointmentEntity.java",
+                "description": "Entidad JPA para Cita"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/entity/TreatmentEntity.java",
+                "description": "Entidad JPA para Tratamiento"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/entity/MedicalHistoryEntity.java",
+                "description": "Entidad JPA para Historial M\u00e9dico"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/entity/ConsultingRoomEntity.java",
+                "description": "Entidad JPA para Consultorio"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/entity/SpecialtyEntity.java",
+                "description": "Entidad JPA para Especialidad"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/entity/InvoiceEntity.java",
+                "description": "Entidad JPA para Factura"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/entity/TreatmentPlanEntity.java",
+                "description": "Entidad JPA para Plan de Tratamiento"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/entity/DentistSpecialtyEntity.java",
+                "description": "Entidad JPA para relaci\u00f3n Odont\u00f3logo-Especialidad"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/entity/AppointmentTreatmentEntity.java",
+                "description": "Entidad JPA para relaci\u00f3n Cita-Tratamiento"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/entity/PlanTreatmentEntity.java",
+                "description": "Entidad JPA para relaci\u00f3n Plan-Tratamiento"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/entity/DentistClinicScheduleEntity.java",
+                "description": "Entidad JPA para horarios Odont\u00f3logo-Cl\u00ednica"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/repository/ClinicJpaRepository.java",
+                "description": "Repositorio JPA para Cl\u00ednica"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/repository/PatientJpaRepository.java",
+                "description": "Repositorio JPA para Paciente"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/repository/DentistJpaRepository.java",
+                "description": "Repositorio JPA para Odont\u00f3logo"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/repository/AppointmentJpaRepository.java",
+                "description": "Repositorio JPA para Cita"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/repository/TreatmentJpaRepository.java",
+                "description": "Repositorio JPA para Tratamiento"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/repository/MedicalHistoryJpaRepository.java",
+                "description": "Repositorio JPA para Historial M\u00e9dico"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/repository/ConsultingRoomJpaRepository.java",
+                "description": "Repositorio JPA para Consultorio"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/repository/SpecialtyJpaRepository.java",
+                "description": "Repositorio JPA para Especialidad"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/repository/InvoiceJpaRepository.java",
+                "description": "Repositorio JPA para Factura"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/repository/TreatmentPlanJpaRepository.java",
+                "description": "Repositorio JPA para Plan de Tratamiento"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/repository/DentistSpecialtyJpaRepository.java",
+                "description": "Repositorio JPA para relaci\u00f3n Odont\u00f3logo-Especialidad"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/repository/AppointmentTreatmentJpaRepository.java",
+                "description": "Repositorio JPA para relaci\u00f3n Cita-Tratamiento"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/repository/PlanTreatmentJpaRepository.java",
+                "description": "Repositorio JPA para relaci\u00f3n Plan-Tratamiento"
+            },
+            {
+                "path": "backend/src/main/java/com/application/infrastructure/repository/DentistClinicScheduleJpaRepository.java",
+                "description": "Repositorio JPA para horarios Odont\u00f3logo-Cl\u00ednica"
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaceadapter/controller/ClinicController.java",
+                "description": "Controlador REST para Cl\u00ednica"
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaceadapter/controller/PatientController.java",
+                "description": "Controlador REST para Paciente"
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaceadapter/controller/DentistController.java",
+                "description": "Controlador REST para Odont\u00f3logo"
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaceadapter/controller/AppointmentController.java",
+                "description": "Controlador REST para Cita"
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaceadapter/controller/TreatmentController.java",
+                "description": "Controlador REST para Tratamiento"
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaceadapter/controller/MedicalHistoryController.java",
+                "description": "Controlador REST para Historial M\u00e9dico"
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaceadapter/controller/ConsultingRoomController.java",
+                "description": "Controlador REST para Consultorio"
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaceadapter/controller/SpecialtyController.java",
+                "description": "Controlador REST para Especialidad"
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaceadapter/controller/InvoiceController.java",
+                "description": "Controlador REST para Factura"
+            },
+            {
+                "path": "backend/src/main/java/com/application/interfaceadapter/controller/TreatmentPlanController.java",
+                "description": "Controlador REST para Plan de Tratamiento"
             }
         ]
     },
@@ -244,69 +416,212 @@
         "backend/pom.xml",
         "backend/src/main/java/com/application/domain/shared/ValueObject.java",
         "backend/src/main/java/com/application/domain/shared/Entity.java",
-        "backend/src/main/java/com/application/domain/exception/DomainException.java",
-        "com/application/school/domain/shared/Money.java",
-        "com/application/school/domain/shared/DateRange.java",
-        "com/application/school/domain/shared/PersonName.java",
-        "com/application/school/domain/student/model/Student.java",
-        "com/application/school/domain/student/model/StudentId.java",
-        "com/application/school/domain/student/model/StudentStatus.java",
-        "com/application/school/domain/student/model/Guardian.java",
-        "com/application/school/domain/student/model/GuardianId.java",
-        "com/application/school/domain/student/repository/StudentRepository.java",
-        "com/application/school/domain/attendance/model/AttendanceRecord.java",
-        "com/application/school/domain/attendance/model/AttendanceRecordId.java",
-        "com/application/school/domain/attendance/model/AttendanceStatus.java",
-        "com/application/school/domain/attendance/repository/AttendanceRepository.java",
-        "com/application/school/domain/billing/model/Invoice.java",
-        "com/application/school/domain/billing/model/InvoiceId.java",
-        "com/application/school/domain/billing/model/InvoiceStatus.java",
-        "com/application/school/domain/billing/model/InvoiceItem.java",
-        "com/application/school/domain/billing/model/InvoiceItemId.java",
-        "com/application/school/domain/billing/model/InvoiceConcept.java",
-        "com/application/school/domain/billing/model/Payment.java",
-        "com/application/school/domain/billing/model/PaymentId.java",
-        "com/application/school/domain/billing/repository/InvoiceRepository.java",
-        "com/application/school/domain/academic/model/Grade.java",
-        "com/application/school/domain/academic/model/GradeId.java",
-        "com/application/school/domain/academic/model/Section.java",
-        "com/application/school/domain/academic/model/SectionId.java",
-        "com/application/school/domain/academic/repository/GradeRepository.java",
-        "com/application/school/application/student/StudentService.java",
-        "com/application/school/application/attendance/AttendanceService.java",
-        "com/application/school/application/billing/BillingService.java",
-        "com/application/school/application/academic/AcademicService.java",
-        "com/application/school/application/dtos/StudentDTO.java",
-        "com/application/school/application/dtos/GuardianDTO.java",
-        "com/application/school/application/dtos/AttendanceRecordDTO.java",
-        "com/application/school/application/dtos/InvoiceDTO.java",
-        "com/application/school/application/dtos/InvoiceItemDTO.java",
-        "com/application/school/application/dtos/PaymentDTO.java",
-        "com/application/school/application/dtos/GradeDTO.java",
-        "com/application/school/application/dtos/SectionDTO.java",
-        "com/application/school/application/mappers/StudentMapper.java",
-        "com/application/school/application/mappers/AttendanceMapper.java",
-        "com/application/school/application/mappers/BillingMapper.java",
-        "com/application/school/application/mappers/AcademicMapper.java",
-        "com/application/school/infrastructure/persistence/jpa/student/JpaStudentRepository.java",
-        "com/application/school/infrastructure/persistence/jpa/student/StudentJpaRepositoryAdapter.java",
-        "com/application/school/infrastructure/persistence/jpa/student/StudentJpaEntity.java",
-        "com/application/school/infrastructure/persistence/jpa/attendance/JpaAttendanceRepository.java",
-        "com/application/school/infrastructure/persistence/jpa/attendance/AttendanceJpaRepositoryAdapter.java",
-        "com/application/school/infrastructure/persistence/jpa/attendance/AttendanceJpaEntity.java",
-        "com/application/school/infrastructure/persistence/jpa/billing/JpaInvoiceRepository.java",
-        "com/application/school/infrastructure/persistence/jpa/billing/InvoiceJpaRepositoryAdapter.java",
-        "com/application/school/infrastructure/persistence/jpa/billing/InvoiceJpaEntity.java",
-        "com/application/school/infrastructure/persistence/jpa/academic/JpaGradeRepository.java",
-        "com/application/school/infrastructure/persistence/jpa/academic/GradeJpaRepositoryAdapter.java",
-        "com/application/school/infrastructure/persistence/jpa/academic/GradeJpaEntity.java",
-        "com/application/school/infrastructure/web/rest/StudentController.java",
-        "com/application/school/infrastructure/web/rest/AttendanceController.java",
-        "com/application/school/infrastructure/web/rest/BillingController.java",
-        "com/application/school/infrastructure/web/rest/AcademicController.java",
+        "backend/src/main/java/com/application/domain/shared/EntityRepository.java",
+        "backend/src/main/java/com/application/domain/model/Clinic.java",
+        "backend/src/test/java/com/application/domain/model/ClinicTest.java",
+        "backend/src/main/java/com/application/domain/model/Patient.java",
+        "backend/src/test/java/com/application/domain/model/PatientTest.java",
+        "backend/src/main/java/com/application/domain/model/Dentist.java",
+        "backend/src/test/java/com/application/domain/model/DentistTest.java",
+        "backend/src/main/java/com/application/domain/model/Appointment.java",
+        "backend/src/test/java/com/application/domain/model/AppointmentTest.java",
+        "backend/src/main/java/com/application/domain/model/Treatment.java",
+        "backend/src/test/java/com/application/domain/model/TreatmentTest.java",
+        "backend/src/main/java/com/application/domain/model/MedicalHistory.java",
+        "backend/src/test/java/com/application/domain/model/MedicalHistoryTest.java",
+        "backend/src/main/java/com/application/domain/model/ConsultingRoom.java",
+        "backend/src/test/java/com/application/domain/model/ConsultingRoomTest.java",
+        "backend/src/main/java/com/application/domain/model/Specialty.java",
+        "backend/src/test/java/com/application/domain/model/SpecialtyTest.java",
+        "backend/src/main/java/com/application/domain/model/Invoice.java",
+        "backend/src/test/java/com/application/domain/model/InvoiceTest.java",
+        "backend/src/main/java/com/application/domain/model/TreatmentPlan.java",
+        "backend/src/test/java/com/application/domain/model/TreatmentPlanTest.java",
+        "backend/src/main/java/com/application/domain/valueobject/ClinicId.java",
+        "backend/src/test/java/com/application/domain/valueobject/ClinicIdTest.java",
+        "backend/src/main/java/com/application/domain/valueobject/PatientId.java",
+        "backend/src/test/java/com/application/domain/valueobject/PatientIdTest.java",
+        "backend/src/main/java/com/application/domain/valueobject/DentistId.java",
+        "backend/src/test/java/com/application/domain/valueobject/DentistIdTest.java",
+        "backend/src/main/java/com/application/domain/valueobject/AppointmentId.java",
+        "backend/src/test/java/com/application/domain/valueobject/AppointmentIdTest.java",
+        "backend/src/main/java/com/application/domain/valueobject/TreatmentId.java",
+        "backend/src/test/java/com/application/domain/valueobject/TreatmentIdTest.java",
+        "backend/src/main/java/com/application/domain/valueobject/MedicalHistoryId.java",
+        "backend/src/test/java/com/application/domain/valueobject/MedicalHistoryIdTest.java",
+        "backend/src/main/java/com/application/domain/valueobject/ConsultingRoomId.java",
+        "backend/src/test/java/com/application/domain/valueobject/ConsultingRoomIdTest.java",
+        "backend/src/main/java/com/application/domain/valueobject/SpecialtyId.java",
+        "backend/src/test/java/com/application/domain/valueobject/SpecialtyIdTest.java",
+        "backend/src/main/java/com/application/domain/valueobject/InvoiceId.java",
+        "backend/src/test/java/com/application/domain/valueobject/InvoiceIdTest.java",
+        "backend/src/main/java/com/application/domain/valueobject/TreatmentPlanId.java",
+        "backend/src/test/java/com/application/domain/valueobject/TreatmentPlanIdTest.java",
+        "backend/src/main/java/com/application/domain/valueobject/AppointmentStatus.java",
+        "backend/src/test/java/com/application/domain/valueobject/AppointmentStatusTest.java",
+        "backend/src/main/java/com/application/domain/valueobject/InvoiceStatus.java",
+        "backend/src/test/java/com/application/domain/valueobject/InvoiceStatusTest.java",
+        "backend/src/main/java/com/application/domain/valueobject/PaymentMethod.java",
+        "backend/src/test/java/com/application/domain/valueobject/PaymentMethodTest.java",
+        "backend/src/main/java/com/application/domain/valueobject/PlanStatus.java",
+        "backend/src/test/java/com/application/domain/valueobject/PlanStatusTest.java",
+        "backend/src/main/java/com/application/domain/port/ClinicRepositoryPort.java",
+        "backend/src/test/java/com/application/domain/port/ClinicRepositoryPortTest.java",
+        "backend/src/main/java/com/application/domain/port/PatientRepositoryPort.java",
+        "backend/src/test/java/com/application/domain/port/PatientRepositoryPortTest.java",
+        "backend/src/main/java/com/application/domain/port/DentistRepositoryPort.java",
+        "backend/src/test/java/com/application/domain/port/DentistRepositoryPortTest.java",
+        "backend/src/main/java/com/application/domain/port/AppointmentRepositoryPort.java",
+        "backend/src/test/java/com/application/domain/port/AppointmentRepositoryPortTest.java",
+        "backend/src/main/java/com/application/domain/port/TreatmentRepositoryPort.java",
+        "backend/src/test/java/com/application/domain/port/TreatmentRepositoryPortTest.java",
+        "backend/src/main/java/com/application/domain/port/MedicalHistoryRepositoryPort.java",
+        "backend/src/test/java/com/application/domain/port/MedicalHistoryRepositoryPortTest.java",
+        "backend/src/main/java/com/application/domain/port/ConsultingRoomRepositoryPort.java",
+        "backend/src/test/java/com/application/domain/port/ConsultingRoomRepositoryPortTest.java",
+        "backend/src/main/java/com/application/domain/port/SpecialtyRepositoryPort.java",
+        "backend/src/test/java/com/application/domain/port/SpecialtyRepositoryPortTest.java",
+        "backend/src/main/java/com/application/domain/port/InvoiceRepositoryPort.java",
+        "backend/src/test/java/com/application/domain/port/InvoiceRepositoryPortTest.java",
+        "backend/src/main/java/com/application/domain/port/TreatmentPlanRepositoryPort.java",
+        "backend/src/test/java/com/application/domain/port/TreatmentPlanRepositoryPortTest.java",
+        "backend/src/main/java/com/application/application/service/ClinicService.java",
+        "backend/src/test/java/com/application/application/service/ClinicServiceTest.java",
+        "backend/src/main/java/com/application/application/service/PatientService.java",
+        "backend/src/test/java/com/application/application/service/PatientServiceTest.java",
+        "backend/src/main/java/com/application/application/service/DentistService.java",
+        "backend/src/test/java/com/application/application/service/DentistServiceTest.java",
+        "backend/src/main/java/com/application/application/service/AppointmentService.java",
+        "backend/src/test/java/com/application/application/service/AppointmentServiceTest.java",
+        "backend/src/main/java/com/application/application/service/TreatmentService.java",
+        "backend/src/test/java/com/application/application/service/TreatmentServiceTest.java",
+        "backend/src/main/java/com/application/application/service/MedicalHistoryService.java",
+        "backend/src/test/java/com/application/application/service/MedicalHistoryServiceTest.java",
+        "backend/src/main/java/com/application/application/service/ConsultingRoomService.java",
+        "backend/src/test/java/com/application/application/service/ConsultingRoomServiceTest.java",
+        "backend/src/main/java/com/application/application/service/SpecialtyService.java",
+        "backend/src/test/java/com/application/application/service/SpecialtyServiceTest.java",
+        "backend/src/main/java/com/application/application/service/InvoiceService.java",
+        "backend/src/test/java/com/application/application/service/InvoiceServiceTest.java",
+        "backend/src/main/java/com/application/application/service/TreatmentPlanService.java",
+        "backend/src/test/java/com/application/application/service/TreatmentPlanServiceTest.java",
+        "backend/src/main/java/com/application/application/dto/ClinicDTO.java",
+        "backend/src/test/java/com/application/application/dto/ClinicDTOTest.java",
+        "backend/src/main/java/com/application/application/dto/PatientDTO.java",
+        "backend/src/test/java/com/application/application/dto/PatientDTOTest.java",
+        "backend/src/main/java/com/application/application/dto/DentistDTO.java",
+        "backend/src/test/java/com/application/application/dto/DentistDTOTest.java",
+        "backend/src/main/java/com/application/application/dto/AppointmentDTO.java",
+        "backend/src/test/java/com/application/application/dto/AppointmentDTOTest.java",
+        "backend/src/main/java/com/application/application/dto/TreatmentDTO.java",
+        "backend/src/test/java/com/application/application/dto/TreatmentDTOTest.java",
+        "backend/src/main/java/com/application/application/dto/MedicalHistoryDTO.java",
+        "backend/src/test/java/com/application/application/dto/MedicalHistoryDTOTest.java",
+        "backend/src/main/java/com/application/application/dto/ConsultingRoomDTO.java",
+        "backend/src/test/java/com/application/application/dto/ConsultingRoomDTOTest.java",
+        "backend/src/main/java/com/application/application/dto/SpecialtyDTO.java",
+        "backend/src/test/java/com/application/application/dto/SpecialtyDTOTest.java",
+        "backend/src/main/java/com/application/application/dto/InvoiceDTO.java",
+        "backend/src/test/java/com/application/application/dto/InvoiceDTOTest.java",
+        "backend/src/main/java/com/application/application/dto/TreatmentPlanDTO.java",
+        "backend/src/test/java/com/application/application/dto/TreatmentPlanDTOTest.java",
+        "backend/src/main/java/com/application/infrastructure/adapter/ClinicJpaAdapter.java",
+        "backend/src/test/java/com/application/infrastructure/adapter/ClinicJpaAdapterTest.java",
+        "backend/src/main/java/com/application/infrastructure/adapter/PatientJpaAdapter.java",
+        "backend/src/main/java/com/application/infrastructure/adapter/DentistJpaAdapter.java",
+        "backend/src/test/java/com/application/infrastructure/adapter/DentistJpaAdapterTest.java",
+        "backend/src/main/java/com/application/infrastructure/adapter/AppointmentJpaAdapter.java",
+        "backend/src/test/java/com/application/infrastructure/adapter/AppointmentJpaAdapterTest.java",
+        "backend/src/main/java/com/application/infrastructure/adapter/TreatmentJpaAdapter.java",
+        "backend/src/test/java/com/application/infrastructure/adapter/TreatmentJpaAdapterTest.java",
+        "backend/src/main/java/com/application/infrastructure/adapter/MedicalHistoryJpaAdapter.java",
+        "backend/src/test/java/com/application/infrastructure/adapter/MedicalHistoryJpaAdapterTest.java",
+        "backend/src/main/java/com/application/infrastructure/adapter/ConsultingRoomJpaAdapter.java",
+        "backend/src/test/java/com/application/infrastructure/adapter/ConsultingRoomJpaAdapterTest.java",
+        "backend/src/main/java/com/application/infrastructure/adapter/SpecialtyJpaAdapter.java",
+        "backend/src/test/java/com/application/infrastructure/adapter/SpecialtyJpaAdapterTest.java",
+        "backend/src/main/java/com/application/infrastructure/adapter/InvoiceJpaAdapter.java",
+        "backend/src/test/java/com/application/infrastructure/adapter/InvoiceJpaAdapterTest.java",
+        "backend/src/main/java/com/application/infrastructure/adapter/TreatmentPlanJpaAdapter.java",
+        "backend/src/test/java/com/application/infrastructure/adapter/TreatmentPlanJpaAdapterTest.java",
+        "backend/src/main/java/com/application/infrastructure/entity/ClinicEntity.java",
+        "backend/src/test/java/com/application/infrastructure/entity/ClinicEntityTest.java",
+        "backend/src/main/java/com/application/infrastructure/entity/PatientEntity.java",
+        "backend/src/test/java/com/application/infrastructure/entity/PatientEntityTest.java",
+        "backend/src/main/java/com/application/infrastructure/entity/DentistEntity.java",
+        "backend/src/test/java/com/application/infrastructure/entity/DentistEntityTest.java",
+        "backend/src/main/java/com/application/infrastructure/entity/AppointmentEntity.java",
+        "backend/src/test/java/com/application/infrastructure/entity/AppointmentEntityTest.java",
+        "backend/src/main/java/com/application/infrastructure/entity/TreatmentEntity.java",
+        "backend/src/test/java/com/application/infrastructure/entity/TreatmentEntityTest.java",
+        "backend/src/main/java/com/application/infrastructure/entity/MedicalHistoryEntity.java",
+        "backend/src/test/java/com/application/infrastructure/entity/MedicalHistoryEntityTest.java",
+        "backend/src/main/java/com/application/infrastructure/entity/ConsultingRoomEntity.java",
+        "backend/src/test/java/com/application/infrastructure/entity/ConsultingRoomEntityTest.java",
+        "backend/src/main/java/com/application/infrastructure/entity/SpecialtyEntity.java",
+        "backend/src/test/java/com/application/infrastructure/entity/SpecialtyEntityTest.java",
+        "backend/src/main/java/com/application/infrastructure/entity/InvoiceEntity.java",
+        "backend/src/test/java/com/application/infrastructure/entity/InvoiceEntityTest.java",
+        "backend/src/main/java/com/application/infrastructure/entity/TreatmentPlanEntity.java",
+        "backend/src/test/java/com/application/infrastructure/entity/TreatmentPlanEntityTest.java",
+        "backend/src/main/java/com/application/infrastructure/entity/DentistSpecialtyEntity.java",
+        "backend/src/test/java/com/application/infrastructure/entity/DentistSpecialtyEntityTest.java",
+        "backend/src/main/java/com/application/infrastructure/entity/AppointmentTreatmentEntity.java",
+        "backend/src/test/java/com/application/infrastructure/entity/AppointmentTreatmentEntityTest.java",
+        "backend/src/main/java/com/application/infrastructure/entity/PlanTreatmentEntity.java",
+        "backend/src/test/java/com/application/infrastructure/entity/PlanTreatmentEntityTest.java",
+        "backend/src/main/java/com/application/infrastructure/entity/DentistClinicScheduleEntity.java",
+        "backend/src/test/java/com/application/infrastructure/entity/DentistClinicScheduleEntityTest.java",
+        "backend/src/main/java/com/application/infrastructure/repository/ClinicJpaRepository.java",
+        "backend/src/test/java/com/application/infrastructure/repository/ClinicJpaRepositoryTest.java",
+        "backend/src/main/java/com/application/infrastructure/repository/PatientJpaRepository.java",
+        "backend/src/test/java/com/application/infrastructure/repository/PatientJpaRepositoryTest.java",
+        "backend/src/main/java/com/application/infrastructure/repository/DentistJpaRepository.java",
+        "backend/src/test/java/com/application/infrastructure/repository/DentistJpaRepositoryTest.java",
+        "backend/src/main/java/com/application/infrastructure/repository/AppointmentJpaRepository.java",
+        "backend/src/test/java/com/application/infrastructure/repository/AppointmentJpaRepositoryTest.java",
+        "backend/src/main/java/com/application/infrastructure/repository/TreatmentJpaRepository.java",
+        "backend/src/test/java/com/application/infrastructure/repository/TreatmentJpaRepositoryTest.java",
+        "backend/src/main/java/com/application/infrastructure/repository/MedicalHistoryJpaRepository.java",
+        "backend/src/test/java/com/application/infrastructure/repository/MedicalHistoryJpaRepositoryTest.java",
+        "backend/src/main/java/com/application/infrastructure/repository/ConsultingRoomJpaRepository.java",
+        "backend/src/test/java/com/application/infrastructure/repository/ConsultingRoomJpaRepositoryTest.java",
+        "backend/src/main/java/com/application/infrastructure/repository/SpecialtyJpaRepository.java",
+        "backend/src/test/java/com/application/infrastructure/repository/SpecialtyJpaRepositoryTest.java",
+        "backend/src/main/java/com/application/infrastructure/repository/InvoiceJpaRepository.java",
+        "backend/src/test/java/com/application/infrastructure/repository/InvoiceJpaRepositoryTest.java",
+        "backend/src/main/java/com/application/infrastructure/repository/TreatmentPlanJpaRepository.java",
+        "backend/src/test/java/com/application/infrastructure/repository/TreatmentPlanJpaRepositoryTest.java",
+        "backend/src/main/java/com/application/infrastructure/repository/DentistSpecialtyJpaRepository.java",
+        "backend/src/test/java/com/application/infrastructure/repository/DentistSpecialtyJpaRepositoryTest.java",
+        "backend/src/main/java/com/application/infrastructure/repository/AppointmentTreatmentJpaRepository.java",
+        "backend/src/test/java/com/application/infrastructure/repository/AppointmentTreatmentJpaRepositoryTest.java",
+        "backend/src/main/java/com/application/infrastructure/repository/PlanTreatmentJpaRepository.java",
+        "backend/src/test/java/com/application/infrastructure/repository/PlanTreatmentJpaRepositoryTest.java",
+        "backend/src/main/java/com/application/infrastructure/repository/DentistClinicScheduleJpaRepository.java",
+        "backend/src/test/java/com/application/infrastructure/repository/DentistClinicScheduleJpaRepositoryTest.java",
+        "backend/src/main/java/com/application/interfaceadapter/controller/ClinicController.java",
+        "backend/src/test/java/com/application/interfaceadapter/controller/ClinicControllerTest.java",
+        "backend/src/main/java/com/application/interfaceadapter/controller/PatientController.java",
+        "backend/src/test/java/com/application/interfaceadapter/controller/PatientControllerTest.java",
+        "backend/src/main/java/com/application/interfaceadapter/controller/DentistController.java",
+        "backend/src/test/java/com/application/interfaceadapter/controller/DentistControllerTest.java",
+        "backend/src/main/java/com/application/interfaceadapter/controller/AppointmentController.java",
+        "backend/src/test/java/com/application/interfaceadapter/controller/AppointmentControllerTest.java",
+        "backend/src/main/java/com/application/interfaceadapter/controller/TreatmentController.java",
+        "backend/src/test/java/com/application/interfaceadapter/controller/TreatmentControllerTest.java",
+        "backend/src/main/java/com/application/interfaceadapter/controller/MedicalHistoryController.java",
+        "backend/src/test/java/com/application/interfaceadapter/controller/MedicalHistoryControllerTest.java",
+        "backend/src/main/java/com/application/interfaceadapter/controller/ConsultingRoomController.java",
+        "backend/src/test/java/com/application/interfaceadapter/controller/ConsultingRoomControllerTest.java",
+        "backend/src/main/java/com/application/interfaceadapter/controller/SpecialtyController.java",
+        "backend/src/test/java/com/application/interfaceadapter/controller/SpecialtyControllerTest.java",
+        "backend/src/main/java/com/application/interfaceadapter/controller/InvoiceController.java",
+        "backend/src/test/java/com/application/interfaceadapter/controller/InvoiceControllerTest.java",
+        "backend/src/main/java/com/application/interfaceadapter/controller/TreatmentPlanController.java",
+        "backend/src/test/java/com/application/interfaceadapter/controller/TreatmentPlanControllerTest.java",
         ".github/workflows/pipeline.yml",
         "docker-compose.yml",
-        "backend/src/main/resources/logback-spring.xml",
         "README.md"
     ]
 }

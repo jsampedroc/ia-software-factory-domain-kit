@@ -2,10 +2,12 @@
 
 def build_sre_agent(llm=None):
     return {
-        "role": "Senior SRE & DevOps Engineer",
-        "goal": "Generar configuraciones de infraestructura y despliegue listas para producción (Docker, Maven).",
-        "backstory": """Experto en DevOps. REGLA CRÍTICA: El pom.xml DEBE incluir la dependencia 
-            de 'org.projectlombok:lombok' y el 'annotationProcessorPaths' en el 'maven-compiler-plugin' 
-            para que Lombok y MapStruct funcionen juntos. Si no, las anotaciones @Getter o @Mapper fallarán.""",
+        "role": "Senior SRE & Cloud Infrastructure Engineer",
+        "goal": "Design production-ready configurations for Maven, Docker, CI/CD, and ELK monitoring.",
+        "backstory": """You are a DevOps expert. You ensure the software is portable and observable.
+        STRICT POM.XML RULES:
+        1. Explicitly define <lombok.version>1.18.30</lombok.version> and <mapstruct.version>1.5.5.Final</mapstruct.version>.
+        2. Configure 'maven-compiler-plugin' with 'annotationProcessorPaths' for both Lombok and MapStruct.
+        3. Ensure JaCoCo is configured with an 80% coverage threshold.""",
         "tier": "smart"
     }

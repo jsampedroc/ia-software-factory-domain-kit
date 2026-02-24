@@ -3,51 +3,81 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: school-management-postgres
+    container_name: dental_clinic_postgres
     environment:
-      POSTGRES_DB: school_management
-      POSTGRES_USER: school_user
-      POSTGRES_PASSWORD: school_password
+      POSTGRES_DB: dental_clinic_db
+      POSTGRES_USER: clinic_admin
+      POSTGRES_PASSWORD: secure_password_123
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
     networks:
-      - school-network
+      - dental_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U school_user -d school_management"]
+      test: ["CMD-SHELL", "pg_isready -U clinic_admin"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: school-management-backend
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/school_management
-      SPRING_DATASOURCE_USERNAME: school_user
-      SPRING_DATASOURCE_PASSWORD: school_password
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_PROFILES_ACTIVE: docker
-      LOGSTASH_HOST: logstash
-      LOGSTASH_PORT: 5000
-      JAVA_OPTS: "-Xmx512m -Xms256m"
+  redis:
+    image: redis:7-alpine
+    container_name: dental_clinic_redis
     ports:
-      - "8080:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      logstash:
-        condition: service_started
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
     networks:
-      - school-network
-    restart: unless-stopped
+      - dental_network
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: dental_clinic_zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - dental_network
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo stat | nc localhost 2181"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: dental_clinic_kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+    networks:
+      - dental_network
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--list", "--bootstrap-server", "localhost:9092"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
-    container_name: school-management-elasticsearch
+    image: elasticsearch:8.11.0
+    container_name: dental_clinic_elasticsearch
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
@@ -57,52 +87,146 @@ services:
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
     networks:
-      - school-network
+      - dental_network
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health"]
       interval: 30s
       timeout: 10s
-      retries: 5
-
-  logstash:
-    image: docker.elastic.co/logstash/logstash:8.13.0
-    container_name: school-management-logstash
-    volumes:
-      - ./logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
-    ports:
-      - "5000:5000/tcp"
-      - "5000:5000/udp"
-    environment:
-      LS_JAVA_OPTS: "-Xmx256m -Xms128m"
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-    networks:
-      - school-network
-    command: logstash -f /usr/share/logstash/pipeline/logstash.conf
+      retries: 3
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:8.13.0
-    container_name: school-management-kibana
+    image: kibana:8.11.0
+    container_name: dental_clinic_kibana
+    depends_on:
+      - elasticsearch
     environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
     ports:
       - "5601:5601"
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
     networks:
-      - school-network
+      - dental_network
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status || exit 1"]
+      test: ["CMD", "curl", "-f", "http://localhost:5601/api/status"]
       interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 3
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: dental_clinic_prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - dental_network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: dental_clinic_grafana
+    depends_on:
+      - prometheus
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    ports:
+      - "3000:3000"
+    networks:
+      - dental_network
+
+  minio:
+    image: minio/minio:latest
+    container_name: dental_clinic_minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - dental_network
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: dental_clinic_jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+    networks:
+      - dental_network
+
+  application:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dental_clinic_application
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: dental_clinic_db
+      DB_USERNAME: clinic_admin
+      DB_PASSWORD: secure_password_123
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      ELASTICSEARCH_HOST: elasticsearch
+      ELASTICSEARCH_PORT: 9200
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin123
+      JAEGER_ENDPOINT: http://jaeger:14268/api/traces
+    ports:
+      - "8080:8080"
+      - "5005:5005"
+    volumes:
+      - ./logs:/app/logs
+      - ./config:/app/config
+    networks:
+      - dental_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  dental_network:
+    driver: bridge
 
 volumes:
   postgres_data:
+  redis_data:
   elasticsearch_data:
-
-networks:
-  school-network:
-    driver: bridge
+  prometheus_data:
+  grafana_data:
+  minio_data:

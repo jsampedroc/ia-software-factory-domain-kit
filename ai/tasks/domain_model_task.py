@@ -1,12 +1,15 @@
-def build_domain_model_task(idea):
+def build_domain_model_task(idea, base_package, **kwargs):
     return {
+        "agent": "domain_reasoner",
         "description": f"""
-        Analiza la siguiente idea de negocio: '{idea}'
-        Tarea: Crea un Domain Kit profesional en Markdown que incluya:
-        1. Lenguaje Ubicuo (Glosario).
-        2. Entidades y Atributos (con tipos de datos).
-        3. Relaciones (1:N, N:N).
-        4. Reglas de Negocio críticas.
+        Analyze the following business idea: '{idea}'
+        CONTEXT RULE: The root package for the system is '{base_package}'.
+        
+        TASK: Create a professional Domain Kit in Markdown including:
+        1. Ubiquitous Language (Glossary).
+        2. Entities and Attributes (using Java 17 data types).
+        3. Relationships (1:N, N:N).
+        4. Critical Business Rules and Invariants.
         """,
-        "expected_output": "Un documento Markdown con el ADN del negocio."
+        "expected_output": "A comprehensive Markdown document representing the Business ADN."
     }

@@ -1,12 +1,24 @@
-def build_code_generation_task(file_path, description, domain_kit):
+# ai/tasks/code_generation_task.py
+
+def build_code_generation_task(path, context_data=None, **kwargs):
+    description = kwargs.get('description') or kwargs.get('desc') or "No description provided"
+    ctx = context_data or ""
+    base_package = kwargs.get('base_package', 'com.application')
+
     return {
+        "agent": "backend_builder",
         "description": f"""
-        CONTEXTO DEL DOMINIO: {domain_kit}
-        ARCHIVO A GENERAR: {file_path}
-        DESCRIPCIÓN TÉCNICA: {description}
+        Implement the file '{path}' ({description}).
         
-        Tarea: Escribe el código fuente completo, profesional y listo para compilar.
-        Asegúrate de incluir todos los imports y anotaciones de Lombok necesarias.
+        PROJECT CONTEXT:
+        {ctx}
+        
+        STRICT SYNTAX RULES (Java 17):
+        1. PACKAGE: The base package for shared logic is '{base_package}.domain.shared'.
+        2. VALUE OBJECTS: Must ALWAYS be 'public record' and 'implements ValueObject'. NEVER use 'extends ValueObject'.
+        3. ENTITIES: Must be classes that 'extends Entity<ID>'. DO NOT declare the 'id' field (inherited).
+        4. GENERICS: In diamonds <>, always use 'extends' (e.g., <ID extends ValueObject>).
+        5. LOMBOK: Use @Getter, @NoArgsConstructor(access = PROTECTED), @AllArgsConstructor, and @Builder where applicable.
         """,
-        "expected_output": "El contenido íntegro del archivo (sin bloques markdown)."
+        "expected_output": "Clean, professional Java 17 source code."
     }

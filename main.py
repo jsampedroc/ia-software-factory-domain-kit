@@ -23,34 +23,29 @@ class SoftwareFactory:
     def __init__(self, idea):
         load_dotenv()
         self.idea, self.executor = idea, TaskExecutor()
-        
         try:
-            with open("config/architecture.yaml", "r") as f:
-                self.arch_config = yaml.safe_load(f)
+            with open("config/architecture.yaml", "r") as f: self.arch_config = yaml.safe_load(f)
         except FileNotFoundError:
-            print("❌ Error: config/architecture.yaml not found."); sys.exit(1)
+            print("❌ ERROR: config/architecture.yaml not found."); sys.exit(1)
         
-        # 1. AGNOSTIC NAMING & PACKAGE PROCESSING
         self.project_name = self.arch_config['project']['name']
         self.project_slug = re.sub(r'[^a-zA-Z0-9]', '', self.project_name.lower())
         self.base_package = f"com.{self.project_slug}"
         self.base_package_path = self.base_package.replace('.', '/')
-        
         self.out_dir = Path("outputs") / self.project_slug
         self.spec_file = Path("specs") / f"{self.project_slug}.json"
-        
         self.out_dir.mkdir(parents=True, exist_ok=True); Path("specs").mkdir(exist_ok=True)
         self.state = PipelineState(self.idea, self.project_name)
         
-        # ELITE INJECTION CONTEXT (English for better AI reasoning)
+        # MEMORIA DE SESIÓN PARA EVITAR BUCLES
+        self.healed_in_this_session = set() 
+        
         self.SHARED_KERNEL_CONTEXT = f"""
-        MANDATORY PROJECT STRUCTURE & BASE CLASSES:
+        CORE ARCHITECTURAL CONTRACTS:
         - Root Package: {self.base_package}
-        - Shared Kernel Classes (USE THESE FOR IMPORTS):
-          1. interface {self.base_package}.domain.shared.ValueObject
-          2. abstract class {self.base_package}.domain.shared.Entity<ID extends ValueObject>
-          3. interface {self.base_package}.domain.shared.EntityRepository<T, ID extends ValueObject>
-          4. class {self.base_package}.domain.exception.DomainException
+        - Base Classes MUST be imported from: {self.base_package}.domain.shared
+        - ValueObjects: Records implementing ValueObject.
+        - Entities: Classes extending Entity<ID>.
         """
 
     def clean_llm_output(self, text):
@@ -59,7 +54,9 @@ class SoftwareFactory:
         return match.group(1).strip() if match else text.strip()
 
     def sanitize_java_code(self, content):
-        """ELITE SYNTAX CORRECTOR: Enforces Java 17 standards and package consistency."""
+        """Elite syntax sanitizer using Regex to prevent common AI hallucinations."""
+        content = content.replace(f"{self.base_package}.domain.base", f"{self.base_package}.domain.shared")
+        content = content.replace(f"{self.base_package}.domain.common", f"{self.base_package}.domain.shared")
         lines = content.split('\n')
         for i, line in enumerate(lines):
             clean_l = line.strip()
@@ -71,14 +68,10 @@ class SoftwareFactory:
                     class_name = path_parts[-1].replace(';', '')
                     package_parts = [p.lower() for p in path_parts[:-1]]
                     lines[i] = f"import {'.'.join(package_parts)}.{class_name};"
-        
         full_content = '\n'.join(lines)
-        # Fix heritage: records/classes must implement interfaces
         full_content = re.sub(r'(class|record)\s+(\w+)\s+extends\s+ValueObject', r'\1 \2 implements ValueObject', full_content, flags=re.IGNORECASE)
-        # Restore generics: In Java diamonds <>, 'extends' is mandatory even for interfaces
         full_content = full_content.replace('<ID implements ValueObject>', '<ID extends ValueObject>')
         full_content = full_content.replace('ID implements ValueObject', 'ID extends ValueObject')
-        # Force Entity inheritance
         full_content = re.sub(r'implements\s+Entity', 'extends Entity', full_content, flags=re.IGNORECASE)
         return full_content
 
@@ -91,11 +84,8 @@ class SoftwareFactory:
             content = self.sanitize_java_code(content)
         else:
             full_path = self.out_dir / relative_path
-
         full_path.parent.mkdir(parents=True, exist_ok=True)
         with open(full_path, "w", encoding="utf-8") as f: f.write(content)
-        
-        # Only mark as 'completed' if it's NOT a skeleton pass
         if not is_skeleton and str(relative_path) not in self.state.generated_files:
             self.state.generated_files.append(str(relative_path))
             StateManager.save_specs(self.spec_file, self.state.domain_model, self.state.architecture, self.state.generated_files)
@@ -107,113 +97,127 @@ class SoftwareFactory:
         except Exception as e: return str(e)
 
     def run_maven_test(self):
+        """Runs Maven and filters for errors. Optimized to be used in healing loops."""
         backend_path = self.out_dir / "backend"
         if not (backend_path / "pom.xml").exists(): return "POM_MISSING"
-        return self.run_command(["mvn", "clean", "compile", "test", "-DskipTests=false"], cwd=backend_path)
-
-    def recalibrate_factory(self):
-        print("\n🔍 RECALIBRANDO: Purgando archivos con errores sintácticos...")
-        error_log = self.run_maven_test()
-        if error_log:
-            culprits = list(set(re.findall(r"([a-zA-Z0-9]+\.java)", error_log)))
-            if culprits:
-                print(f"🛠️  Borrando {len(culprits)} archivos para regeneración limpia.")
-                self.state.generated_files = [f for f in self.state.generated_files if not any(c in f for c in culprits)]
-                StateManager.save_specs(self.spec_file, self.state.domain_model, self.state.architecture, self.state.generated_files)
-                return True
-        return False
+        # We use mvn compile to avoid the overhead of full clean every time in loops
+        raw_log = self.run_command(["mvn", "compile"], cwd=backend_path)
+        if raw_log:
+            error_lines = [line for line in raw_log.split('\n') if "[ERROR]" in line]
+            return "\n".join(error_lines) if error_lines else None
+        return None
 
     def run_massive_healing(self, error_log):
-        print("\n🚨 REPARACIÓN MASIVA: Sincronizando contratos estructurales...")
-        analysis = self.executor.run_task("project_debug", error_log=error_log[:4000], base_package=self.base_package)
+        """Surgical repair using the Arbiter, avoiding infinite loops."""
+        print("\n🚨 MASSIVE HEALING: Principal Architect intervening...")
+        culprits = list(set(re.findall(r"([a-zA-Z0-9]+\.java)", error_log)))
+        if not culprits: return
+
         inventory = self.state.architecture.get("file_inventory", [])
-        for f in [fi for fi in inventory if "valueobject" in fi['path'] or "shared" in fi['path']]:
-            code = self.executor.run_task("write_code", context_data=f"ARCHITECTURAL_REPAIR_PLAN: {analysis}", path=f['path'], desc=f['description'], base_package=self.base_package)
-            self.save_to_disk(f['path'], self.clean_llm_output(code))
+        # Only heal files that haven't been healed in this session yet
+        to_heal = [f for f in inventory if Path(f['path']).name in culprits 
+                   and Path(f['path']).name not in self.healed_in_this_session][:3]
+        
+        if not to_heal:
+            print("   ⚠️ All detected culprits were already processed. Breaking loop to avoid recursion.")
+            return
+
+        for f in to_heal:
+            fname = Path(f['path']).name
+            print(f"   🩹 [Arbiter] Rescuing: {fname}")
+            self.healed_in_this_session.add(fname)
+            code = self.executor.run_task(
+                "arbitration", 
+                context_data=f"THIS FILE IS BROKEN. FIX IMPORTS AND PACKAGE: {self.base_package}",
+                path=f['path'], 
+                error_log=error_log[:2000],
+                base_package=self.base_package
+            )
+            self.save_to_disk(f['path'], self.clean_llm_output(code), is_skeleton=False)
 
     def run(self):
         log_path = self.out_dir / "execution.log"
         tee_instance = Tee(log_path)
         sys.stdout = tee_instance 
         try:
-            print(f"🚀 --- FACTORÍA ELITE ACTIVA: {self.project_name.upper()} ---")
+            print("="*60)
+            print(f"🚀 ELITE FACTORY ACTIVE: {self.project_name.upper()}")
+            print(f"📦 BASE PACKAGE: {self.base_package}")
+            print("="*60)
+
             if not (self.out_dir / ".git").exists(): self.run_command(["git", "init"])
 
-            # 1. DESIGN PHASES
+            # 1. DESIGN & INVENTORY
             if not StateManager.load_specs(self.spec_file, self.state):
-                print("\n🧠 FASE 1: Inferencia de Dominio...")
+                print("\n🧠 PHASE 1: Domain Reasoning...")
                 self.state.domain_model = self.executor.run_task("model_domain", idea=self.idea, base_package=self.base_package)
-                print("\n📐 FASE 2: Diseño de Inventario...")
+                print("\n📐 PHASE 2: Architecture Inventory...")
                 res_arch = self.executor.run_task("create_inventory", context_data=self.state.domain_model, base_package=self.base_package, base_package_path=self.base_package_path)
                 self.state.architecture = {"file_inventory": json.loads(self.clean_llm_output(res_arch))}
                 StateManager.save_specs(self.spec_file, self.state.domain_model, self.state.architecture, self.state.generated_files)
             else:
-                print(f"✅ Diseño cargado desde caché."); self.recalibrate_factory()
+                print(f"✅ Design loaded from cache.")
 
             inventory = self.state.architecture.get("file_inventory", [])
-            inv_map = "\n".join([f"- {Path(f['path']).name}: {f['path']}" for f in inventory])
+            import_map = "\n".join([f"Class: {Path(f['path']).stem} -> Import: {f['path'].replace('backend/src/main/java/', '').replace('/', '.').replace('.java', '')}" for f in inventory])
 
-            # 2. BOOTSTRAP (Maven & Shared Kernel)
-            print("\n🏗️  FASE: BOOTSTRAP (Infrastructure & Kernel)...")
+            # 2. BOOTSTRAP (Shared Kernel)
+            print("\n🏗️  PHASE: BOOTSTRAP (Infrastructure)...")
             pkg_p, base_p = self.base_package_path, self.base_package
             pom_path = "backend/pom.xml"
             if not (self.out_dir / pom_path).exists():
-                code_pom = self.executor.run_task("write_code", context_data=self.state.domain_model, path=pom_path, desc="Maven POM with Lombok and JaCoCo", base_package=self.base_package, agent_override="sre_agent")
+                code_pom = self.executor.run_task("write_code", context_data=self.state.domain_model, path=pom_path, desc="Maven POM with JaCoCo", base_package=self.base_package, agent_override="sre_agent")
                 self.save_to_disk(pom_path, self.clean_llm_output(code_pom), is_skeleton=False)
 
             self.save_to_disk(f"backend/src/main/java/{pkg_p}/domain/shared/ValueObject.java", f"package {base_p}.domain.shared;\nimport java.io.Serializable;\npublic interface ValueObject extends Serializable {{}}", is_skeleton=False)
-            self.save_to_disk(f"backend/src/main/java/{pkg_p}/domain/shared/Entity.java", f"package {base_p}.domain.shared;\nimport lombok.*;\nimport java.util.Objects;\n@Getter @NoArgsConstructor(access=AccessLevel.PROTECTED)\npublic abstract class Entity<ID extends ValueObject> {{ protected ID id; protected Entity(ID id) {{ this.id = Objects.requireNonNull(id); }} }}", is_skeleton=False)
+            self.save_to_disk(f"backend/src/main/java/{pkg_p}/domain/shared/Entity.java", f"package {base_p}.domain.shared;\nimport lombok.*;\nimport java.util.Objects;\nimport lombok.experimental.SuperBuilder;\n@Getter @SuperBuilder @NoArgsConstructor(access=AccessLevel.PROTECTED)\npublic abstract class Entity<ID extends ValueObject> {{ protected ID id; protected Entity(ID id) {{ this.id = id; }} }}", is_skeleton=False)
             self.save_to_disk(f"backend/src/main/java/{pkg_p}/domain/shared/EntityRepository.java", f"package {base_p}.domain.shared;\nimport java.util.*;\npublic interface EntityRepository<T extends Entity<ID>, ID extends ValueObject> {{ T save(T entity); Optional<T> findById(ID id); List<T> findAll(); void delete(T entity); boolean existsById(ID id); }}", is_skeleton=False)
             self.save_to_disk(f"backend/src/main/java/{pkg_p}/domain/exception/DomainException.java", f"package {base_p}.domain.exception;\npublic class DomainException extends RuntimeException {{ public DomainException(String m) {{ super(m); }} }}", is_skeleton=False)
 
-            # 3. PASS 1: SCAFFOLDING (Skeletons)
-            print(f"\n🦴 PASADA 1: Creando esqueletos físicos de {len(inventory)} archivos...")
+            # 3. MANUFACTURING PASS 1 (Skeletons)
+            print(f"\n🦴 PASS 1: Creating skeletons for {len(inventory)} files...")
             for file_info in inventory:
                 path = file_info['path']
-                if not path.endswith(".java") or "shared" in path.lower() or "exception" in path.lower(): continue
+                if not path.endswith(".java") or "shared" in path.lower(): continue
                 if not (self.out_dir / path).exists():
                     sk_code = self.clean_llm_output(self.executor.run_task("create_skeleton", path=path, name=Path(path).stem, base_package=self.base_package))
                     self.save_to_disk(path, sk_code, is_skeleton=True)
 
-            # 4. PASS 2: LOGIC + TESTS + HEALING + GIT
-            print(f"\n🧠 PASADA 2: Inyectando lógica en los archivos...")
-            for file_info in inventory:
+            # 4. MANUFACTURING PASS 2 (Logic + Healing + Git)
+            print(f"\n🧠 PASS 2: Business Logic Injection...")
+            for index, file_info in enumerate(inventory, 1):
                 path, desc = file_info['path'], file_info['description']
-                if path in self.state.generated_files or (self.out_dir / path).exists() and "record" in open(self.out_dir / path.lower() if "src/main" in path else self.out_dir / path).read(): 
-                    # Pequeña validación: si el archivo ya tiene lógica (no es solo llaves), saltar
-                    if path in self.state.generated_files: continue
+                if path in self.state.generated_files or "shared" in path.lower() or "pom.xml" in path: continue
 
-                print(f"   👉 Generando: {path}")
-                agent_role = "frontend_builder" if (".js" in path or ".jsx" in path) else "backend_builder"
-                ctx = f"{self.SHARED_KERNEL_CONTEXT}\nPROJECT_FILE_MAP:\n{inv_map}\nBUSINESS_DOMAIN:\n{self.state.domain_model}"
+                print(f"   [{index}/{len(inventory)}] 👉 Generating: {path}")
+                ctx = f"{self.SHARED_KERNEL_CONTEXT}\nIMPORT_MAP:\n{import_map}\nDOMAIN_KIT:\n{self.state.domain_model}"
                 
                 # Logic Injection
-                code = self.clean_llm_output(self.executor.run_task("write_code", context_data=ctx, path=path, desc=desc, base_package=self.base_package, agent_override=agent_role))
+                code = self.clean_llm_output(self.executor.run_task("write_code", context_data=ctx, path=path, desc=desc, base_package=self.base_package))
                 self.save_to_disk(path, code, is_skeleton=False)
 
-                # Tests & Auto-Healing
-                if path.endswith(".java") and ("domain" in path or "application" in path):
-                    test_p = path.replace("src/main/java", "src/test/java").replace(".java", "Test.java")
-                    t_ctx = f"{ctx}\n\nREAL_SOURCE_CODE_FOR_TESTING:\n{code}"
-                    t_code = self.clean_llm_output(self.executor.run_task("write_tests", context_data=t_ctx, path=path, base_package=self.base_package))
-                    self.save_to_disk(test_p, t_code, is_skeleton=False)
-
+                # HEALING LOOP
+                err = self.run_maven_test()
+                for attempt in range(2): # Solo 2 intentos de cura individual
+                    if not err: break
+                    print(f"      🩹 Individual Healing attempt {attempt + 1}...")
+                    code = self.clean_llm_output(self.executor.run_task("heal_code", context_data=code, error_log=err, path=path, base_package=self.base_package))
+                    self.save_to_disk(path, code, is_skeleton=False)
                     err = self.run_maven_test()
-                    if err:
-                        if err.count("[ERROR]") > 15: self.run_massive_healing(err); continue 
-                        print(f"   🩹 Auto-Healing..."); fixed = self.clean_llm_output(self.executor.run_task("heal_code", context_data=t_ctx, path=path, error_log=err[:2500], base_package=self.base_package))
-                        self.save_to_disk(path, fixed, is_skeleton=False)
                 
-                self.run_command(["git", "add", "."]); self.run_command(["git", "commit", "-m", f"feat: implemented {Path(path).name}"])
+                # REPARACIÓN MASIVA SI HAY CAOS
+                if err and err.count("[ERROR]") > 10:
+                    self.run_massive_healing(err)
+                
+                self.run_command(["git", "add", "."]); self.run_command(["git", "commit", "-m", f"feat: add {Path(path).name}"])
 
             # 5. SYNC FINAL
-            print("\n✨ PROYECTO FINALIZADO CON ÉXITO")
+            print("\n✨ PROJECT FINISHED SUCCESSFULY")
             remote_url = os.getenv("GITHUB_REMOTE_URL")
-            if remote_url: 
-                self.run_command(["git", "remote", "add", "origin", remote_url])
-                self.run_command(["git", "push", "-u", "origin", "main", "--force"])
+            if remote_url: self.run_command(["git", "remote", "add", "origin", remote_url]); self.run_command(["git", "push", "-u", "origin", "main", "--force"])
 
         except Exception as e:
+            self.state.status = "FAILED"
             print(f"❌ Error: {e}"); import traceback; traceback.print_exc()
         finally:
             generate_report(self.state, self.out_dir)
@@ -221,6 +225,6 @@ class SoftwareFactory:
             if tee_instance: tee_instance.close()
 
 if __name__ == "__main__":
-    idea = " ".join(sys.argv[1:]).strip()
-    if idea: SoftwareFactory(idea).run()
+    input_idea = " ".join(sys.argv[1:]).strip()
+    if input_idea: SoftwareFactory(input_idea).run()
     else: print("❌ Error: Please provide a business idea.")

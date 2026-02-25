@@ -1,343 +1,548 @@
 package com.application.domain.model;
 
+import com.application.domain.enums.PatientStatus;
 import com.application.domain.valueobject.PatientId;
-import com.application.domain.exception.DomainException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(MockitoExtension.class)
 class PatientTest {
 
-    @Test
-    void create_WithValidData_ShouldCreatePatient() {
-        // Given
-        String dni = "12345678A";
-        String nombre = "Juan";
-        String apellido = "Pérez";
-        LocalDate fechaNacimiento = LocalDate.of(1990, 1, 1);
-        String telefono = "600123456";
-        String email = "juan.perez@example.com";
-        String direccion = "Calle Falsa 123";
+    private PatientId patientId;
+    private PatientIdentity validIdentity;
+    private LocalDateTime fixedTimestamp;
 
-        // When
-        Patient patient = Patient.create(dni, nombre, apellido, fechaNacimiento, telefono, email, direccion);
-
-        // Then
-        assertNotNull(patient);
-        assertNotNull(patient.getId());
-        assertEquals(dni.toUpperCase(), patient.getDni());
-        assertEquals(nombre, patient.getNombre());
-        assertEquals(apellido, patient.getApellido());
-        assertEquals(fechaNacimiento, patient.getFechaNacimiento());
-        assertEquals(telefono, patient.getTelefono());
-        assertEquals(email.toLowerCase(), patient.getEmail());
-        assertEquals(direccion, patient.getDireccion());
-        assertNotNull(patient.getFechaRegistro());
-        assertTrue(patient.getActivo());
+    @BeforeEach
+    void setUp() {
+        patientId = new PatientId(UUID.randomUUID());
+        fixedTimestamp = LocalDateTime.of(2024, 1, 15, 10, 0);
+        validIdentity = PatientIdentity.builder()
+                .firstName("John")
+                .lastName("Doe")
+                .dateOfBirth(LocalDate.of(1985, 5, 20))
+                .nationalId("ID123456")
+                .email("john.doe@example.com")
+                .phoneNumber("+1234567890")
+                .address("123 Main St")
+                .build();
     }
 
-    @Test
-    void create_WithInvalidDni_ShouldThrowDomainException() {
-        // Given
-        String invalidDni = "1234567A"; // 7 dígitos en lugar de 8
+    @Nested
+    @DisplayName("Patient Creation and Instantiation")
+    class CreationTests {
 
-        // When & Then
-        DomainException exception = assertThrows(DomainException.class, () ->
-                Patient.create(invalidDni, "Juan", "Pérez", LocalDate.of(1990, 1, 1),
-                        "600123456", "juan@example.com", "Calle 123")
-        );
-        assertTrue(exception.getMessage().contains("Formato de DNI inválido"));
+        @Test
+        @DisplayName("Should create a Patient with required fields using builder")
+        void shouldCreatePatientWithBuilder() {
+            Patient patient = Patient.builder()
+                    .id(patientId)
+                    .identity(validIdentity)
+                    .status(PatientStatus.ACTIVE)
+                    .build();
+
+            assertThat(patient).isNotNull();
+            assertThat(patient.getId()).isEqualTo(patientId);
+            assertThat(patient.getIdentity()).isEqualTo(validIdentity);
+            assertThat(patient.getStatus()).isEqualTo(PatientStatus.ACTIVE);
+            assertThat(patient.getMedicalAlerts()).isEmpty();
+            assertThat(patient.getAllergies()).isEmpty();
+            assertThat(patient.getConsents()).isEmpty();
+            assertThat(patient.getCreatedAt()).isNotNull();
+            assertThat(patient.getUpdatedAt()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("Should create a Patient with all collections populated")
+        void shouldCreatePatientWithCollections() {
+            MedicalAlert alert = MedicalAlert.builder()
+                    .alertId(UUID.randomUUID())
+                    .code("H001")
+                    .description("Heart Condition")
+                    .severity(com.application.domain.enums.AlertSeverity.HIGH)
+                    .createdAt(fixedTimestamp)
+                    .isActive(true)
+                    .build();
+
+            Allergy allergy = Allergy.builder()
+                    .allergyId(UUID.randomUUID())
+                    .substance("Penicillin")
+                    .reaction("Rash")
+                    .severity(com.application.domain.enums.AllergySeverity.MODERATE)
+                    .diagnosedDate(LocalDate.of(2020, 3, 10))
+                    .build();
+
+            DigitalConsent consent = DigitalConsent.builder()
+                    .consentId(UUID.randomUUID())
+                    .consentType(com.application.domain.enums.ConsentType.TREATMENT)
+                    .version("1.0")
+                    .content("I consent to treatment")
+                    .givenBy("John Doe")
+                    .givenAt(fixedTimestamp)
+                    .isRevoked(false)
+                    .build();
+
+            Set<MedicalAlert> alerts = new HashSet<>(List.of(alert));
+            Set<Allergy> allergies = new HashSet<>(List.of(allergy));
+            List<DigitalConsent> consents = List.of(consent);
+
+            Patient patient = Patient.builder()
+                    .id(patientId)
+                    .identity(validIdentity)
+                    .status(PatientStatus.ACTIVE)
+                    .medicalAlerts(alerts)
+                    .allergies(allergies)
+                    .consents(consents)
+                    .createdAt(fixedTimestamp)
+                    .updatedAt(fixedTimestamp)
+                    .build();
+
+            assertThat(patient.getMedicalAlerts()).hasSize(1).contains(alert);
+            assertThat(patient.getAllergies()).hasSize(1).contains(allergy);
+            assertThat(patient.getConsents()).hasSize(1).contains(consent);
+            assertThat(patient.getCreatedAt()).isEqualTo(fixedTimestamp);
+            assertThat(patient.getUpdatedAt()).isEqualTo(fixedTimestamp);
+        }
+
+        @Test
+        @DisplayName("Should throw IllegalArgumentException when identity is null")
+        void shouldThrowExceptionWhenIdentityIsNull() {
+            Patient.PatientBuilder builder = Patient.builder()
+                    .id(patientId)
+                    .status(PatientStatus.ACTIVE);
+
+            assertThatThrownBy(builder::build)
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Patient identity cannot be null");
+        }
+
+        @Test
+        @DisplayName("Should throw IllegalArgumentException when status is null")
+        void shouldThrowExceptionWhenStatusIsNull() {
+            Patient.PatientBuilder builder = Patient.builder()
+                    .id(patientId)
+                    .identity(validIdentity);
+
+            assertThatThrownBy(builder::build)
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Patient status cannot be null");
+        }
+
+        @Test
+        @DisplayName("Should initialize empty collections when null collections are provided")
+        void shouldInitializeEmptyCollectionsForNullInputs() {
+            Patient patient = Patient.builder()
+                    .id(patientId)
+                    .identity(validIdentity)
+                    .status(PatientStatus.ACTIVE)
+                    .medicalAlerts(null)
+                    .allergies(null)
+                    .consents(null)
+                    .build();
+
+            assertThat(patient.getMedicalAlerts()).isEmpty();
+            assertThat(patient.getAllergies()).isEmpty();
+            assertThat(patient.getConsents()).isEmpty();
+        }
     }
 
-    @Test
-    void create_WithInvalidEmail_ShouldThrowDomainException() {
-        // Given
-        String invalidEmail = "invalid-email";
+    @Nested
+    @DisplayName("Medical Alert Management")
+    class MedicalAlertTests {
 
-        // When & Then
-        DomainException exception = assertThrows(DomainException.class, () ->
-                Patient.create("12345678A", "Juan", "Pérez", LocalDate.of(1990, 1, 1),
-                        "600123456", invalidEmail, "Calle 123")
-        );
-        assertTrue(exception.getMessage().contains("Formato de email inválido"));
+        private Patient patient;
+        private MedicalAlert alert;
+
+        @BeforeEach
+        void setUp() {
+            patient = Patient.builder()
+                    .id(patientId)
+                    .identity(validIdentity)
+                    .status(PatientStatus.ACTIVE)
+                    .build();
+
+            alert = MedicalAlert.builder()
+                    .alertId(UUID.randomUUID())
+                    .code("P001")
+                    .description("Pregnancy")
+                    .severity(com.application.domain.enums.AlertSeverity.HIGH)
+                    .createdAt(fixedTimestamp)
+                    .isActive(true)
+                    .build();
+        }
+
+        @Test
+        @DisplayName("Should add a medical alert and update timestamp")
+        void shouldAddMedicalAlert() {
+            LocalDateTime beforeUpdate = patient.getUpdatedAt();
+
+            patient.addMedicalAlert(alert);
+
+            assertThat(patient.getMedicalAlerts()).hasSize(1).contains(alert);
+            assertThat(patient.getUpdatedAt()).isAfter(beforeUpdate);
+        }
+
+        @Test
+        @DisplayName("Should throw IllegalArgumentException when adding null medical alert")
+        void shouldThrowExceptionWhenAddingNullAlert() {
+            assertThatThrownBy(() -> patient.addMedicalAlert(null))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Medical alert cannot be null");
+        }
+
+        @Test
+        @DisplayName("Should remove a medical alert and update timestamp")
+        void shouldRemoveMedicalAlert() {
+            patient.addMedicalAlert(alert);
+            LocalDateTime beforeUpdate = patient.getUpdatedAt();
+
+            patient.removeMedicalAlert(alert);
+
+            assertThat(patient.getMedicalAlerts()).isEmpty();
+            assertThat(patient.getUpdatedAt()).isAfter(beforeUpdate);
+        }
+
+        @Test
+        @DisplayName("Should handle removal of non-existent medical alert gracefully")
+        void shouldHandleRemovalOfNonExistentAlert() {
+            MedicalAlert otherAlert = MedicalAlert.builder()
+                    .alertId(UUID.randomUUID())
+                    .code("D001")
+                    .description("Diabetes")
+                    .severity(com.application.domain.enums.AlertSeverity.MEDIUM)
+                    .createdAt(fixedTimestamp)
+                    .isActive(true)
+                    .build();
+
+            patient.addMedicalAlert(alert);
+            int initialSize = patient.getMedicalAlerts().size();
+            LocalDateTime beforeUpdate = patient.getUpdatedAt();
+
+            patient.removeMedicalAlert(otherAlert);
+
+            assertThat(patient.getMedicalAlerts()).hasSize(initialSize);
+            assertThat(patient.getUpdatedAt()).isEqualTo(beforeUpdate);
+        }
+
+        @Test
+        @DisplayName("Should not update timestamp when removing null alert")
+        void shouldNotUpdateTimestampWhenRemovingNullAlert() {
+            LocalDateTime beforeUpdate = patient.getUpdatedAt();
+
+            patient.removeMedicalAlert(null);
+
+            assertThat(patient.getUpdatedAt()).isEqualTo(beforeUpdate);
+        }
     }
 
-    @Test
-    void create_WithFutureBirthDate_ShouldThrowDomainException() {
-        // Given
-        LocalDate futureBirthDate = LocalDate.now().plusDays(1);
+    @Nested
+    @DisplayName("Allergy Management")
+    class AllergyTests {
 
-        // When & Then
-        DomainException exception = assertThrows(DomainException.class, () ->
-                Patient.create("12345678A", "Juan", "Pérez", futureBirthDate,
-                        "600123456", "juan@example.com", "Calle 123")
-        );
-        assertTrue(exception.getMessage().contains("no puede ser en el último año"));
+        private Patient patient;
+        private Allergy allergy;
+
+        @BeforeEach
+        void setUp() {
+            patient = Patient.builder()
+                    .id(patientId)
+                    .identity(validIdentity)
+                    .status(PatientStatus.ACTIVE)
+                    .build();
+
+            allergy = Allergy.builder()
+                    .allergyId(UUID.randomUUID())
+                    .substance("Latex")
+                    .reaction("Anaphylaxis")
+                    .severity(com.application.domain.enums.AllergySeverity.SEVERE)
+                    .diagnosedDate(LocalDate.of(2019, 7, 15))
+                    .build();
+        }
+
+        @Test
+        @DisplayName("Should add an allergy and update timestamp")
+        void shouldAddAllergy() {
+            LocalDateTime beforeUpdate = patient.getUpdatedAt();
+
+            patient.addAllergy(allergy);
+
+            assertThat(patient.getAllergies()).hasSize(1).contains(allergy);
+            assertThat(patient.getUpdatedAt()).isAfter(beforeUpdate);
+        }
+
+        @Test
+        @DisplayName("Should throw IllegalArgumentException when adding null allergy")
+        void shouldThrowExceptionWhenAddingNullAllergy() {
+            assertThatThrownBy(() -> patient.addAllergy(null))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Allergy cannot be null");
+        }
+
+        @Test
+        @DisplayName("Should remove an allergy and update timestamp")
+        void shouldRemoveAllergy() {
+            patient.addAllergy(allergy);
+            LocalDateTime beforeUpdate = patient.getUpdatedAt();
+
+            patient.removeAllergy(allergy);
+
+            assertThat(patient.getAllergies()).isEmpty();
+            assertThat(patient.getUpdatedAt()).isAfter(beforeUpdate);
+        }
     }
 
-    @Test
-    void constructor_WithBirthDateAfterRegistration_ShouldThrowDomainException() {
-        // Given
-        PatientId id = new PatientId(UUID.randomUUID());
-        LocalDate birthDate = LocalDate.of(2020, 1, 1);
-        LocalDateTime registrationDate = LocalDateTime.of(2019, 12, 31, 10, 0);
+    @Nested
+    @DisplayName("Consent Management")
+    class ConsentTests {
 
-        // When & Then
-        DomainException exception = assertThrows(DomainException.class, () ->
-                new Patient(id, "12345678A", "Juan", "Pérez", birthDate,
-                        "600123456", "juan@example.com", "Calle 123",
-                        registrationDate, true)
-        );
-        assertTrue(exception.getMessage().contains("posterior a la fecha de registro"));
+        private Patient patient;
+        private DigitalConsent consent;
+
+        @BeforeEach
+        void setUp() {
+            patient = Patient.builder()
+                    .id(patientId)
+                    .identity(validIdentity)
+                    .status(PatientStatus.ACTIVE)
+                    .build();
+
+            consent = DigitalConsent.builder()
+                    .consentId(UUID.randomUUID())
+                    .consentType(com.application.domain.enums.ConsentType.TREATMENT)
+                    .version("2.1")
+                    .content("Consent for root canal treatment")
+                    .givenBy("John Doe")
+                    .givenAt(fixedTimestamp)
+                    .isRevoked(false)
+                    .build();
+        }
+
+        @Test
+        @DisplayName("Should add a consent and update timestamp")
+        void shouldAddConsent() {
+            LocalDateTime beforeUpdate = patient.getUpdatedAt();
+
+            patient.addConsent(consent);
+
+            assertThat(patient.getConsents()).hasSize(1).contains(consent);
+            assertThat(patient.getUpdatedAt()).isAfter(beforeUpdate);
+        }
+
+        @Test
+        @DisplayName("Should throw IllegalArgumentException when adding null consent")
+        void shouldThrowExceptionWhenAddingNullConsent() {
+            assertThatThrownBy(() -> patient.addConsent(null))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Consent cannot be null");
+        }
+
+        @Test
+        @DisplayName("Should revoke a consent and update timestamp")
+        void shouldRevokeConsent() {
+            patient.addConsent(consent);
+            LocalDateTime beforeUpdate = patient.getUpdatedAt();
+
+            patient.revokeConsent(consent);
+
+            assertThat(consent.isRevoked()).isTrue();
+            assertThat(patient.getUpdatedAt()).isAfter(beforeUpdate);
+        }
+
+        @Test
+        @DisplayName("Should not revoke consent that is not in patient's consents")
+        void shouldNotRevokeConsentNotInList() {
+            DigitalConsent otherConsent = DigitalConsent.builder()
+                    .consentId(UUID.randomUUID())
+                    .consentType(com.application.domain.enums.ConsentType.DATA_USAGE)
+                    .version("1.0")
+                    .content("Data usage consent")
+                    .givenBy("John Doe")
+                    .givenAt(fixedTimestamp)
+                    .isRevoked(false)
+                    .build();
+
+            patient.addConsent(consent);
+            LocalDateTime beforeUpdate = patient.getUpdatedAt();
+
+            patient.revokeConsent(otherConsent);
+
+            assertThat(otherConsent.isRevoked()).isFalse();
+            assertThat(patient.getUpdatedAt()).isEqualTo(beforeUpdate);
+        }
     }
 
-    @Test
-    void updatePersonalInfo_WithValidData_ShouldUpdateFields() {
-        // Given
-        Patient patient = Patient.create("12345678A", "Juan", "Pérez", LocalDate.of(1990, 1, 1),
-                "600123456", "juan@example.com", "Calle 123");
-        String newNombre = "Carlos";
-        String newApellido = "Gómez";
-        String newTelefono = "611223344";
-        String newEmail = "carlos.gomez@example.com";
-        String newDireccion = "Avenida Real 456";
+    @Nested
+    @DisplayName("Status Management")
+    class StatusTests {
 
-        // When
-        patient.updatePersonalInfo(newNombre, newApellido, newTelefono, newEmail, newDireccion);
+        private Patient patient;
 
-        // Then
-        assertEquals(newNombre, patient.getNombre());
-        assertEquals(newApellido, patient.getApellido());
-        assertEquals(newTelefono, patient.getTelefono());
-        assertEquals(newEmail.toLowerCase(), patient.getEmail());
-        assertEquals(newDireccion, patient.getDireccion());
-        // Campos no modificados deben permanecer igual
-        assertEquals("12345678A", patient.getDni());
-        assertEquals(LocalDate.of(1990, 1, 1), patient.getFechaNacimiento());
+        @BeforeEach
+        void setUp() {
+            patient = Patient.builder()
+                    .id(patientId)
+                    .identity(validIdentity)
+                    .status(PatientStatus.ACTIVE)
+                    .build();
+        }
+
+        @Test
+        @DisplayName("Should archive an active patient")
+        void shouldArchiveActivePatient() {
+            patient.archive();
+
+            assertThat(patient.getStatus()).isEqualTo(PatientStatus.ARCHIVED);
+        }
+
+        @Test
+        @DisplayName("Should archive an inactive patient")
+        void shouldArchiveInactivePatient() {
+            patient.deactivate();
+            patient.archive();
+
+            assertThat(patient.getStatus()).isEqualTo(PatientStatus.ARCHIVED);
+        }
+
+        @Test
+        @DisplayName("Should not update timestamp when archiving an already archived patient")
+        void shouldNotUpdateWhenAlreadyArchived() {
+            patient.archive();
+            LocalDateTime archivedTimestamp = patient.getUpdatedAt();
+
+            patient.archive();
+
+            assertThat(patient.getUpdatedAt()).isEqualTo(archivedTimestamp);
+        }
+
+        @Test
+        @DisplayName("Should activate an inactive patient")
+        void shouldActivateInactivePatient() {
+            patient.deactivate();
+            patient.activate();
+
+            assertThat(patient.getStatus()).isEqualTo(PatientStatus.ACTIVE);
+        }
+
+        @Test
+        @DisplayName("Should activate an archived patient")
+        void shouldActivateArchivedPatient() {
+            patient.archive();
+            patient.activate();
+
+            assertThat(patient.getStatus()).isEqualTo(PatientStatus.ACTIVE);
+        }
+
+        @Test
+        @DisplayName("Should not activate an already active patient")
+        void shouldNotActivateActivePatient() {
+            LocalDateTime beforeUpdate = patient.getUpdatedAt();
+            patient.activate();
+
+            assertThat(patient.getStatus()).isEqualTo(PatientStatus.ACTIVE);
+            assertThat(patient.getUpdatedAt()).isEqualTo(beforeUpdate);
+        }
+
+        @Test
+        @DisplayName("Should deactivate an active patient")
+        void shouldDeactivateActivePatient() {
+            patient.deactivate();
+
+            assertThat(patient.getStatus()).isEqualTo(PatientStatus.INACTIVE);
+        }
+
+        @Test
+        @DisplayName("Should not deactivate an inactive patient")
+        void shouldNotDeactivateInactivePatient() {
+            patient.deactivate();
+            LocalDateTime beforeUpdate = patient.getUpdatedAt();
+            patient.deactivate();
+
+            assertThat(patient.getStatus()).isEqualTo(PatientStatus.INACTIVE);
+            assertThat(patient.getUpdatedAt()).isEqualTo(beforeUpdate);
+        }
     }
 
-    @Test
-    void updatePersonalInfo_WithInvalidEmail_ShouldThrowDomainException() {
-        // Given
-        Patient patient = Patient.create("12345678A", "Juan", "Pérez", LocalDate.of(1990, 1, 1),
-                "600123456", "juan@example.com", "Calle 123");
+    @Nested
+    @DisplayName("Business Rule Validation")
+    class BusinessRuleTests {
 
-        // When & Then
-        DomainException exception = assertThrows(DomainException.class, () ->
-                patient.updatePersonalInfo("Carlos", "Gómez", "611223344", "invalid-email", "Avenida 456")
-        );
-        assertTrue(exception.getMessage().contains("Formato de email inválido"));
-    }
+        @Test
+        @DisplayName("Should return true when patient has active high severity alerts")
+        void shouldDetectActiveHighSeverityAlerts() {
+            MedicalAlert highAlert = MedicalAlert.builder()
+                    .alertId(UUID.randomUUID())
+                    .code("H002")
+                    .description("Hemophilia")
+                    .severity(com.application.domain.enums.AlertSeverity.HIGH)
+                    .createdAt(fixedTimestamp)
+                    .isActive(true)
+                    .build();
 
-    @Test
-    void deactivate_WhenActive_ShouldDeactivate() {
-        // Given
-        Patient patient = Patient.create("12345678A", "Juan", "Pérez", LocalDate.of(1990, 1, 1),
-                "600123456", "juan@example.com", "Calle 123");
-        assertTrue(patient.getActivo());
+            MedicalAlert mediumAlert = MedicalAlert.builder()
+                    .alertId(UUID.randomUUID())
+                    .code("M001")
+                    .description("Mild Asthma")
+                    .severity(com.application.domain.enums.AlertSeverity.MEDIUM)
+                    .createdAt(fixedTimestamp)
+                    .isActive(true)
+                    .build();
 
-        // When
-        patient.deactivate();
+            Patient patient = Patient.builder()
+                    .id(patientId)
+                    .identity(validIdentity)
+                    .status(PatientStatus.ACTIVE)
+                    .medicalAlerts(Set.of(highAlert, mediumAlert))
+                    .build();
 
-        // Then
-        assertFalse(patient.getActivo());
-    }
+            assertThat(patient.hasActiveHighSeverityAlerts()).isTrue();
+        }
 
-    @Test
-    void deactivate_WhenAlreadyInactive_ShouldThrowDomainException() {
-        // Given
-        Patient patient = Patient.create("12345678A", "Juan", "Pérez", LocalDate.of(1990, 1, 1),
-                "600123456", "juan@example.com", "Calle 123");
-        patient.deactivate();
+        @Test
+        @DisplayName("Should return false when patient has no active high severity alerts")
+        void shouldNotDetectHighSeverityAlertsWhenNone() {
+            MedicalAlert mediumAlert = MedicalAlert.builder()
+                    .alertId(UUID.randomUUID())
+                    .code("M001")
+                    .description("Mild Asthma")
+                    .severity(com.application.domain.enums.AlertSeverity.MEDIUM)
+                    .createdAt(fixedTimestamp)
+                    .isActive(true)
+                    .build();
 
-        // When & Then
-        DomainException exception = assertThrows(DomainException.class, patient::deactivate);
-        assertEquals("El paciente ya se encuentra inactivo.", exception.getMessage());
-    }
+            MedicalAlert lowAlert = MedicalAlert.builder()
+                    .alertId(UUID.randomUUID())
+                    .code("L001")
+                    .description("Allergy to pollen")
+                    .severity(com.application.domain.enums.AlertSeverity.LOW)
+                    .createdAt(fixedTimestamp)
+                    .isActive(true)
+                    .build();
 
-    @Test
-    void activate_WhenInactive_ShouldActivate() {
-        // Given
-        Patient patient = Patient.create("12345678A", "Juan", "Pérez", LocalDate.of(1990, 1, 1),
-                "600123456", "juan@example.com", "Calle 123");
-        patient.deactivate();
-        assertFalse(patient.getActivo());
+            Patient patient = Patient.builder()
+                    .id(patientId)
+                    .identity(validIdentity)
+                    .status(PatientStatus.ACTIVE)
+                    .medicalAlerts(Set.of(mediumAlert, lowAlert))
+                    .build();
 
-        // When
-        patient.activate();
+            assertThat(patient.hasActiveHighSeverityAlerts()).isFalse();
+        }
 
-        // Then
-        assertTrue(patient.getActivo());
-    }
-
-    @Test
-    void activate_WhenAlreadyActive_ShouldThrowDomainException() {
-        // Given
-        Patient patient = Patient.create("12345678A", "Juan", "Pérez", LocalDate.of(1990, 1, 1),
-                "600123456", "juan@example.com", "Calle 123");
-
-        // When & Then
-        DomainException exception = assertThrows(DomainException.class, patient::activate);
-        assertEquals("El paciente ya se encuentra activo.", exception.getMessage());
-    }
-
-    @Test
-    void isEligibleForNewAppointments_WhenActive_ShouldReturnTrue() {
-        // Given
-        Patient patient = Patient.create("12345678A", "Juan", "Pérez", LocalDate.of(1990, 1, 1),
-                "600123456", "juan@example.com", "Calle 123");
-
-        // When
-        boolean eligible = patient.isEligibleForNewAppointments();
-
-        // Then
-        assertTrue(eligible);
-    }
-
-    @Test
-    void isEligibleForNewAppointments_WhenInactive_ShouldReturnFalse() {
-        // Given
-        Patient patient = Patient.create("12345678A", "Juan", "Pérez", LocalDate.of(1990, 1, 1),
-                "600123456", "juan@example.com", "Calle 123");
-        patient.deactivate();
-
-        // When
-        boolean eligible = patient.isEligibleForNewAppointments();
-
-        // Then
-        assertFalse(eligible);
-    }
-
-    @Test
-    void setNombre_WithNull_ShouldThrowDomainException() {
-        // Given
-        PatientId id = new PatientId(UUID.randomUUID());
-
-        // When & Then
-        DomainException exception = assertThrows(DomainException.class, () ->
-                new Patient(id, "12345678A", null, "Pérez", LocalDate.of(1990, 1, 1),
-                        "600123456", "juan@example.com", "Calle 123",
-                        LocalDateTime.now(), true)
-        );
-        assertEquals("El nombre no puede estar vacío.", exception.getMessage());
-    }
-
-    @Test
-    void setNombre_WithExcessiveLength_ShouldThrowDomainException() {
-        // Given
-        PatientId id = new PatientId(UUID.randomUUID());
-        String longNombre = "A".repeat(101);
-
-        // When & Then
-        DomainException exception = assertThrows(DomainException.class, () ->
-                new Patient(id, "12345678A", longNombre, "Pérez", LocalDate.of(1990, 1, 1),
-                        "600123456", "juan@example.com", "Calle 123",
-                        LocalDateTime.now(), true)
-        );
-        assertEquals("El nombre no puede exceder los 100 caracteres.", exception.getMessage());
-    }
-
-    @Test
-    void setTelefono_WithExcessiveLength_ShouldThrowDomainException() {
-        // Given
-        PatientId id = new PatientId(UUID.randomUUID());
-        String longTelefono = "1".repeat(21);
-
-        // When & Then
-        DomainException exception = assertThrows(DomainException.class, () ->
-                new Patient(id, "12345678A", "Juan", "Pérez", LocalDate.of(1990, 1, 1),
-                        longTelefono, "juan@example.com", "Calle 123",
-                        LocalDateTime.now(), true)
-        );
-        assertEquals("El teléfono no puede exceder los 20 caracteres.", exception.getMessage());
-    }
-
-    @Test
-    void setEmail_WithExcessiveLength_ShouldThrowDomainException() {
-        // Given
-        PatientId id = new PatientId(UUID.randomUUID());
-        String longEmail = "a".repeat(151) + "@example.com";
-
-        // When & Then
-        DomainException exception = assertThrows(DomainException.class, () ->
-                new Patient(id, "12345678A", "Juan", "Pérez", LocalDate.of(1990, 1, 1),
-                        "600123456", longEmail, "Calle 123",
-                        LocalDateTime.now(), true)
-        );
-        assertEquals("El email no puede exceder los 150 caracteres.", exception.getMessage());
-    }
-
-    @Test
-    void setDireccion_WithExcessiveLength_ShouldThrowDomainException() {
-        // Given
-        PatientId id = new PatientId(UUID.randomUUID());
-        String longDireccion = "A".repeat(256);
-
-        // When & Then
-        DomainException exception = assertThrows(DomainException.class, () ->
-                new Patient(id, "12345678A", "Juan", "Pérez", LocalDate.of(1990, 1, 1),
-                        "600123456", "juan@example.com", longDireccion,
-                        LocalDateTime.now(), true)
-        );
-        assertEquals("La dirección no puede exceder los 255 caracteres.", exception.getMessage());
-    }
-
-    @Test
-    void setFechaRegistro_WithFutureDate_ShouldThrowDomainException() {
-        // Given
-        PatientId id = new PatientId(UUID.randomUUID());
-        LocalDateTime futureDate = LocalDateTime.now().plusDays(1);
-
-        // When & Then
-        DomainException exception = assertThrows(DomainException.class, () ->
-                new Patient(id, "12345678A", "Juan", "Pérez", LocalDate.of(1990, 1, 1),
-                        "600123456", "juan@example.com", "Calle 123",
-                        futureDate, true)
-        );
-        assertEquals("La fecha de registro no puede ser futura.", exception.getMessage());
-    }
-
-    @Test
-    void setActivo_WithNull_ShouldThrowDomainException() {
-        // Given
-        PatientId id = new PatientId(UUID.randomUUID());
-
-        // When & Then
-        DomainException exception = assertThrows(DomainException.class, () ->
-                new Patient(id, "12345678A", "Juan", "Pérez", LocalDate.of(1990, 1, 1),
-                        "600123456", "juan@example.com", "Calle 123",
-                        LocalDateTime.now(), null)
-        );
-        assertEquals("El estado activo no puede ser nulo.", exception.getMessage());
-    }
-
-    @Test
-    void create_ShouldTrimAndNormalizeFields() {
-        // Given
-        String dni = " 12345678a ";
-        String nombre = "  Juan  ";
-        String apellido = "  Pérez  ";
-        String telefono = "  600123456  ";
-        String email = "  Juan.Perez@Example.COM  ";
-        String direccion = "  Calle Falsa 123  ";
-
-        // When
-        Patient patient = Patient.create(dni, nombre, apellido, LocalDate.of(1990, 1, 1),
-                telefono, email, direccion);
-
-        // Then
-        assertEquals("12345678A", patient.getDni());
-        assertEquals("Juan", patient.getNombre());
-        assertEquals("Pérez", patient.getApellido());
-        assertEquals("600123456", patient.getTelefono());
-        assertEquals("juan.perez@example.com", patient.getEmail());
-        assertEquals("Calle Falsa 123", patient.getDireccion());
-    }
-}
+        @Test
+        @DisplayName("Should return false when patient has high severity alert but it's inactive")
+        void shouldNotDetectInactiveHighSeverityAlerts() {
+            MedicalAlert inactiveHighAlert = MedicalAlert.builder()
+                    .alertId(UUID.randomUUID())
+                    .code("H003")
+                    .description("Previous Heart Surgery")
+                    .severity(com.application.domain.enums.AlertSeverity.HIGH

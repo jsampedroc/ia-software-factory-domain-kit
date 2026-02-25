@@ -5,7 +5,6 @@ from ai.llm.grounding import build_grounded_prompt
 
 # Modular Agent and Task imports
 import ai.agents as agents
-import ai.tasks as tasks
 
 class TaskExecutor:
     def __init__(self):
@@ -20,7 +19,7 @@ class TaskExecutor:
         Executes a task by dynamically resolving the agent and the task 
         specification from individual files in ai/agents/ and ai/tasks/.
         """
-        # Late import to prevent circular dependency issues
+        # Late import to prevent circular dependency issues during initialization
         import ai.tasks as tasks
         
         # 1. TASK MAPPING (Resolves logic from ai/tasks/ folder)
@@ -32,22 +31,27 @@ class TaskExecutor:
             "audit_code": tasks.build_audit_code_task,
             "heal_code": tasks.build_heal_code_task,
             "project_debug": tasks.build_project_debug_task,
-            "create_skeleton": tasks.build_create_skeleton_task
+            "create_skeleton": tasks.build_create_skeleton_task,
+            "arbitration": tasks.build_arbitration_task
         }
 
         if task_key not in task_map:
             raise ValueError(f"❌ Task '{task_key}' is not mapped in TaskExecutor.")
 
-        # 2. ARGUMENT PREPARATION
-        # Merge context data and dynamic kwargs (base_package, idea, etc.)
+        # 2. ARGUMENT SYNCHRONIZATION (Critical for Auto-Healing)
+        # We ensure context_data is passed down as 'domain_kit' or 'context_data'
+        # and kwargs like 'error_log' are preserved for the task builders.
         task_args = kwargs.copy()
         task_args['context_data'] = context_data
+        if 'domain_kit' not in task_args:
+            task_args['domain_kit'] = context_data
 
         # 3. BUILD TASK DEFINITION
+        # This calls functions like build_heal_code_task(**task_args)
         task_def = task_map[task_key](**task_args)
         
         # 4. AGENT RESOLUTION
-        # Use override if provided; otherwise, use the default agent assigned to the task
+        # Use override if provided (e.g. SRE for infra); otherwise, use task default
         role_key = agent_override if agent_override else task_def['agent']
         
         agent_map = {
@@ -56,7 +60,8 @@ class TaskExecutor:
             "backend_builder": agents.build_backend_builder,
             "qa_agent": agents.build_qa_agent,
             "sre_agent": agents.build_sre_agent,
-            "frontend_builder": agents.build_frontend_builder
+            "frontend_builder": agents.build_frontend_builder,
+            "principal_architect": agents.build_principal_architect
         }
         
         if role_key not in agent_map:
@@ -64,7 +69,7 @@ class TaskExecutor:
             
         agent_config = agent_map[role_key]()
         
-        # 5. SYSTEM RULES CONSOLIDATION
+        # 5. SYSTEM RULES CONSOLIDATION (Support for both formats)
         system_rules = agent_config.get('system') or f"You are a {agent_config['role']}. {agent_config['backstory']}"
         
         # 6. LLM CONFIGURATION (Smart vs. Cheap)

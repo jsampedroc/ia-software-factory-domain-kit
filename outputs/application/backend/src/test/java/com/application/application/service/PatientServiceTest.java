@@ -1,24 +1,30 @@
 package com.application.application.service;
 
-import com.application.application.dto.PatientDTO;
-import com.application.domain.exception.DomainException;
-import com.application.domain.model.Patient;
-import com.application.domain.port.PatientRepositoryPort;
+import com.application.domain.model.*;
 import com.application.domain.valueobject.PatientId;
+import com.application.domain.valueobject.EhrId;
+import com.application.domain.enums.PatientStatus;
+import com.application.domain.enums.AlertSeverity;
+import com.application.domain.enums.AllergySeverity;
+import com.application.domain.enums.ConsentType;
+import com.application.domain.repository.PatientRepository;
+import com.application.domain.repository.ElectronicHealthRecordRepository;
+import com.application.domain.exception.DomainException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -26,263 +32,426 @@ import static org.mockito.Mockito.*;
 class PatientServiceTest {
 
     @Mock
-    private PatientRepositoryPort patientRepositoryPort;
+    private PatientRepository patientRepository;
+
+    @Mock
+    private ElectronicHealthRecordRepository ehrRepository;
 
     @InjectMocks
     private PatientService patientService;
 
-    private PatientId patientId;
-    private Patient patient;
-    private PatientDTO patientDTO;
-    private final LocalDate birthDate = LocalDate.now().minusYears(30);
-    private final LocalDateTime registrationDate = LocalDateTime.now().minusMonths(1);
+    @Captor
+    private ArgumentCaptor<Patient> patientCaptor;
+
+    @Captor
+    private ArgumentCaptor<ElectronicHealthRecord> ehrCaptor;
+
+    private PatientId samplePatientId;
+    private PatientIdentity sampleIdentity;
+    private MedicalAlert sampleAlert;
+    private Allergy sampleAllergy;
+    private DigitalConsent sampleConsent;
+    private Patient activePatient;
 
     @BeforeEach
     void setUp() {
-        patientId = new PatientId(UUID.randomUUID());
-        patient = Patient.create(
-                "12345678A",
-                "Juan",
-                "Pérez",
-                birthDate,
-                "600123456",
-                "juan.perez@email.com",
-                "Calle Falsa 123"
-        );
-        patientDTO = new PatientDTO(
-                patientId,
-                "12345678A",
-                "Juan",
-                "Pérez",
-                birthDate,
-                "600123456",
-                "juan.perez@email.com",
-                "Calle Falsa 123",
-                registrationDate,
-                true
-        );
+        samplePatientId = new PatientId(UUID.randomUUID());
+        sampleIdentity = PatientIdentity.builder()
+                .firstName("John")
+                .lastName("Doe")
+                .dateOfBirth(LocalDate.of(1985, 5, 15))
+                .nationalId("ID123456")
+                .email("john.doe@example.com")
+                .phoneNumber("+1234567890")
+                .address("123 Main St")
+                .build();
+
+        sampleAlert = MedicalAlert.builder()
+                .alertId(UUID.randomUUID())
+                .code("HC001")
+                .description("Heart Condition")
+                .severity(AlertSeverity.HIGH)
+                .createdAt(LocalDateTime.now())
+                .isActive(true)
+                .build();
+
+        sampleAllergy = Allergy.builder()
+                .allergyId(UUID.randomUUID())
+                .substance("Penicillin")
+                .reaction("Rash")
+                .severity(AllergySeverity.SEVERE)
+                .diagnosedDate(LocalDate.now())
+                .build();
+
+        sampleConsent = DigitalConsent.builder()
+                .consentId(UUID.randomUUID())
+                .consentType(ConsentType.TREATMENT)
+                .version("1.0")
+                .content("I consent to standard dental treatment.")
+                .givenBy("John Doe")
+                .givenAt(LocalDateTime.now())
+                .isRevoked(false)
+                .revokedAt(null)
+                .build();
+
+        activePatient = Patient.builder()
+                .patientId(samplePatientId)
+                .identity(sampleIdentity)
+                .medicalAlerts(new HashSet<>())
+                .allergies(new HashSet<>())
+                .consents(new ArrayList<>())
+                .status(PatientStatus.ACTIVE)
+                .build();
     }
 
     @Test
-    void createPatient_ValidData_ReturnsPatientDTO() {
-        when(patientRepositoryPort.findByDni(any())).thenReturn(Optional.empty());
-        when(patientRepositoryPort.findByEmail(any())).thenReturn(Optional.empty());
-        when(patientRepositoryPort.save(any(Patient.class))).thenReturn(patient);
+    void registerPatient_SuccessfulRegistration_CreatesPatientAndEHR() {
+        // Given
+        Set<MedicalAlert> alerts = Set.of(sampleAlert);
+        Set<Allergy> allergies = Set.of(sampleAllergy);
+        List<DigitalConsent> consents = List.of(sampleConsent);
 
-        PatientDTO result = patientService.createPatient(patientDTO);
+        when(patientRepository.findByIdentity(sampleIdentity)).thenReturn(Optional.empty());
+        when(patientRepository.save(any(Patient.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(ehrRepository.save(any(ElectronicHealthRecord.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        assertNotNull(result);
-        assertEquals(patientDTO.dni(), result.dni());
-        assertEquals(patientDTO.nombre(), result.nombre());
-        verify(patientRepositoryPort).save(any(Patient.class));
+        // When
+        Patient result = patientService.registerPatient(sampleIdentity, alerts, allergies, consents);
+
+        // Then
+        verify(patientRepository).findByIdentity(sampleIdentity);
+        verify(patientRepository).save(patientCaptor.capture());
+        verify(ehrRepository).save(ehrCaptor.capture());
+
+        Patient savedPatient = patientCaptor.getValue();
+        assertThat(savedPatient.getIdentity()).isEqualTo(sampleIdentity);
+        assertThat(savedPatient.getMedicalAlerts()).containsExactly(sampleAlert);
+        assertThat(savedPatient.getAllergies()).containsExactly(sampleAllergy);
+        assertThat(savedPatient.getConsents()).containsExactly(sampleConsent);
+        assertThat(savedPatient.getStatus()).isEqualTo(PatientStatus.ACTIVE);
+
+        ElectronicHealthRecord savedEhr = ehrCaptor.getValue();
+        assertThat(savedEhr.getPatientId()).isEqualTo(savedPatient.getPatientId().getValue());
+        assertThat(savedEhr.getClinicalNotes()).isEmpty();
+        assertThat(savedEhr.getTreatments()).isEmpty();
+        assertThat(savedEhr.getCreatedAt()).isNotNull();
+        assertThat(savedEhr.getLastUpdated()).isNotNull();
+
+        assertThat(result).isSameAs(savedPatient);
     }
 
     @Test
-    void createPatient_DuplicateDni_ThrowsDomainException() {
-        when(patientRepositoryPort.findByDni(patientDTO.dni())).thenReturn(Optional.of(patient));
+    void registerPatient_DuplicateIdentity_ThrowsDomainException() {
+        // Given
+        when(patientRepository.findByIdentity(sampleIdentity)).thenReturn(Optional.of(activePatient));
 
-        DomainException exception = assertThrows(DomainException.class,
-                () -> patientService.createPatient(patientDTO));
+        // When & Then
+        assertThatThrownBy(() -> patientService.registerPatient(sampleIdentity, null, null, null))
+                .isInstanceOf(DomainException.class)
+                .hasMessageContaining("already exists");
 
-        assertTrue(exception.getMessage().contains("Ya existe un paciente con el DNI"));
-        verify(patientRepositoryPort, never()).save(any());
+        verify(patientRepository, never()).save(any());
+        verify(ehrRepository, never()).save(any());
     }
 
     @Test
-    void createPatient_InvalidEmailFormat_ThrowsDomainException() {
-        PatientDTO invalidEmailDTO = new PatientDTO(
-                null, "87654321B", "Ana", "García", birthDate,
-                "600987654", "invalid-email", "Calle Real 456", null, true
-        );
+    void registerPatient_NullCollections_InitializesEmptyCollections() {
+        // Given
+        when(patientRepository.findByIdentity(sampleIdentity)).thenReturn(Optional.empty());
+        when(patientRepository.save(any(Patient.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(ehrRepository.save(any(ElectronicHealthRecord.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        DomainException exception = assertThrows(DomainException.class,
-                () -> patientService.createPatient(invalidEmailDTO));
+        // When
+        Patient result = patientService.registerPatient(sampleIdentity, null, null, null);
 
-        assertTrue(exception.getMessage().contains("formato del email"));
+        // Then
+        verify(patientRepository).save(patientCaptor.capture());
+        Patient savedPatient = patientCaptor.getValue();
+        assertThat(savedPatient.getMedicalAlerts()).isEmpty();
+        assertThat(savedPatient.getAllergies()).isEmpty();
+        assertThat(savedPatient.getConsents()).isEmpty();
+        assertThat(result).isSameAs(savedPatient);
     }
 
     @Test
-    void getPatientById_ExistingId_ReturnsPatientDTO() {
-        when(patientRepositoryPort.findById(patientId)).thenReturn(Optional.of(patient));
+    void updatePatientIdentity_SuccessfulUpdate() {
+        // Given
+        PatientIdentity newIdentity = PatientIdentity.builder()
+                .firstName("Jane")
+                .lastName("Doe")
+                .dateOfBirth(LocalDate.of(1990, 1, 1))
+                .nationalId("ID654321")
+                .email("jane.doe@example.com")
+                .phoneNumber("+0987654321")
+                .address("456 Oak Ave")
+                .build();
 
-        PatientDTO result = patientService.getPatientById(patientId);
+        when(patientRepository.findById(samplePatientId)).thenReturn(Optional.of(activePatient));
+        when(patientRepository.findByIdentity(newIdentity)).thenReturn(Optional.empty());
+        when(patientRepository.save(any(Patient.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        assertNotNull(result);
-        assertEquals(patient.getDni(), result.dni());
+        // When
+        Patient result = patientService.updatePatientIdentity(samplePatientId, newIdentity);
+
+        // Then
+        verify(patientRepository).save(patientCaptor.capture());
+        Patient updatedPatient = patientCaptor.getValue();
+        assertThat(updatedPatient.getIdentity()).isEqualTo(newIdentity);
+        assertThat(result).isSameAs(updatedPatient);
     }
 
     @Test
-    void getPatientById_NonExistingId_ThrowsDomainException() {
-        when(patientRepositoryPort.findById(patientId)).thenReturn(Optional.empty());
+    void updatePatientIdentity_IdentityConflictWithOtherPatient_ThrowsDomainException() {
+        // Given
+        PatientIdentity newIdentity = PatientIdentity.builder()
+                .firstName("Jane")
+                .lastName("Doe")
+                .dateOfBirth(LocalDate.of(1990, 1, 1))
+                .nationalId("ID654321")
+                .email("jane.doe@example.com")
+                .phoneNumber("+0987654321")
+                .address("456 Oak Ave")
+                .build();
 
-        DomainException exception = assertThrows(DomainException.class,
-                () -> patientService.getPatientById(patientId));
+        PatientId otherPatientId = new PatientId(UUID.randomUUID());
+        Patient otherPatient = Patient.builder()
+                .patientId(otherPatientId)
+                .identity(newIdentity)
+                .status(PatientStatus.ACTIVE)
+                .build();
 
-        assertTrue(exception.getMessage().contains("no encontrado"));
+        when(patientRepository.findById(samplePatientId)).thenReturn(Optional.of(activePatient));
+        when(patientRepository.findByIdentity(newIdentity)).thenReturn(Optional.of(otherPatient));
+
+        // When & Then
+        assertThatThrownBy(() -> patientService.updatePatientIdentity(samplePatientId, newIdentity))
+                .isInstanceOf(DomainException.class)
+                .hasMessageContaining("Another patient already exists");
+
+        verify(patientRepository, never()).save(any());
     }
 
     @Test
-    void getAllPatients_ReturnsListOfDTOs() {
-        List<Patient> patients = List.of(patient);
-        when(patientRepositoryPort.findAll()).thenReturn(patients);
+    void updatePatientIdentity_PatientNotFound_ThrowsDomainException() {
+        // Given
+        when(patientRepository.findById(samplePatientId)).thenReturn(Optional.empty());
 
-        List<PatientDTO> result = patientService.getAllPatients();
-
-        assertFalse(result.isEmpty());
-        assertEquals(1, result.size());
+        // When & Then
+        assertThatThrownBy(() -> patientService.updatePatientIdentity(samplePatientId, sampleIdentity))
+                .isInstanceOf(DomainException.class)
+                .hasMessageContaining("Patient not found");
     }
 
     @Test
-    void getActivePatients_ReturnsActivePatients() {
-        List<Patient> activePatients = List.of(patient);
-        when(patientRepositoryPort.findByActive(true)).thenReturn(activePatients);
+    void updatePatientIdentity_PatientNotActive_ThrowsDomainException() {
+        // Given
+        Patient archivedPatient = Patient.builder()
+                .patientId(samplePatientId)
+                .identity(sampleIdentity)
+                .status(PatientStatus.ARCHIVED)
+                .build();
 
-        List<PatientDTO> result = patientService.getActivePatients();
+        when(patientRepository.findById(samplePatientId)).thenReturn(Optional.of(archivedPatient));
 
-        assertFalse(result.isEmpty());
-        verify(patientRepositoryPort).findByActive(true);
+        // When & Then
+        assertThatThrownBy(() -> patientService.updatePatientIdentity(samplePatientId, sampleIdentity))
+                .isInstanceOf(DomainException.class)
+                .hasMessageContaining("Patient is not active");
     }
 
     @Test
-    void updatePatient_ValidData_ReturnsUpdatedDTO() {
-        when(patientRepositoryPort.findById(patientId)).thenReturn(Optional.of(patient));
-        when(patientRepositoryPort.findByDni(any())).thenReturn(Optional.empty());
-        when(patientRepositoryPort.findByEmail(any())).thenReturn(Optional.empty());
-        when(patientRepositoryPort.save(any(Patient.class))).thenReturn(patient);
+    void addMedicalAlert_SuccessfulAddition() {
+        // Given
+        when(patientRepository.findById(samplePatientId)).thenReturn(Optional.of(activePatient));
+        when(patientRepository.save(any(Patient.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        PatientDTO updatedDTO = new PatientDTO(
-                patientId,
-                "87654321B",
-                "Juan Updated",
-                "Pérez Updated",
-                birthDate,
-                "611223344",
-                "updated@email.com",
-                "Nueva Dirección 789",
-                registrationDate,
-                true
-        );
+        // When
+        Patient result = patientService.addMedicalAlert(samplePatientId, sampleAlert);
 
-        PatientDTO result = patientService.updatePatient(patientId, updatedDTO);
-
-        assertNotNull(result);
-        assertEquals(updatedDTO.nombre(), result.nombre());
-        verify(patientRepositoryPort).save(any(Patient.class));
+        // Then
+        verify(patientRepository).save(patientCaptor.capture());
+        Patient updatedPatient = patientCaptor.getValue();
+        assertThat(updatedPatient.getMedicalAlerts()).contains(sampleAlert);
+        assertThat(result).isSameAs(updatedPatient);
     }
 
     @Test
-    void updatePatient_DuplicateDniForOtherPatient_ThrowsDomainException() {
-        Patient otherPatient = Patient.create(
-                "87654321B", "Other", "Patient", birthDate,
-                "600000000", "other@email.com", "Other Address"
-        );
-        PatientId otherId = new PatientId(UUID.randomUUID());
+    void deactivateMedicalAlert_SuccessfulDeactivation() {
+        // Given
+        activePatient = Patient.builder()
+                .patientId(samplePatientId)
+                .identity(sampleIdentity)
+                .medicalAlerts(new HashSet<>(Set.of(sampleAlert)))
+                .status(PatientStatus.ACTIVE)
+                .build();
 
-        when(patientRepositoryPort.findById(patientId)).thenReturn(Optional.of(patient));
-        when(patientRepositoryPort.findByDni("87654321B")).thenReturn(Optional.of(otherPatient));
+        when(patientRepository.findById(samplePatientId)).thenReturn(Optional.of(activePatient));
+        when(patientRepository.save(any(Patient.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        PatientDTO updatedDTO = new PatientDTO(
-                patientId,
-                "87654321B",
-                "Juan",
-                "Pérez",
-                birthDate,
-                "600123456",
-                "juan.perez@email.com",
-                "Calle Falsa 123",
-                registrationDate,
-                true
-        );
+        // When
+        Patient result = patientService.deactivateMedicalAlert(samplePatientId, sampleAlert.getAlertId());
 
-        DomainException exception = assertThrows(DomainException.class,
-                () -> patientService.updatePatient(patientId, updatedDTO));
-
-        assertTrue(exception.getMessage().contains("Ya existe otro paciente con el DNI"));
+        // Then
+        verify(patientRepository).save(patientCaptor.capture());
+        Patient updatedPatient = patientCaptor.getValue();
+        Optional<MedicalAlert> deactivatedAlert = updatedPatient.getMedicalAlerts().stream()
+                .filter(a -> a.getAlertId().equals(sampleAlert.getAlertId()))
+                .findFirst();
+        assertThat(deactivatedAlert).isPresent();
+        assertThat(deactivatedAlert.get().isActive()).isFalse();
+        assertThat(result).isSameAs(updatedPatient);
     }
 
     @Test
-    void deactivatePatient_ExistingPatient_DeactivatesPatient() {
-        when(patientRepositoryPort.findById(patientId)).thenReturn(Optional.of(patient));
-        when(patientRepositoryPort.save(any(Patient.class))).thenReturn(patient);
+    void addAllergy_SuccessfulAddition() {
+        // Given
+        when(patientRepository.findById(samplePatientId)).thenReturn(Optional.of(activePatient));
+        when(patientRepository.save(any(Patient.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        patientService.deactivatePatient(patientId);
+        // When
+        Patient result = patientService.addAllergy(samplePatientId, sampleAllergy);
 
-        verify(patientRepositoryPort).save(patient);
-        // Assuming deactivate() method exists and is called
+        // Then
+        verify(patientRepository).save(patientCaptor.capture());
+        Patient updatedPatient = patientCaptor.getValue();
+        assertThat(updatedPatient.getAllergies()).contains(sampleAllergy);
+        assertThat(result).isSameAs(updatedPatient);
     }
 
     @Test
-    void archiveInactivePatients_ArchivesOldInactivePatients() {
-        Patient inactivePatient = Patient.create(
-                "99999999Z", "Inactive", "Patient", birthDate,
-                "600999999", "inactive@email.com", "Old Address"
-        );
-        inactivePatient.deactivate();
-        // Reflection or package-private method might be needed to set old registration date
-        // For simplicity, we assume the repository returns the patient
-        List<Patient> inactivePatients = List.of(inactivePatient);
+    void removeAllergy_SuccessfulRemoval() {
+        // Given
+        activePatient = Patient.builder()
+                .patientId(samplePatientId)
+                .identity(sampleIdentity)
+                .allergies(new HashSet<>(Set.of(sampleAllergy)))
+                .status(PatientStatus.ACTIVE)
+                .build();
 
-        when(patientRepositoryPort.findByActive(false)).thenReturn(inactivePatients);
-        when(patientRepositoryPort.saveAll(any())).thenReturn(inactivePatients);
+        when(patientRepository.findById(samplePatientId)).thenReturn(Optional.of(activePatient));
+        when(patientRepository.save(any(Patient.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        patientService.archiveInactivePatients();
+        // When
+        Patient result = patientService.removeAllergy(samplePatientId, sampleAllergy.getAllergyId());
 
-        verify(patientRepositoryPort).saveAll(inactivePatients);
+        // Then
+        verify(patientRepository).save(patientCaptor.capture());
+        Patient updatedPatient = patientCaptor.getValue();
+        assertThat(updatedPatient.getAllergies()).doesNotContain(sampleAllergy);
+        assertThat(result).isSameAs(updatedPatient);
     }
 
     @Test
-    void canScheduleNewAppointment_ActivePatientNoOverdueInvoices_ReturnsTrue() {
-        when(patientRepositoryPort.findById(patientId)).thenReturn(Optional.of(patient));
-        // Assuming patient has no overdue invoices
+    void giveConsent_SuccessfulConsentCreation() {
+        // Given
+        when(patientRepository.findById(samplePatientId)).thenReturn(Optional.of(activePatient));
+        when(patientRepository.save(any(Patient.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        boolean result = patientService.canScheduleNewAppointment(patientId);
+        // When
+        DigitalConsent result = patientService.giveConsent(samplePatientId, ConsentType.DATA_USAGE, "2.0", "Data usage consent", "John Doe");
 
-        assertTrue(result);
+        // Then
+        verify(patientRepository).save(patientCaptor.capture());
+        Patient updatedPatient = patientCaptor.getValue();
+        assertThat(updatedPatient.getConsents()).hasSize(1);
+        DigitalConsent savedConsent = updatedPatient.getConsents().get(0);
+        assertThat(savedConsent.getConsentType()).isEqualTo(ConsentType.DATA_USAGE);
+        assertThat(savedConsent.getVersion()).isEqualTo("2.0");
+        assertThat(savedConsent.getContent()).isEqualTo("Data usage consent");
+        assertThat(savedConsent.getGivenBy()).isEqualTo("John Doe");
+        assertThat(savedConsent.isRevoked()).isFalse();
+        assertThat(result).isSameAs(savedConsent);
     }
 
     @Test
-    void canScheduleNewAppointment_InactivePatient_ReturnsFalse() {
-        patient.deactivate();
-        when(patientRepositoryPort.findById(patientId)).thenReturn(Optional.of(patient));
+    void revokeConsent_SuccessfulRevocation() {
+        // Given
+        activePatient = Patient.builder()
+                .patientId(samplePatientId)
+                .identity(sampleIdentity)
+                .consents(new ArrayList<>(List.of(sampleConsent)))
+                .status(PatientStatus.ACTIVE)
+                .build();
 
-        boolean result = patientService.canScheduleNewAppointment(patientId);
+        when(patientRepository.findById(samplePatientId)).thenReturn(Optional.of(activePatient));
+        when(patientRepository.save(any(Patient.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        assertFalse(result);
+        // When
+        Patient result = patientService.revokeConsent(samplePatientId, sampleConsent.getConsentId());
+
+        // Then
+        verify(patientRepository).save(patientCaptor.capture());
+        Patient updatedPatient = patientCaptor.getValue();
+        DigitalConsent revokedConsent = updatedPatient.getConsents().get(0);
+        assertThat(revokedConsent.isRevoked()).isTrue();
+        assertThat(revokedConsent.getRevokedAt()).isNotNull();
+        assertThat(result).isSameAs(updatedPatient);
     }
 
     @Test
-    void calculateAge_ValidPatient_ReturnsCorrectAge() {
-        when(patientRepositoryPort.findById(patientId)).thenReturn(Optional.of(patient));
+    void archivePatient_SuccessfulArchival() {
+        // Given
+        when(patientRepository.findById(samplePatientId)).thenReturn(Optional.of(activePatient));
+        when(patientRepository.save(any(Patient.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        int age = patientService.calculateAge(patientId);
+        // When
+        Patient result = patientService.archivePatient(samplePatientId);
 
-        assertEquals(30, age); // Based on birthDate set in setUp
+        // Then
+        verify(patientRepository).save(patientCaptor.capture());
+        Patient archivedPatient = patientCaptor.getValue();
+        assertThat(archivedPatient.getStatus()).isEqualTo(PatientStatus.ARCHIVED);
+        assertThat(result).isSameAs(archivedPatient);
     }
 
     @Test
-    void createPatient_MissingDni_ThrowsDomainException() {
-        PatientDTO invalidDTO = new PatientDTO(
-                null, null, "Nombre", "Apellido", birthDate,
-                "600123456", "email@test.com", "Dirección", null, true
-        );
+    void archivePatient_AlreadyArchived_ThrowsDomainException() {
+        // Given
+        Patient archivedPatient = Patient.builder()
+                .patientId(samplePatientId)
+                .identity(sampleIdentity)
+                .status(PatientStatus.ARCHIVED)
+                .build();
 
-        DomainException exception = assertThrows(DomainException.class,
-                () -> patientService.createPatient(invalidDTO));
+        when(patientRepository.findById(samplePatientId)).thenReturn(Optional.of(archivedPatient));
 
-        assertTrue(exception.getMessage().contains("DNI es obligatorio"));
+        // When & Then
+        assertThatThrownBy(() -> patientService.archivePatient(samplePatientId))
+                .isInstanceOf(DomainException.class)
+                .hasMessageContaining("already archived");
+        verify(patientRepository, never()).save(any());
     }
 
     @Test
-    void createPatient_TooYoung_ThrowsDomainException() {
-        LocalDate tooYoungBirthDate = LocalDate.now().minusMonths(6);
-        PatientDTO invalidDTO = new PatientDTO(
-                null, "11223344C", "Baby", "Smith", tooYoungBirthDate,
-                "600111222", "baby@test.com", "Dirección", null, true
-        );
+    void reactivatePatient_FromArchived_Successful() {
+        // Given
+        Patient archivedPatient = Patient.builder()
+                .patientId(samplePatientId)
+                .identity(sampleIdentity)
+                .status(PatientStatus.ARCHIVED)
+                .build();
 
-        DomainException exception = assertThrows(DomainException.class,
-                () -> patientService.createPatient(invalidDTO));
+        when(patientRepository.findById(samplePatientId)).thenReturn(Optional.of(archivedPatient));
+        when(patientRepository.save(any(Patient.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        assertTrue(exception.getMessage().contains("al menos 1 año de edad"));
+        // When
+        Patient result = patientService.reactivatePatient(samplePatientId);
+
+        // Then
+        verify(patientRepository).save(patientCaptor.capture());
+        Patient reactivatedPatient = patientCaptor.getValue();
+        assertThat(reactivatedPatient.getStatus()).isEqualTo(PatientStatus.ACTIVE);
+        assertThat(result).isSameAs(reactivatedPatient);
     }
-}
+
+    @Test
+    void reactivatePatient_FromInactive_Successful() {
+        // Given
+        Patient inactivePatient = Patient.builder()
+                .patientId(samplePatientId)
+                .identity(sampleIdentity)
+                .status(PatientStatus.INACTIVE)
+                .build();
+
+        when(patientRepository.findById(samplePatientId)).thenReturn(Optional.of(inactivePatient));
+        when(patientRepository.save

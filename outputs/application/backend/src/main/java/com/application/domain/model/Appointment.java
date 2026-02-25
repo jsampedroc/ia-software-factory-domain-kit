@@ -2,169 +2,95 @@ package com.application.domain.model;
 
 import com.application.domain.shared.Entity;
 import com.application.domain.valueobject.AppointmentId;
-import com.application.domain.valueobject.AppointmentStatus;
-import com.application.domain.valueobject.PatientId;
-import com.application.domain.valueobject.DentistId;
-import com.application.domain.valueobject.ClinicId;
-import com.application.domain.valueobject.ConsultingRoomId;
-import com.application.domain.valueobject.TreatmentId;
-import com.application.domain.exception.DomainException;
+import com.application.domain.enums.AppointmentType;
+import com.application.domain.enums.AppointmentStatus;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
-import static lombok.AccessLevel.PROTECTED;
-
 @Getter
-@NoArgsConstructor(access = PROTECTED)
+@ToString(callSuper = true)
+@SuperBuilder(toBuilder = true)
 public class Appointment extends Entity<AppointmentId> {
 
-    private LocalDateTime fechaHora;
-    private Integer duracionMinutos;
-    private AppointmentStatus estado;
-    private String motivo;
-    private String notas;
-    private PatientId pacienteId;
-    private DentistId odontologoId;
-    private ClinicId clinicaId;
-    private ConsultingRoomId consultorioId;
-    private Set<TreatmentId> tratamientos;
+    private final UUID patientId;
+    private final UUID dentistId;
+    private final LocalDateTime scheduledTime;
+    private final Duration duration;
+    private final AppointmentType type;
+    private AppointmentStatus status;
+    private final String reason;
+    private final LocalDateTime createdAt;
 
-    public Appointment(
-            AppointmentId id,
-            LocalDateTime fechaHora,
-            Integer duracionMinutos,
-            AppointmentStatus estado,
-            String motivo,
-            String notas,
-            PatientId pacienteId,
-            DentistId odontologoId,
-            ClinicId clinicaId,
-            ConsultingRoomId consultorioId,
-            Set<TreatmentId> tratamientos
-    ) {
+    public Appointment(AppointmentId id,
+                       UUID patientId,
+                       UUID dentistId,
+                       LocalDateTime scheduledTime,
+                       Duration duration,
+                       AppointmentType type,
+                       AppointmentStatus status,
+                       String reason,
+                       LocalDateTime createdAt) {
         super(id);
-        this.fechaHora = fechaHora;
-        this.duracionMinutos = duracionMinutos;
-        this.estado = estado;
-        this.motivo = motivo;
-        this.notas = notas;
-        this.pacienteId = pacienteId;
-        this.odontologoId = odontologoId;
-        this.clinicaId = clinicaId;
-        this.consultorioId = consultorioId;
-        this.tratamientos = tratamientos != null ? new HashSet<>(tratamientos) : new HashSet<>();
-        validate();
+        this.patientId = patientId;
+        this.dentistId = dentistId;
+        this.scheduledTime = scheduledTime;
+        this.duration = duration;
+        this.type = type;
+        this.status = status;
+        this.reason = reason;
+        this.createdAt = createdAt;
     }
 
-    public static Appointment create(
-            LocalDateTime fechaHora,
-            Integer duracionMinutos,
-            String motivo,
-            String notas,
-            PatientId pacienteId,
-            DentistId odontologoId,
-            ClinicId clinicaId,
-            ConsultingRoomId consultorioId,
-            Set<TreatmentId> tratamientos
-    ) {
-        return new Appointment(
-                new AppointmentId(UUID.randomUUID()),
-                fechaHora,
-                duracionMinutos,
-                AppointmentStatus.PROGRAMADA,
-                motivo,
-                notas,
-                pacienteId,
-                odontologoId,
-                clinicaId,
-                consultorioId,
-                tratamientos
-        );
+    public void confirm() {
+        if (this.status != AppointmentStatus.SCHEDULED) {
+            throw new IllegalStateException("Only SCHEDULED appointments can be confirmed.");
+        }
+        this.status = AppointmentStatus.CONFIRMED;
     }
 
-    public void confirmar() {
-        if (this.estado != AppointmentStatus.PROGRAMADA) {
-            throw new DomainException("Solo las citas PROGRAMADAS pueden ser confirmadas. Estado actual: " + this.estado);
+    public void start() {
+        if (this.status != AppointmentStatus.CONFIRMED && this.status != AppointmentStatus.SCHEDULED) {
+            throw new IllegalStateException("Appointment must be SCHEDULED or CONFIRMED to start.");
         }
-        this.estado = AppointmentStatus.CONFIRMADA;
+        this.status = AppointmentStatus.IN_PROGRESS;
     }
 
-    public void iniciar() {
-        if (this.estado != AppointmentStatus.CONFIRMADA) {
-            throw new DomainException("Solo las citas CONFIRMADAS pueden iniciarse. Estado actual: " + this.estado);
+    public void complete() {
+        if (this.status != AppointmentStatus.IN_PROGRESS) {
+            throw new IllegalStateException("Only IN_PROGRESS appointments can be completed.");
         }
-        this.estado = AppointmentStatus.EN_CURSO;
+        this.status = AppointmentStatus.COMPLETED;
     }
 
-    public void completar() {
-        if (this.estado != AppointmentStatus.EN_CURSO) {
-            throw new DomainException("Solo las citas EN_CURSO pueden completarse. Estado actual: " + this.estado);
+    public void cancel(LocalDateTime cancellationTime) {
+        if (this.status == AppointmentStatus.COMPLETED || this.status == AppointmentStatus.CANCELLED || this.status == AppointmentStatus.NO_SHOW) {
+            throw new IllegalStateException("Cannot cancel a COMPLETED, CANCELLED, or NO_SHOW appointment.");
         }
-        this.estado = AppointmentStatus.COMPLETADA;
+        if (this.type != AppointmentType.EMERGENCY && scheduledTime.minusHours(24).isBefore(cancellationTime)) {
+            throw new IllegalStateException("Non-emergency appointments must be cancelled at least 24 hours in advance.");
+        }
+        this.status = AppointmentStatus.CANCELLED;
     }
 
-    public void cancelar() {
-        if (this.estado == AppointmentStatus.COMPLETADA || this.estado == AppointmentStatus.CANCELADA) {
-            throw new DomainException("No se puede cancelar una cita en estado " + this.estado);
+    public void markAsNoShow() {
+        if (this.status != AppointmentStatus.SCHEDULED && this.status != AppointmentStatus.CONFIRMED) {
+            throw new IllegalStateException("Only SCHEDULED or CONFIRMED appointments can be marked as NO_SHOW.");
         }
-        this.estado = AppointmentStatus.CANCELADA;
+        this.status = AppointmentStatus.NO_SHOW;
     }
 
-    public boolean esCancelacionTardia() {
-        if (this.estado != AppointmentStatus.CANCELADA) {
-            return false;
-        }
-        long horasAnticipacion = ChronoUnit.HOURS.between(LocalDateTime.now(), this.fechaHora);
-        return horasAnticipacion < 24;
+    public boolean isOverlapping(Appointment other) {
+        LocalDateTime thisEnd = this.scheduledTime.plus(this.duration);
+        LocalDateTime otherEnd = other.scheduledTime.plus(other.duration);
+        return this.scheduledTime.isBefore(otherEnd) && other.scheduledTime.isBefore(thisEnd);
     }
 
-    public void agregarTratamiento(TreatmentId tratamientoId) {
-        if (tratamientoId == null) {
-            throw new DomainException("El tratamiento no puede ser nulo");
-        }
-        this.tratamientos.add(tratamientoId);
-    }
-
-    public void removerTratamiento(TreatmentId tratamientoId) {
-        if (tratamientoId == null) {
-            throw new DomainException("El tratamiento no puede ser nulo");
-        }
-        this.tratamientos.remove(tratamientoId);
-    }
-
-    private void validate() {
-        if (fechaHora == null) {
-            throw new DomainException("La fecha y hora de la cita son obligatorias");
-        }
-        if (duracionMinutos == null || duracionMinutos < 15 || duracionMinutos > 180) {
-            throw new DomainException("La duración de la cita debe estar entre 15 y 180 minutos");
-        }
-        if (estado == null) {
-            throw new DomainException("El estado de la cita es obligatorio");
-        }
-        if (motivo == null || motivo.trim().isEmpty()) {
-            throw new DomainException("El motivo de la cita es obligatorio");
-        }
-        if (pacienteId == null) {
-            throw new DomainException("El paciente es obligatorio");
-        }
-        if (odontologoId == null) {
-            throw new DomainException("El odontólogo es obligatorio");
-        }
-        if (clinicaId == null) {
-            throw new DomainException("La clínica es obligatoria");
-        }
-        if (consultorioId == null) {
-            throw new DomainException("El consultorio es obligatorio");
-        }
-        if (fechaHora.isBefore(LocalDateTime.now().plusHours(24))) {
-            throw new DomainException("La cita debe programarse con al menos 24 horas de anticipación");
-        }
+    public LocalDateTime getEndTime() {
+        return scheduledTime.plus(duration);
     }
 }

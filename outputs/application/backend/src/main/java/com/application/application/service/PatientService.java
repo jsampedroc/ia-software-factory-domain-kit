@@ -1,199 +1,238 @@
 package com.application.application.service;
 
 import com.application.domain.model.Patient;
+import com.application.domain.model.PatientIdentity;
+import com.application.domain.model.MedicalAlert;
+import com.application.domain.model.Allergy;
+import com.application.domain.model.DigitalConsent;
+import com.application.domain.enums.PatientStatus;
+import com.application.domain.enums.ConsentType;
 import com.application.domain.valueobject.PatientId;
-import com.application.domain.port.PatientRepositoryPort;
-import com.application.application.dto.PatientDTO;
-import com.application.domain.exception.DomainException;
-
+import com.application.domain.repository.PatientRepository;
+import com.application.domain.repository.ElectronicHealthRecordRepository;
+import com.application.domain.model.ElectronicHealthRecord;
+import com.application.domain.valueobject.EhrId;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.Period;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.Set;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Slf4j
 public class PatientService {
 
-    private final PatientRepositoryPort patientRepositoryPort;
+    private final PatientRepository patientRepository;
+    private final ElectronicHealthRecordRepository ehrRepository;
 
     @Transactional
-    public PatientDTO createPatient(PatientDTO patientDTO) {
-        validatePatientData(patientDTO);
-        checkDuplicateDni(patientDTO.dni(), patientDTO.email());
+    public Patient registerPatient(PatientIdentity identity,
+                                   Set<MedicalAlert> medicalAlerts,
+                                   Set<Allergy> allergies,
+                                   List<DigitalConsent> initialConsents) {
 
-        Patient patient = Patient.create(
-                patientDTO.dni(),
-                patientDTO.nombre(),
-                patientDTO.apellido(),
-                patientDTO.fechaNacimiento(),
-                patientDTO.telefono(),
-                patientDTO.email(),
-                patientDTO.direccion()
+        // Business Rule 1: Unique identity check
+        Optional<Patient> existingPatient = patientRepository.findByIdentity(
+                identity.getFirstName(),
+                identity.getLastName(),
+                identity.getDateOfBirth()
         );
+        if (existingPatient.isPresent()) {
+            throw new IllegalArgumentException("A patient with the same first name, last name, and date of birth already exists.");
+        }
 
-        Patient savedPatient = patientRepositoryPort.save(patient);
-        return mapToDTO(savedPatient);
+        // Create new patient aggregate
+        PatientId patientId = PatientId.of(UUID.randomUUID());
+        Patient newPatient = Patient.builder()
+                .patientId(patientId)
+                .identity(identity)
+                .medicalAlerts(medicalAlerts != null ? medicalAlerts : new HashSet<>())
+                .allergies(allergies != null ? allergies : new HashSet<>())
+                .consents(initialConsents != null ? initialConsents : List.of())
+                .status(PatientStatus.ACTIVE)
+                .build();
+
+        // Business Rule: EHR is created automatically on patient registration
+        createElectronicHealthRecordForPatient(newPatient);
+
+        Patient savedPatient = patientRepository.save(newPatient);
+        log.info("Registered new patient with ID: {}", savedPatient.getPatientId().getValue());
+        return savedPatient;
     }
 
-    public PatientDTO getPatientById(PatientId patientId) {
-        return patientRepositoryPort.findById(patientId)
-                .map(this::mapToDTO)
-                .orElseThrow(() -> new DomainException("Paciente no encontrado con ID: " + patientId));
-    }
-
-    public List<PatientDTO> getAllPatients() {
-        return patientRepositoryPort.findAll().stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
-    }
-
-    public List<PatientDTO> getActivePatients() {
-        return patientRepositoryPort.findByActive(true).stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
+    @Transactional(readOnly = true)
+    public Patient getPatient(PatientId patientId) {
+        return patientRepository.findById(patientId)
+                .orElseThrow(() -> new IllegalArgumentException("Patient not found with ID: " + patientId));
     }
 
     @Transactional
-    public PatientDTO updatePatient(PatientId patientId, PatientDTO patientDTO) {
-        Patient existingPatient = patientRepositoryPort.findById(patientId)
-                .orElseThrow(() -> new DomainException("Paciente no encontrado con ID: " + patientId));
+    public Patient updatePatientIdentity(PatientId patientId, PatientIdentity updatedIdentity) {
+        Patient patient = getPatient(patientId);
 
-        validatePatientData(patientDTO);
-        checkDuplicateDniForUpdate(patientDTO.dni(), patientDTO.email(), patientId);
-
-        existingPatient.update(
-                patientDTO.dni(),
-                patientDTO.nombre(),
-                patientDTO.apellido(),
-                patientDTO.fechaNacimiento(),
-                patientDTO.telefono(),
-                patientDTO.email(),
-                patientDTO.direccion(),
-                patientDTO.activo()
-        );
-
-        Patient updatedPatient = patientRepositoryPort.save(existingPatient);
-        return mapToDTO(updatedPatient);
-    }
-
-    @Transactional
-    public void deactivatePatient(PatientId patientId) {
-        Patient patient = patientRepositoryPort.findById(patientId)
-                .orElseThrow(() -> new DomainException("Paciente no encontrado con ID: " + patientId));
-
-        patient.deactivate();
-        patientRepositoryPort.save(patient);
-    }
-
-    @Transactional
-    public void archiveInactivePatients() {
-        LocalDateTime twoYearsAgo = LocalDateTime.now().minusYears(2);
-        List<Patient> inactivePatients = patientRepositoryPort.findByActive(false).stream()
-                .filter(patient -> patient.getFechaRegistro().isBefore(twoYearsAgo))
-                .collect(Collectors.toList());
-
-        inactivePatients.forEach(Patient::archive);
-        patientRepositoryPort.saveAll(inactivePatients);
-    }
-
-    public boolean canScheduleNewAppointment(PatientId patientId) {
-        Patient patient = patientRepositoryPort.findById(patientId)
-                .orElseThrow(() -> new DomainException("Paciente no encontrado con ID: " + patientId));
-
-        if (!patient.isActivo()) {
-            return false;
+        // Business Rule: Cannot update archived patient
+        if (patient.getStatus() == PatientStatus.ARCHIVED) {
+            throw new IllegalStateException("Cannot update identity of an archived patient.");
         }
 
-        // Verificar si tiene facturas vencidas por más de 60 días
-        boolean hasOverdueInvoices = patient.getInvoices().stream()
-                .anyMatch(invoice -> invoice.isVencida() && invoice.getDaysOverdue() > 60);
-
-        return !hasOverdueInvoices;
-    }
-
-    public int calculateAge(PatientId patientId) {
-        Patient patient = patientRepositoryPort.findById(patientId)
-                .orElseThrow(() -> new DomainException("Paciente no encontrado con ID: " + patientId));
-
-        LocalDate birthDate = patient.getFechaNacimiento();
-        LocalDate currentDate = LocalDate.now();
-        return Period.between(birthDate, currentDate).getYears();
-    }
-
-    private void validatePatientData(PatientDTO patientDTO) {
-        if (patientDTO.dni() == null || patientDTO.dni().trim().isEmpty()) {
-            throw new DomainException("El DNI es obligatorio");
-        }
-
-        if (patientDTO.nombre() == null || patientDTO.nombre().trim().isEmpty()) {
-            throw new DomainException("El nombre es obligatorio");
-        }
-
-        if (patientDTO.apellido() == null || patientDTO.apellido().trim().isEmpty()) {
-            throw new DomainException("El apellido es obligatorio");
-        }
-
-        if (patientDTO.fechaNacimiento() == null) {
-            throw new DomainException("La fecha de nacimiento es obligatoria");
-        }
-
-        if (patientDTO.fechaNacimiento().isAfter(LocalDate.now().minusYears(1))) {
-            throw new DomainException("El paciente debe tener al menos 1 año de edad");
-        }
-
-        if (patientDTO.email() != null && !patientDTO.email().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
-            throw new DomainException("El formato del email no es válido");
-        }
-    }
-
-    private void checkDuplicateDni(String dni, String email) {
-        Optional<Patient> existingByDni = patientRepositoryPort.findByDni(dni);
-        if (existingByDni.isPresent()) {
-            throw new DomainException("Ya existe un paciente con el DNI: " + dni);
-        }
-
-        if (email != null && !email.trim().isEmpty()) {
-            Optional<Patient> existingByEmail = patientRepositoryPort.findByEmail(email);
-            if (existingByEmail.isPresent()) {
-                throw new DomainException("Ya existe un paciente con el email: " + email);
+        // Check uniqueness again if identity fields changed
+        if (!patient.getIdentity().equals(updatedIdentity)) {
+            Optional<Patient> duplicate = patientRepository.findByIdentity(
+                    updatedIdentity.getFirstName(),
+                    updatedIdentity.getLastName(),
+                    updatedIdentity.getDateOfBirth()
+            );
+            if (duplicate.isPresent() && !duplicate.get().getPatientId().equals(patientId)) {
+                throw new IllegalArgumentException("Another patient with the same first name, last name, and date of birth already exists.");
             }
         }
+
+        patient.updateIdentity(updatedIdentity);
+        return patientRepository.save(patient);
     }
 
-    private void checkDuplicateDniForUpdate(String dni, String email, PatientId currentPatientId) {
-        Optional<Patient> existingByDni = patientRepositoryPort.findByDni(dni);
-        if (existingByDni.isPresent() && !existingByDni.get().getId().equals(currentPatientId)) {
-            throw new DomainException("Ya existe otro paciente con el DNI: " + dni);
-        }
-
-        if (email != null && !email.trim().isEmpty()) {
-            Optional<Patient> existingByEmail = patientRepositoryPort.findByEmail(email);
-            if (existingByEmail.isPresent() && !existingByEmail.get().getId().equals(currentPatientId)) {
-                throw new DomainException("Ya existe otro paciente con el email: " + email);
-            }
-        }
+    @Transactional
+    public Patient addMedicalAlert(PatientId patientId, MedicalAlert alert) {
+        Patient patient = getPatient(patientId);
+        patient.addMedicalAlert(alert);
+        log.info("Added medical alert '{}' to patient ID: {}", alert.getCode(), patientId);
+        return patientRepository.save(patient);
     }
 
-    private PatientDTO mapToDTO(Patient patient) {
-        return new PatientDTO(
-                patient.getId(),
-                patient.getDni(),
-                patient.getNombre(),
-                patient.getApellido(),
-                patient.getFechaNacimiento(),
-                patient.getTelefono(),
-                patient.getEmail(),
-                patient.getDireccion(),
-                patient.getFechaRegistro(),
-                patient.isActivo()
-        );
+    @Transactional
+    public Patient deactivateMedicalAlert(PatientId patientId, UUID alertId) {
+        Patient patient = getPatient(patientId);
+        patient.deactivateMedicalAlert(alertId);
+        log.info("Deactivated medical alert ID: {} for patient ID: {}", alertId, patientId);
+        return patientRepository.save(patient);
+    }
+
+    @Transactional
+    public Patient addAllergy(PatientId patientId, Allergy allergy) {
+        Patient patient = getPatient(patientId);
+        patient.addAllergy(allergy);
+        log.info("Added allergy '{}' to patient ID: {}", allergy.getSubstance(), patientId);
+        return patientRepository.save(patient);
+    }
+
+    @Transactional
+    public Patient removeAllergy(PatientId patientId, UUID allergyId) {
+        Patient patient = getPatient(patientId);
+        patient.removeAllergy(allergyId);
+        log.info("Removed allergy ID: {} from patient ID: {}", allergyId, patientId);
+        return patientRepository.save(patient);
+    }
+
+    @Transactional
+    public DigitalConsent giveConsent(PatientId patientId,
+                                      ConsentType consentType,
+                                      String version,
+                                      String content,
+                                      String givenBy) {
+        Patient patient = getPatient(patientId);
+
+        // Business Rule: Cannot give consent if patient is archived
+        if (patient.getStatus() == PatientStatus.ARCHIVED) {
+            throw new IllegalStateException("Archived patient cannot give consent.");
+        }
+
+        DigitalConsent consent = DigitalConsent.builder()
+                .consentId(UUID.randomUUID())
+                .consentType(consentType)
+                .version(version)
+                .content(content)
+                .givenBy(givenBy)
+                .givenAt(LocalDateTime.now())
+                .isRevoked(false)
+                .build();
+
+        patient.addConsent(consent);
+        patientRepository.save(patient);
+        log.info("Patient ID: {} gave consent type: {} version: {}", patientId, consentType, version);
+        return consent;
+    }
+
+    @Transactional
+    public void revokeConsent(PatientId patientId, UUID consentId) {
+        Patient patient = getPatient(patientId);
+        patient.revokeConsent(consentId, LocalDateTime.now());
+        patientRepository.save(patient);
+        log.info("Patient ID: {} revoked consent ID: {}", patientId, consentId);
+    }
+
+    @Transactional
+    public Patient archivePatient(PatientId patientId) {
+        Patient patient = getPatient(patientId);
+
+        // Business Rule 2: Patients are archived, not deleted
+        if (patient.getStatus() == PatientStatus.ARCHIVED) {
+            throw new IllegalStateException("Patient is already archived.");
+        }
+
+        // Additional business rule: Check for pending appointments or unpaid invoices?
+        // This would require integration with Scheduling and Billing services.
+        // For now, we just archive.
+
+        patient.archive();
+        Patient archivedPatient = patientRepository.save(patient);
+        log.info("Archived patient with ID: {}", patientId);
+        return archivedPatient;
+    }
+
+    @Transactional
+    public Patient reactivatePatient(PatientId patientId) {
+        Patient patient = getPatient(patientId);
+        if (patient.getStatus() != PatientStatus.ARCHIVED) {
+            throw new IllegalStateException("Only archived patients can be reactivated.");
+        }
+        patient.reactivate();
+        Patient reactivatedPatient = patientRepository.save(patient);
+        log.info("Reactivated patient with ID: {}", patientId);
+        return reactivatedPatient;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Patient> findPatientsByStatus(PatientStatus status) {
+        return patientRepository.findByStatus(status);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasActiveMedicalAlerts(PatientId patientId) {
+        Patient patient = getPatient(patientId);
+        return patient.getMedicalAlerts().stream()
+                .anyMatch(MedicalAlert::isActive);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasValidTreatmentConsent(PatientId patientId) {
+        Patient patient = getPatient(patientId);
+        return patient.getConsents().stream()
+                .filter(c -> c.getConsentType() == ConsentType.TREATMENT)
+                .filter(c -> !c.isRevoked())
+                .findFirst()
+                .isPresent();
+    }
+
+    // Private helper method
+    private void createElectronicHealthRecordForPatient(Patient patient) {
+        EhrId ehrId = EhrId.of(UUID.randomUUID());
+        ElectronicHealthRecord ehr = ElectronicHealthRecord.builder()
+                .ehrId(ehrId)
+                .patientId(patient.getPatientId())
+                .clinicalNotes(List.of())
+                .odontogram(null) // Initial odontogram is created on first dental visit
+                .treatments(List.of())
+                .createdAt(LocalDateTime.now())
+                .lastUpdated(LocalDateTime.now())
+                .build();
+        ehrRepository.save(ehr);
+        log.debug("Created initial EHR ID: {} for patient ID: {}", ehrId, patient.getPatientId());
     }
 }

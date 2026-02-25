@@ -1,587 +1,425 @@
 package com.application.domain.model;
 
-import com.application.domain.exception.DomainException;
-import com.application.domain.valueobject.*;
+import com.application.domain.valueobject.AppointmentId;
+import com.application.domain.enums.AppointmentType;
+import com.application.domain.enums.AppointmentStatus;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(MockitoExtension.class)
 class AppointmentTest {
 
-    private final AppointmentId appointmentId = new AppointmentId(UUID.randomUUID());
-    private final LocalDateTime futureDateTime = LocalDateTime.now().plusDays(2);
-    private final PatientId patientId = new PatientId(UUID.randomUUID());
-    private final DentistId dentistId = new DentistId(UUID.randomUUID());
-    private final ClinicId clinicId = new ClinicId(UUID.randomUUID());
-    private final ConsultingRoomId consultingRoomId = new ConsultingRoomId(UUID.randomUUID());
-    private final TreatmentId treatmentId = new TreatmentId(UUID.randomUUID());
-    private final Set<TreatmentId> treatments = new HashSet<>();
+    private final AppointmentId APPOINTMENT_ID = new AppointmentId(UUID.randomUUID());
+    private final UUID PATIENT_ID = UUID.randomUUID();
+    private final UUID DENTIST_ID = UUID.randomUUID();
+    private final LocalDateTime BASE_TIME = LocalDateTime.of(2024, 1, 15, 10, 0);
+    private final Duration ONE_HOUR = Duration.ofHours(1);
+    private final String REASON = "Routine check-up";
 
-    @Test
-    void create_ShouldCreateAppointmentWithProgrammedStatus() {
-        Appointment appointment = Appointment.create(
-                futureDateTime,
-                60,
-                "Limpieza dental",
-                "Notas de prueba",
-                patientId,
-                dentistId,
-                clinicId,
-                consultingRoomId,
-                treatments
-        );
-
-        assertNotNull(appointment.getId());
-        assertEquals(futureDateTime, appointment.getFechaHora());
-        assertEquals(60, appointment.getDuracionMinutos());
-        assertEquals(AppointmentStatus.PROGRAMADA, appointment.getEstado());
-        assertEquals("Limpieza dental", appointment.getMotivo());
-        assertEquals("Notas de prueba", appointment.getNotas());
-        assertEquals(patientId, appointment.getPacienteId());
-        assertEquals(dentistId, appointment.getOdontologoId());
-        assertEquals(clinicId, appointment.getClinicaId());
-        assertEquals(consultingRoomId, appointment.getConsultorioId());
-        assertEquals(treatments, appointment.getTratamientos());
-    }
-
-    @Test
-    void create_ShouldThrowExceptionWhenDateIsLessThan24Hours() {
-        LocalDateTime invalidDateTime = LocalDateTime.now().plusHours(23);
-
-        DomainException exception = assertThrows(DomainException.class, () ->
-                Appointment.create(
-                        invalidDateTime,
-                        60,
-                        "Motivo",
-                        "Notas",
-                        patientId,
-                        dentistId,
-                        clinicId,
-                        consultingRoomId,
-                        treatments
-                )
-        );
-
-        assertTrue(exception.getMessage().contains("La cita debe programarse con al menos 24 horas de anticipación"));
-    }
-
-    @Test
-    void constructor_ShouldThrowExceptionWhenDurationIsLessThan15() {
-        DomainException exception = assertThrows(DomainException.class, () ->
-                new Appointment(
-                        appointmentId,
-                        futureDateTime,
-                        14,
-                        AppointmentStatus.PROGRAMADA,
-                        "Motivo",
-                        "Notas",
-                        patientId,
-                        dentistId,
-                        clinicId,
-                        consultingRoomId,
-                        treatments
-                )
-        );
-
-        assertTrue(exception.getMessage().contains("La duración de la cita debe estar entre 15 y 180 minutos"));
-    }
-
-    @Test
-    void constructor_ShouldThrowExceptionWhenDurationIsMoreThan180() {
-        DomainException exception = assertThrows(DomainException.class, () ->
-                new Appointment(
-                        appointmentId,
-                        futureDateTime,
-                        181,
-                        AppointmentStatus.PROGRAMADA,
-                        "Motivo",
-                        "Notas",
-                        patientId,
-                        dentistId,
-                        clinicId,
-                        consultingRoomId,
-                        treatments
-                )
-        );
-
-        assertTrue(exception.getMessage().contains("La duración de la cita debe estar entre 15 y 180 minutos"));
-    }
-
-    @Test
-    void constructor_ShouldThrowExceptionWhenMotivoIsEmpty() {
-        DomainException exception = assertThrows(DomainException.class, () ->
-                new Appointment(
-                        appointmentId,
-                        futureDateTime,
-                        60,
-                        AppointmentStatus.PROGRAMADA,
-                        "",
-                        "Notas",
-                        patientId,
-                        dentistId,
-                        clinicId,
-                        consultingRoomId,
-                        treatments
-                )
-        );
-
-        assertTrue(exception.getMessage().contains("El motivo de la cita es obligatorio"));
-    }
-
-    @Test
-    void constructor_ShouldThrowExceptionWhenRequiredIdsAreNull() {
-        assertThrows(DomainException.class, () ->
-                new Appointment(
-                        appointmentId,
-                        futureDateTime,
-                        60,
-                        AppointmentStatus.PROGRAMADA,
-                        "Motivo",
-                        "Notas",
-                        null,
-                        dentistId,
-                        clinicId,
-                        consultingRoomId,
-                        treatments
-                )
-        );
-
-        assertThrows(DomainException.class, () ->
-                new Appointment(
-                        appointmentId,
-                        futureDateTime,
-                        60,
-                        AppointmentStatus.PROGRAMADA,
-                        "Motivo",
-                        "Notas",
-                        patientId,
-                        null,
-                        clinicId,
-                        consultingRoomId,
-                        treatments
-                )
-        );
-
-        assertThrows(DomainException.class, () ->
-                new Appointment(
-                        appointmentId,
-                        futureDateTime,
-                        60,
-                        AppointmentStatus.PROGRAMADA,
-                        "Motivo",
-                        "Notas",
-                        patientId,
-                        dentistId,
-                        null,
-                        consultingRoomId,
-                        treatments
-                )
-        );
-
-        assertThrows(DomainException.class, () ->
-                new Appointment(
-                        appointmentId,
-                        futureDateTime,
-                        60,
-                        AppointmentStatus.PROGRAMADA,
-                        "Motivo",
-                        "Notas",
-                        patientId,
-                        dentistId,
-                        clinicId,
-                        null,
-                        treatments
-                )
+    private Appointment createScheduledAppointment(AppointmentType type) {
+        return new Appointment(
+                APPOINTMENT_ID,
+                PATIENT_ID,
+                DENTIST_ID,
+                BASE_TIME,
+                ONE_HOUR,
+                type,
+                AppointmentStatus.SCHEDULED,
+                REASON,
+                BASE_TIME.minusDays(1)
         );
     }
 
     @Test
-    void confirmar_ShouldChangeStatusToConfirmed() {
-        Appointment appointment = new Appointment(
-                appointmentId,
-                futureDateTime,
-                60,
-                AppointmentStatus.PROGRAMADA,
-                "Motivo",
-                "Notas",
-                patientId,
-                dentistId,
-                clinicId,
-                consultingRoomId,
-                treatments
-        );
+    @DisplayName("Should create an Appointment with correct initial state")
+    void shouldCreateAppointment() {
+        Appointment appointment = createScheduledAppointment(AppointmentType.CONSULTATION);
 
-        appointment.confirmar();
-
-        assertEquals(AppointmentStatus.CONFIRMADA, appointment.getEstado());
+        assertThat(appointment.getId()).isEqualTo(APPOINTMENT_ID);
+        assertThat(appointment.getPatientId()).isEqualTo(PATIENT_ID);
+        assertThat(appointment.getDentistId()).isEqualTo(DENTIST_ID);
+        assertThat(appointment.getScheduledTime()).isEqualTo(BASE_TIME);
+        assertThat(appointment.getDuration()).isEqualTo(ONE_HOUR);
+        assertThat(appointment.getType()).isEqualTo(AppointmentType.CONSULTATION);
+        assertThat(appointment.getStatus()).isEqualTo(AppointmentStatus.SCHEDULED);
+        assertThat(appointment.getReason()).isEqualTo(REASON);
+        assertThat(appointment.getCreatedAt()).isEqualTo(BASE_TIME.minusDays(1));
     }
 
     @Test
-    void confirmar_ShouldThrowExceptionWhenNotProgrammed() {
-        Appointment appointment = new Appointment(
-                appointmentId,
-                futureDateTime,
-                60,
-                AppointmentStatus.CONFIRMADA,
-                "Motivo",
-                "Notas",
-                patientId,
-                dentistId,
-                clinicId,
-                consultingRoomId,
-                treatments
-        );
+    @DisplayName("Should calculate end time correctly")
+    void getEndTime_ShouldReturnScheduledTimePlusDuration() {
+        Appointment appointment = createScheduledAppointment(AppointmentType.TREATMENT);
+        LocalDateTime expectedEndTime = BASE_TIME.plus(ONE_HOUR);
 
-        DomainException exception = assertThrows(DomainException.class, appointment::confirmar);
-        assertTrue(exception.getMessage().contains("Solo las citas PROGRAMADAS pueden ser confirmadas"));
+        assertThat(appointment.getEndTime()).isEqualTo(expectedEndTime);
+    }
+
+    @Nested
+    @DisplayName("State Transition Tests")
+    class StateTransitionTests {
+
+        @Test
+        @DisplayName("Should confirm a SCHEDULED appointment")
+        void confirm_ShouldChangeStatusToConfirmed() {
+            Appointment appointment = createScheduledAppointment(AppointmentType.FOLLOW_UP);
+
+            appointment.confirm();
+
+            assertThat(appointment.getStatus()).isEqualTo(AppointmentStatus.CONFIRMED);
+        }
+
+        @Test
+        @DisplayName("Should throw when confirming a non-SCHEDULED appointment")
+        void confirm_ShouldThrowWhenNotScheduled() {
+            Appointment appointment = createScheduledAppointment(AppointmentType.CONSULTATION);
+            appointment.confirm(); // Now CONFIRMED
+
+            assertThatThrownBy(appointment::confirm)
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Only SCHEDULED appointments can be confirmed.");
+        }
+
+        @Test
+        @DisplayName("Should start a SCHEDULED appointment")
+        void start_ShouldChangeScheduledToInProgress() {
+            Appointment appointment = createScheduledAppointment(AppointmentType.TREATMENT);
+
+            appointment.start();
+
+            assertThat(appointment.getStatus()).isEqualTo(AppointmentStatus.IN_PROGRESS);
+        }
+
+        @Test
+        @DisplayName("Should start a CONFIRMED appointment")
+        void start_ShouldChangeConfirmedToInProgress() {
+            Appointment appointment = createScheduledAppointment(AppointmentType.CONSULTATION);
+            appointment.confirm();
+
+            appointment.start();
+
+            assertThat(appointment.getStatus()).isEqualTo(AppointmentStatus.IN_PROGRESS);
+        }
+
+        @Test
+        @DisplayName("Should throw when starting an appointment not SCHEDULED or CONFIRMED")
+        void start_ShouldThrowWhenInvalidState() {
+            Appointment appointment = createScheduledAppointment(AppointmentType.FOLLOW_UP);
+            appointment.confirm();
+            appointment.start();
+            appointment.complete(); // Now COMPLETED
+
+            assertThatThrownBy(appointment::start)
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Appointment must be SCHEDULED or CONFIRMED to start.");
+        }
+
+        @Test
+        @DisplayName("Should complete an IN_PROGRESS appointment")
+        void complete_ShouldChangeStatusToCompleted() {
+            Appointment appointment = createScheduledAppointment(AppointmentType.TREATMENT);
+            appointment.start(); // Now IN_PROGRESS
+
+            appointment.complete();
+
+            assertThat(appointment.getStatus()).isEqualTo(AppointmentStatus.COMPLETED);
+        }
+
+        @Test
+        @DisplayName("Should throw when completing a non-IN_PROGRESS appointment")
+        void complete_ShouldThrowWhenNotInProgress() {
+            Appointment appointment = createScheduledAppointment(AppointmentType.CONSULTATION);
+
+            assertThatThrownBy(appointment::complete)
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Only IN_PROGRESS appointments can be completed.");
+        }
+
+        @Test
+        @DisplayName("Should mark a SCHEDULED appointment as NO_SHOW")
+        void markAsNoShow_ShouldChangeScheduledToNoShow() {
+            Appointment appointment = createScheduledAppointment(AppointmentType.FOLLOW_UP);
+
+            appointment.markAsNoShow();
+
+            assertThat(appointment.getStatus()).isEqualTo(AppointmentStatus.NO_SHOW);
+        }
+
+        @Test
+        @DisplayName("Should mark a CONFIRMED appointment as NO_SHOW")
+        void markAsNoShow_ShouldChangeConfirmedToNoShow() {
+            Appointment appointment = createScheduledAppointment(AppointmentType.CONSULTATION);
+            appointment.confirm();
+
+            appointment.markAsNoShow();
+
+            assertThat(appointment.getStatus()).isEqualTo(AppointmentStatus.NO_SHOW);
+        }
+
+        @Test
+        @DisplayName("Should throw when marking a non-SCHEDULED/CONFIRMED appointment as NO_SHOW")
+        void markAsNoShow_ShouldThrowWhenInvalidState() {
+            Appointment appointment = createScheduledAppointment(AppointmentType.TREATMENT);
+            appointment.start(); // Now IN_PROGRESS
+
+            assertThatThrownBy(appointment::markAsNoShow)
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Only SCHEDULED or CONFIRMED appointments can be marked as NO_SHOW.");
+        }
+    }
+
+    @Nested
+    @DisplayName("Cancellation Tests")
+    class CancellationTests {
+
+        @Test
+        @DisplayName("Should cancel a SCHEDULED non-emergency appointment >24h in advance")
+        void cancel_ShouldAllowCancellationMoreThan24hBefore() {
+            Appointment appointment = createScheduledAppointment(AppointmentType.CONSULTATION);
+            LocalDateTime cancellationTime = BASE_TIME.minusHours(25); // 25 hours before
+
+            appointment.cancel(cancellationTime);
+
+            assertThat(appointment.getStatus()).isEqualTo(AppointmentStatus.CANCELLED);
+        }
+
+        @Test
+        @DisplayName("Should cancel an EMERGENCY appointment even within 24h")
+        void cancel_ShouldAllowEmergencyCancellationWithin24h() {
+            Appointment appointment = new Appointment(
+                    APPOINTMENT_ID,
+                    PATIENT_ID,
+                    DENTIST_ID,
+                    BASE_TIME,
+                    ONE_HOUR,
+                    AppointmentType.EMERGENCY,
+                    AppointmentStatus.SCHEDULED,
+                    "Toothache",
+                    BASE_TIME.minusHours(1)
+            );
+            LocalDateTime cancellationTime = BASE_TIME.minusMinutes(30); // 30 minutes before
+
+            appointment.cancel(cancellationTime);
+
+            assertThat(appointment.getStatus()).isEqualTo(AppointmentStatus.CANCELLED);
+        }
+
+        @Test
+        @DisplayName("Should throw when cancelling a non-emergency appointment <24h in advance")
+        void cancel_ShouldThrowWhenLessThan24hForNonEmergency() {
+            Appointment appointment = createScheduledAppointment(AppointmentType.TREATMENT);
+            LocalDateTime cancellationTime = BASE_TIME.minusHours(23); // 23 hours before
+
+            assertThatThrownBy(() -> appointment.cancel(cancellationTime))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Non-emergency appointments must be cancelled at least 24 hours in advance.");
+        }
+
+        @Test
+        @DisplayName("Should throw when cancelling a COMPLETED appointment")
+        void cancel_ShouldThrowWhenAppointmentCompleted() {
+            Appointment appointment = createScheduledAppointment(AppointmentType.FOLLOW_UP);
+            appointment.start();
+            appointment.complete(); // Now COMPLETED
+
+            assertThatThrownBy(() -> appointment.cancel(BASE_TIME.minusDays(1)))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Cannot cancel a COMPLETED, CANCELLED, or NO_SHOW appointment.");
+        }
+
+        @Test
+        @DisplayName("Should throw when cancelling an already CANCELLED appointment")
+        void cancel_ShouldThrowWhenAppointmentAlreadyCancelled() {
+            Appointment appointment = createScheduledAppointment(AppointmentType.CONSULTATION);
+            appointment.cancel(BASE_TIME.minusDays(1)); // Now CANCELLED
+
+            assertThatThrownBy(() -> appointment.cancel(BASE_TIME.minusDays(2)))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Cannot cancel a COMPLETED, CANCELLED, or NO_SHOW appointment.");
+        }
+
+        @Test
+        @DisplayName("Should throw when cancelling a NO_SHOW appointment")
+        void cancel_ShouldThrowWhenAppointmentNoShow() {
+            Appointment appointment = createScheduledAppointment(AppointmentType.TREATMENT);
+            appointment.markAsNoShow(); // Now NO_SHOW
+
+            assertThatThrownBy(() -> appointment.cancel(BASE_TIME.minusDays(1)))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessage("Cannot cancel a COMPLETED, CANCELLED, or NO_SHOW appointment.");
+        }
+    }
+
+    @Nested
+    @DisplayName("Overlap Detection Tests")
+    class OverlapDetectionTests {
+
+        @Test
+        @DisplayName("Should detect overlapping appointments (this starts during other)")
+        void isOverlapping_ShouldReturnTrueWhenThisStartsDuringOther() {
+            Appointment appointment1 = new Appointment(
+                    new AppointmentId(UUID.randomUUID()),
+                    PATIENT_ID,
+                    DENTIST_ID,
+                    BASE_TIME,
+                    Duration.ofHours(2),
+                    AppointmentType.CONSULTATION,
+                    AppointmentStatus.SCHEDULED,
+                    REASON,
+                    BASE_TIME.minusDays(1)
+            );
+
+            Appointment appointment2 = new Appointment(
+                    new AppointmentId(UUID.randomUUID()),
+                    UUID.randomUUID(),
+                    DENTIST_ID,
+                    BASE_TIME.plusHours(1),
+                    Duration.ofHours(1),
+                    AppointmentType.TREATMENT,
+                    AppointmentStatus.SCHEDULED,
+                    "Filling",
+                    BASE_TIME.minusDays(1)
+            );
+
+            assertThat(appointment1.isOverlapping(appointment2)).isTrue();
+            assertThat(appointment2.isOverlapping(appointment1)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Should detect overlapping appointments (other starts during this)")
+        void isOverlapping_ShouldReturnTrueWhenOtherStartsDuringThis() {
+            Appointment appointment1 = new Appointment(
+                    new AppointmentId(UUID.randomUUID()),
+                    PATIENT_ID,
+                    DENTIST_ID,
+                    BASE_TIME.plusHours(1),
+                    Duration.ofHours(1),
+                    AppointmentType.CONSULTATION,
+                    AppointmentStatus.SCHEDULED,
+                    REASON,
+                    BASE_TIME.minusDays(1)
+            );
+
+            Appointment appointment2 = new Appointment(
+                    new AppointmentId(UUID.randomUUID()),
+                    UUID.randomUUID(),
+                    DENTIST_ID,
+                    BASE_TIME,
+                    Duration.ofHours(2),
+                    AppointmentType.TREATMENT,
+                    AppointmentStatus.SCHEDULED,
+                    "Filling",
+                    BASE_TIME.minusDays(1)
+            );
+
+            assertThat(appointment1.isOverlapping(appointment2)).isTrue();
+            assertThat(appointment2.isOverlapping(appointment1)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Should detect overlapping appointments (exact same time)")
+        void isOverlapping_ShouldReturnTrueWhenExactSameTime() {
+            Appointment appointment1 = createScheduledAppointment(AppointmentType.CONSULTATION);
+            Appointment appointment2 = new Appointment(
+                    new AppointmentId(UUID.randomUUID()),
+                    UUID.randomUUID(),
+                    DENTIST_ID,
+                    BASE_TIME,
+                    ONE_HOUR,
+                    AppointmentType.TREATMENT,
+                    AppointmentStatus.SCHEDULED,
+                    "Filling",
+                    BASE_TIME.minusDays(1)
+            );
+
+            assertThat(appointment1.isOverlapping(appointment2)).isTrue();
+            assertThat(appointment2.isOverlapping(appointment1)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Should not detect overlap when appointments are back-to-back")
+        void isOverlapping_ShouldReturnFalseWhenBackToBack() {
+            Appointment appointment1 = createScheduledAppointment(AppointmentType.CONSULTATION);
+
+            Appointment appointment2 = new Appointment(
+                    new AppointmentId(UUID.randomUUID()),
+                    UUID.randomUUID(),
+                    DENTIST_ID,
+                    BASE_TIME.plusHours(1),
+                    ONE_HOUR,
+                    AppointmentType.TREATMENT,
+                    AppointmentStatus.SCHEDULED,
+                    "Filling",
+                    BASE_TIME.minusDays(1)
+            );
+
+            assertThat(appointment1.isOverlapping(appointment2)).isFalse();
+            assertThat(appointment2.isOverlapping(appointment1)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Should not detect overlap when appointments are separate")
+        void isOverlapping_ShouldReturnFalseWhenSeparate() {
+            Appointment appointment1 = createScheduledAppointment(AppointmentType.CONSULTATION);
+
+            Appointment appointment2 = new Appointment(
+                    new AppointmentId(UUID.randomUUID()),
+                    UUID.randomUUID(),
+                    DENTIST_ID,
+                    BASE_TIME.plusHours(3),
+                    ONE_HOUR,
+                    AppointmentType.TREATMENT,
+                    AppointmentStatus.SCHEDULED,
+                    "Filling",
+                    BASE_TIME.minusDays(1)
+            );
+
+            assertThat(appointment1.isOverlapping(appointment2)).isFalse();
+            assertThat(appointment2.isOverlapping(appointment1)).isFalse();
+        }
     }
 
     @Test
-    void iniciar_ShouldChangeStatusToInProgress() {
-        Appointment appointment = new Appointment(
-                appointmentId,
-                futureDateTime,
-                60,
-                AppointmentStatus.CONFIRMADA,
-                "Motivo",
-                "Notas",
-                patientId,
-                dentistId,
-                clinicId,
-                consultingRoomId,
-                treatments
-        );
+    @DisplayName("Should use Lombok @SuperBuilder correctly")
+    void shouldUseSuperBuilder() {
+        Appointment original = createScheduledAppointment(AppointmentType.CONSULTATION);
 
-        appointment.iniciar();
+        Appointment modified = original.toBuilder()
+                .status(AppointmentStatus.CONFIRMED)
+                .reason("Updated reason")
+                .build();
 
-        assertEquals(AppointmentStatus.EN_CURSO, appointment.getEstado());
+        assertThat(modified.getId()).isEqualTo(original.getId());
+        assertThat(modified.getPatientId()).isEqualTo(original.getPatientId());
+        assertThat(modified.getDentistId()).isEqualTo(original.getDentistId());
+        assertThat(modified.getScheduledTime()).isEqualTo(original.getScheduledTime());
+        assertThat(modified.getDuration()).isEqualTo(original.getDuration());
+        assertThat(modified.getType()).isEqualTo(original.getType());
+        assertThat(modified.getStatus()).isEqualTo(AppointmentStatus.CONFIRMED);
+        assertThat(modified.getReason()).isEqualTo("Updated reason");
+        assertThat(modified.getCreatedAt()).isEqualTo(original.getCreatedAt());
     }
 
     @Test
-    void iniciar_ShouldThrowExceptionWhenNotConfirmed() {
-        Appointment appointment = new Appointment(
-                appointmentId,
-                futureDateTime,
-                60,
-                AppointmentStatus.PROGRAMADA,
-                "Motivo",
-                "Notas",
-                patientId,
-                dentistId,
-                clinicId,
-                consultingRoomId,
-                treatments
-        );
+    @DisplayName("Should use Lombok @ToString correctly")
+    void toString_ShouldIncludeSuperClassAndFields() {
+        Appointment appointment = createScheduledAppointment(AppointmentType.TREATMENT);
+        String toString = appointment.toString();
 
-        DomainException exception = assertThrows(DomainException.class, appointment::iniciar);
-        assertTrue(exception.getMessage().contains("Solo las citas CONFIRMADAS pueden iniciarse"));
-    }
-
-    @Test
-    void completar_ShouldChangeStatusToCompleted() {
-        Appointment appointment = new Appointment(
-                appointmentId,
-                futureDateTime,
-                60,
-                AppointmentStatus.EN_CURSO,
-                "Motivo",
-                "Notas",
-                patientId,
-                dentistId,
-                clinicId,
-                consultingRoomId,
-                treatments
-        );
-
-        appointment.completar();
-
-        assertEquals(AppointmentStatus.COMPLETADA, appointment.getEstado());
-    }
-
-    @Test
-    void completar_ShouldThrowExceptionWhenNotInProgress() {
-        Appointment appointment = new Appointment(
-                appointmentId,
-                futureDateTime,
-                60,
-                AppointmentStatus.CONFIRMADA,
-                "Motivo",
-                "Notas",
-                patientId,
-                dentistId,
-                clinicId,
-                consultingRoomId,
-                treatments
-        );
-
-        DomainException exception = assertThrows(DomainException.class, appointment::completar);
-        assertTrue(exception.getMessage().contains("Solo las citas EN_CURSO pueden completarse"));
-    }
-
-    @Test
-    void cancelar_ShouldChangeStatusToCancelled() {
-        Appointment appointment = new Appointment(
-                appointmentId,
-                futureDateTime,
-                60,
-                AppointmentStatus.PROGRAMADA,
-                "Motivo",
-                "Notas",
-                patientId,
-                dentistId,
-                clinicId,
-                consultingRoomId,
-                treatments
-        );
-
-        appointment.cancelar();
-
-        assertEquals(AppointmentStatus.CANCELADA, appointment.getEstado());
-    }
-
-    @Test
-    void cancelar_ShouldThrowExceptionWhenAlreadyCompleted() {
-        Appointment appointment = new Appointment(
-                appointmentId,
-                futureDateTime,
-                60,
-                AppointmentStatus.COMPLETADA,
-                "Motivo",
-                "Notas",
-                patientId,
-                dentistId,
-                clinicId,
-                consultingRoomId,
-                treatments
-        );
-
-        DomainException exception = assertThrows(DomainException.class, appointment::cancelar);
-        assertTrue(exception.getMessage().contains("No se puede cancelar una cita en estado COMPLETADA"));
-    }
-
-    @Test
-    void cancelar_ShouldThrowExceptionWhenAlreadyCancelled() {
-        Appointment appointment = new Appointment(
-                appointmentId,
-                futureDateTime,
-                60,
-                AppointmentStatus.CANCELADA,
-                "Motivo",
-                "Notas",
-                patientId,
-                dentistId,
-                clinicId,
-                consultingRoomId,
-                treatments
-        );
-
-        DomainException exception = assertThrows(DomainException.class, appointment::cancelar);
-        assertTrue(exception.getMessage().contains("No se puede cancelar una cita en estado CANCELADA"));
-    }
-
-    @Test
-    void esCancelacionTardia_ShouldReturnFalseWhenNotCancelled() {
-        Appointment appointment = new Appointment(
-                appointmentId,
-                futureDateTime,
-                60,
-                AppointmentStatus.PROGRAMADA,
-                "Motivo",
-                "Notas",
-                patientId,
-                dentistId,
-                clinicId,
-                consultingRoomId,
-                treatments
-        );
-
-        assertFalse(appointment.esCancelacionTardia());
-    }
-
-    @Test
-    void esCancelacionTardia_ShouldReturnTrueWhenCancelledLessThan24Hours() {
-        LocalDateTime nearFuture = LocalDateTime.now().plusHours(12);
-        Appointment appointment = new Appointment(
-                appointmentId,
-                nearFuture,
-                60,
-                AppointmentStatus.CANCELADA,
-                "Motivo",
-                "Notas",
-                patientId,
-                dentistId,
-                clinicId,
-                consultingRoomId,
-                treatments
-        );
-
-        assertTrue(appointment.esCancelacionTardia());
-    }
-
-    @Test
-    void esCancelacionTardia_ShouldReturnFalseWhenCancelledMoreThan24Hours() {
-        LocalDateTime farFuture = LocalDateTime.now().plusDays(2);
-        Appointment appointment = new Appointment(
-                appointmentId,
-                farFuture,
-                60,
-                AppointmentStatus.CANCELADA,
-                "Motivo",
-                "Notas",
-                patientId,
-                dentistId,
-                clinicId,
-                consultingRoomId,
-                treatments
-        );
-
-        assertFalse(appointment.esCancelacionTardia());
-    }
-
-    @Test
-    void agregarTratamiento_ShouldAddTreatment() {
-        Appointment appointment = new Appointment(
-                appointmentId,
-                futureDateTime,
-                60,
-                AppointmentStatus.PROGRAMADA,
-                "Motivo",
-                "Notas",
-                patientId,
-                dentistId,
-                clinicId,
-                consultingRoomId,
-                new HashSet<>()
-        );
-
-        appointment.agregarTratamiento(treatmentId);
-
-        assertTrue(appointment.getTratamientos().contains(treatmentId));
-        assertEquals(1, appointment.getTratamientos().size());
-    }
-
-    @Test
-    void agregarTratamiento_ShouldThrowExceptionWhenTreatmentIsNull() {
-        Appointment appointment = new Appointment(
-                appointmentId,
-                futureDateTime,
-                60,
-                AppointmentStatus.PROGRAMADA,
-                "Motivo",
-                "Notas",
-                patientId,
-                dentistId,
-                clinicId,
-                consultingRoomId,
-                treatments
-        );
-
-        DomainException exception = assertThrows(DomainException.class, () ->
-                appointment.agregarTratamiento(null)
-        );
-
-        assertTrue(exception.getMessage().contains("El tratamiento no puede ser nulo"));
-    }
-
-    @Test
-    void removerTratamiento_ShouldRemoveTreatment() {
-        Set<TreatmentId> initialTreatments = new HashSet<>();
-        initialTreatments.add(treatmentId);
-
-        Appointment appointment = new Appointment(
-                appointmentId,
-                futureDateTime,
-                60,
-                AppointmentStatus.PROGRAMADA,
-                "Motivo",
-                "Notas",
-                patientId,
-                dentistId,
-                clinicId,
-                consultingRoomId,
-                initialTreatments
-        );
-
-        appointment.removerTratamiento(treatmentId);
-
-        assertFalse(appointment.getTratamientos().contains(treatmentId));
-        assertTrue(appointment.getTratamientos().isEmpty());
-    }
-
-    @Test
-    void removerTratamiento_ShouldThrowExceptionWhenTreatmentIsNull() {
-        Appointment appointment = new Appointment(
-                appointmentId,
-                futureDateTime,
-                60,
-                AppointmentStatus.PROGRAMADA,
-                "Motivo",
-                "Notas",
-                patientId,
-                dentistId,
-                clinicId,
-                consultingRoomId,
-                treatments
-        );
-
-        DomainException exception = assertThrows(DomainException.class, () ->
-                appointment.removerTratamiento(null)
-        );
-
-        assertTrue(exception.getMessage().contains("El tratamiento no puede ser nulo"));
-    }
-
-    @Test
-    void constructor_ShouldCopyTreatmentSet() {
-        Set<TreatmentId> originalSet = new HashSet<>();
-        originalSet.add(treatmentId);
-
-        Appointment appointment = new Appointment(
-                appointmentId,
-                futureDateTime,
-                60,
-                AppointmentStatus.PROGRAMADA,
-                "Motivo",
-                "Notas",
-                patientId,
-                dentistId,
-                clinicId,
-                consultingRoomId,
-                originalSet
-        );
-
-        originalSet.clear();
-
-        assertFalse(originalSet.contains(treatmentId));
-        assertTrue(appointment.getTratamientos().contains(treatmentId));
-        assertEquals(1, appointment.getTratamientos().size());
-    }
-
-    @Test
-    void constructor_ShouldInitializeEmptySetWhenTreatmentsIsNull() {
-        Appointment appointment = new Appointment(
-                appointmentId,
-                futureDateTime,
-                60,
-                AppointmentStatus.PROGRAMADA,
-                "Motivo",
-                "Notas",
-                patientId,
-                dentistId,
-                clinicId,
-                consultingRoomId,
-                null
-        );
-
-        assertNotNull(appointment.getTratamientos());
-        assertTrue(appointment.getTratamientos().isEmpty());
+        assertThat(toString).contains("Appointment");
+        assertThat(toString).contains("patientId=" + PATIENT_ID);
+        assertThat(toString).contains("dentistId=" + DENTIST_ID);
+        assertThat(toString).contains("status=SCHEDULED");
+        assertThat(toString).contains("type=TREATMENT");
     }
 }

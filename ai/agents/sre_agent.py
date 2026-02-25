@@ -2,12 +2,14 @@
 
 def build_sre_agent(llm=None):
     return {
-        "role": "Senior SRE & Cloud Infrastructure Engineer",
-        "goal": "Design production-ready configurations for Maven, Docker, CI/CD, and ELK monitoring.",
-        "backstory": """You are a DevOps expert. You ensure the software is portable and observable.
-        STRICT POM.XML RULES:
-        1. Explicitly define <lombok.version>1.18.30</lombok.version> and <mapstruct.version>1.5.5.Final</mapstruct.version>.
-        2. Configure 'maven-compiler-plugin' with 'annotationProcessorPaths' for both Lombok and MapStruct.
-        3. Ensure JaCoCo is configured with an 80% coverage threshold.""",
+        "role": "Senior SRE & DevOps Engineer",
+        "goal": "Generate production-ready infrastructure and build configurations.",
+        "backstory": """You are an expert in Maven and Java build systems. 
+        CRITICAL RULES FOR pom.xml: 
+        1. Use 'spring-boot-starter-parent' version 3.2.5.
+        2. Define <lombok.version>1.18.30</lombok.version> and <mapstruct.version>1.5.5.Final</mapstruct.version> in properties.
+        3. MANDATORY: Configure 'maven-compiler-plugin' with 'annotationProcessorPaths'. 
+           Include: lombok, mapstruct-processor, and lombok-mapstruct-binding (0.2.0).
+        4. This setup is vital so the IDE can resolve @Getter, @Setter and @SuperBuilder.""",
         "tier": "smart"
     }

@@ -1,272 +1,430 @@
 package com.application.domain.model;
 
+import com.application.domain.exception.DomainException;
 import com.application.domain.valueobject.InvoiceId;
-import com.application.domain.valueobject.InvoiceStatus;
-import com.application.domain.valueobject.PaymentMethod;
 import com.application.domain.valueobject.PatientId;
+import com.application.domain.valueobject.AppointmentId;
+import com.application.domain.valueobject.PaymentPlanId;
+import com.application.domain.enums.InvoiceStatus;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(MockitoExtension.class)
 class InvoiceTest {
 
-    private final String NUMERO_FACTURA = "FAC-2024-001";
-    private final LocalDate FECHA_EMISION = LocalDate.now();
-    private final LocalDate FECHA_VENCIMIENTO = LocalDate.now().plusDays(30);
-    private final BigDecimal SUBTOTAL = new BigDecimal("1000.00");
-    private final BigDecimal IMPUESTOS = new BigDecimal("210.00");
-    private final BigDecimal TOTAL = new BigDecimal("1210.00");
-    private final PatientId PATIENT_ID = new PatientId(UUID.randomUUID());
+    private static final InvoiceId VALID_INVOICE_ID = new InvoiceId(UUID.randomUUID());
+    private static final PatientId VALID_PATIENT_ID = new PatientId(UUID.randomUUID());
+    private static final AppointmentId VALID_APPOINTMENT_ID = new AppointmentId(UUID.randomUUID());
+    private static final PaymentPlanId VALID_PAYMENT_PLAN_ID = new PaymentPlanId(UUID.randomUUID());
+    private static final String VALID_INVOICE_NUMBER = "INV-2024-001";
+    private static final LocalDate TODAY = LocalDate.now();
+    private static final LocalDate TOMORROW = TODAY.plusDays(1);
+    private static final LocalDate YESTERDAY = TODAY.minusDays(1);
+    private static final InvoiceItem VALID_ITEM = InvoiceItem.builder()
+            .itemId(new InvoiceItemId(UUID.randomUUID()))
+            .treatmentCode("FILLING")
+            .description("Tooth Filling")
+            .quantity(1)
+            .unitPrice(new BigDecimal("150.00"))
+            .amount(new BigDecimal("150.00"))
+            .build();
+    private static final List<InvoiceItem> VALID_ITEMS = List.of(VALID_ITEM);
+    private static final BigDecimal VALID_SUBTOTAL = new BigDecimal("150.00");
+    private static final BigDecimal VALID_TAX = new BigDecimal("15.00");
+    private static final BigDecimal VALID_TOTAL = new BigDecimal("165.00");
 
-    @Test
-    void create_ShouldCreateInvoiceWithCorrectInitialState() {
-        Invoice invoice = Invoice.create(NUMERO_FACTURA, FECHA_EMISION, FECHA_VENCIMIENTO, SUBTOTAL, IMPUESTOS, PATIENT_ID);
+    private Invoice createDraftInvoice() {
+        return Invoice.builder()
+                .id(VALID_INVOICE_ID)
+                .patientId(VALID_PATIENT_ID)
+                .appointmentId(VALID_APPOINTMENT_ID)
+                .invoiceNumber(VALID_INVOICE_NUMBER)
+                .issueDate(TODAY)
+                .dueDate(TOMORROW)
+                .items(VALID_ITEMS)
+                .subtotal(VALID_SUBTOTAL)
+                .tax(VALID_TAX)
+                .total(VALID_TOTAL)
+                .status(InvoiceStatus.DRAFT)
+                .paymentPlanId(null)
+                .build();
+    }
 
-        assertNotNull(invoice.getId());
-        assertEquals(NUMERO_FACTURA, invoice.getNumeroFactura());
-        assertEquals(FECHA_EMISION, invoice.getFechaEmision());
-        assertEquals(FECHA_VENCIMIENTO, invoice.getFechaVencimiento());
-        assertEquals(SUBTOTAL, invoice.getSubtotal());
-        assertEquals(IMPUESTOS, invoice.getImpuestos());
-        assertEquals(TOTAL, invoice.getTotal());
-        assertEquals(InvoiceStatus.PENDIENTE, invoice.getEstado());
-        assertNull(invoice.getMetodoPago());
-        assertEquals(PATIENT_ID, invoice.getPatientId());
+    private Invoice createIssuedInvoice() {
+        return Invoice.builder()
+                .id(VALID_INVOICE_ID)
+                .patientId(VALID_PATIENT_ID)
+                .appointmentId(VALID_APPOINTMENT_ID)
+                .invoiceNumber(VALID_INVOICE_NUMBER)
+                .issueDate(TODAY)
+                .dueDate(TOMORROW)
+                .items(VALID_ITEMS)
+                .subtotal(VALID_SUBTOTAL)
+                .tax(VALID_TAX)
+                .total(VALID_TOTAL)
+                .status(InvoiceStatus.ISSUED)
+                .paymentPlanId(null)
+                .build();
     }
 
     @Test
-    void create_ShouldThrowExceptionWhenFechaVencimientoBeforeFechaEmision() {
-        LocalDate fechaVencimientoInvalida = FECHA_EMISION.minusDays(1);
+    void givenValidParameters_whenCreatingInvoice_thenInvoiceIsCreated() {
+        Invoice invoice = createDraftInvoice();
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> Invoice.create(NUMERO_FACTURA, FECHA_EMISION, fechaVencimientoInvalida, SUBTOTAL, IMPUESTOS, PATIENT_ID));
-
-        assertEquals("La fecha de vencimiento no puede ser anterior a la fecha de emisión", exception.getMessage());
+        assertThat(invoice).isNotNull();
+        assertThat(invoice.getId()).isEqualTo(VALID_INVOICE_ID);
+        assertThat(invoice.getPatientId()).isEqualTo(VALID_PATIENT_ID);
+        assertThat(invoice.getAppointmentId()).isEqualTo(VALID_APPOINTMENT_ID);
+        assertThat(invoice.getInvoiceNumber()).isEqualTo(VALID_INVOICE_NUMBER);
+        assertThat(invoice.getIssueDate()).isEqualTo(TODAY);
+        assertThat(invoice.getDueDate()).isEqualTo(TOMORROW);
+        assertThat(invoice.getItems()).containsExactly(VALID_ITEM);
+        assertThat(invoice.getSubtotal()).isEqualByComparingTo(VALID_SUBTOTAL);
+        assertThat(invoice.getTax()).isEqualByComparingTo(VALID_TAX);
+        assertThat(invoice.getTotal()).isEqualByComparingTo(VALID_TOTAL);
+        assertThat(invoice.getStatus()).isEqualTo(InvoiceStatus.DRAFT);
+        assertThat(invoice.getPaymentPlanId()).isNull();
     }
 
     @Test
-    void create_ShouldThrowExceptionWhenSubtotalNegative() {
-        BigDecimal subtotalNegativo = new BigDecimal("-100.00");
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> Invoice.create(NUMERO_FACTURA, FECHA_EMISION, FECHA_VENCIMIENTO, subtotalNegativo, IMPUESTOS, PATIENT_ID));
-
-        assertEquals("El subtotal no puede ser negativo", exception.getMessage());
+    void givenNullInvoiceId_whenCreatingInvoice_thenThrowsException() {
+        assertThatThrownBy(() -> Invoice.builder()
+                .id(null)
+                .patientId(VALID_PATIENT_ID)
+                .invoiceNumber(VALID_INVOICE_NUMBER)
+                .issueDate(TODAY)
+                .dueDate(TOMORROW)
+                .items(VALID_ITEMS)
+                .subtotal(VALID_SUBTOTAL)
+                .tax(VALID_TAX)
+                .total(VALID_TOTAL)
+                .status(InvoiceStatus.DRAFT)
+                .build())
+                .isInstanceOf(NullPointerException.class);
     }
 
     @Test
-    void create_ShouldThrowExceptionWhenImpuestosNegative() {
-        BigDecimal impuestosNegativos = new BigDecimal("-50.00");
+    void givenNullPatientId_whenCreatingInvoice_thenThrowsException() {
+        assertThatThrownBy(() -> Invoice.builder()
+                .id(VALID_INVOICE_ID)
+                .patientId(null)
+                .invoiceNumber(VALID_INVOICE_NUMBER)
+                .issueDate(TODAY)
+                .dueDate(TOMORROW)
+                .items(VALID_ITEMS)
+                .subtotal(VALID_SUBTOTAL)
+                .tax(VALID_TAX)
+                .total(VALID_TOTAL)
+                .status(InvoiceStatus.DRAFT)
+                .build())
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("PatientId cannot be null");
+    }
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> Invoice.create(NUMERO_FACTURA, FECHA_EMISION, FECHA_VENCIMIENTO, SUBTOTAL, impuestosNegativos, PATIENT_ID));
-
-        assertEquals("Los impuestos no pueden ser negativos", exception.getMessage());
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {" ", "  "})
+    void givenInvalidInvoiceNumber_whenCreatingInvoice_thenThrowsDomainException(String invalidNumber) {
+        assertThatThrownBy(() -> Invoice.builder()
+                .id(VALID_INVOICE_ID)
+                .patientId(VALID_PATIENT_ID)
+                .invoiceNumber(invalidNumber)
+                .issueDate(TODAY)
+                .dueDate(TOMORROW)
+                .items(VALID_ITEMS)
+                .subtotal(VALID_SUBTOTAL)
+                .tax(VALID_TAX)
+                .total(VALID_TOTAL)
+                .status(InvoiceStatus.DRAFT)
+                .build())
+                .isInstanceOf(DomainException.class)
+                .hasMessageContaining("Invoice number cannot be null or blank");
     }
 
     @Test
-    void create_ShouldThrowExceptionWhenTotalDoesNotMatchSubtotalPlusImpuestos() {
-        InvoiceId fakeId = new InvoiceId(UUID.randomUUID());
-        BigDecimal totalIncorrecto = new BigDecimal("1500.00");
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> new Invoice(fakeId, NUMERO_FACTURA, FECHA_EMISION, FECHA_VENCIMIENTO, SUBTOTAL, IMPUESTOS, totalIncorrecto, InvoiceStatus.PENDIENTE, null, PATIENT_ID));
-
-        assertEquals("El total debe ser igual al subtotal más los impuestos", exception.getMessage());
+    void givenNullIssueDate_whenCreatingInvoice_thenThrowsException() {
+        assertThatThrownBy(() -> Invoice.builder()
+                .id(VALID_INVOICE_ID)
+                .patientId(VALID_PATIENT_ID)
+                .invoiceNumber(VALID_INVOICE_NUMBER)
+                .issueDate(null)
+                .dueDate(TOMORROW)
+                .items(VALID_ITEMS)
+                .subtotal(VALID_SUBTOTAL)
+                .tax(VALID_TAX)
+                .total(VALID_TOTAL)
+                .status(InvoiceStatus.DRAFT)
+                .build())
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("Issue date cannot be null");
     }
 
     @Test
-    void markAsPaid_ShouldUpdateEstadoAndMetodoPago() {
-        Invoice invoice = Invoice.create(NUMERO_FACTURA, FECHA_EMISION, FECHA_VENCIMIENTO, SUBTOTAL, IMPUESTOS, PATIENT_ID);
-        PaymentMethod metodoPago = PaymentMethod.TARJETA;
-
-        invoice.markAsPaid(metodoPago);
-
-        assertEquals(InvoiceStatus.PAGADA, invoice.getEstado());
-        assertEquals(metodoPago, invoice.getMetodoPago());
+    void givenNullDueDate_whenCreatingInvoice_thenThrowsException() {
+        assertThatThrownBy(() -> Invoice.builder()
+                .id(VALID_INVOICE_ID)
+                .patientId(VALID_PATIENT_ID)
+                .invoiceNumber(VALID_INVOICE_NUMBER)
+                .issueDate(TODAY)
+                .dueDate(null)
+                .items(VALID_ITEMS)
+                .subtotal(VALID_SUBTOTAL)
+                .tax(VALID_TAX)
+                .total(VALID_TOTAL)
+                .status(InvoiceStatus.DRAFT)
+                .build())
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("Due date cannot be null");
     }
 
     @Test
-    void markAsPaid_ShouldThrowExceptionWhenInvoiceAlreadyPaid() {
-        Invoice invoice = Invoice.create(NUMERO_FACTURA, FECHA_EMISION, FECHA_VENCIMIENTO, SUBTOTAL, IMPUESTOS, PATIENT_ID);
-        invoice.markAsPaid(PaymentMethod.EFECTIVO);
-
-        IllegalStateException exception = assertThrows(IllegalStateException.class,
-                () -> invoice.markAsPaid(PaymentMethod.TRANSFERENCIA));
-
-        assertEquals("La factura ya está pagada", exception.getMessage());
+    void givenNullItemsList_whenCreatingInvoice_thenThrowsDomainException() {
+        assertThatThrownBy(() -> Invoice.builder()
+                .id(VALID_INVOICE_ID)
+                .patientId(VALID_PATIENT_ID)
+                .invoiceNumber(VALID_INVOICE_NUMBER)
+                .issueDate(TODAY)
+                .dueDate(TOMORROW)
+                .items(null)
+                .subtotal(VALID_SUBTOTAL)
+                .tax(VALID_TAX)
+                .total(VALID_TOTAL)
+                .status(InvoiceStatus.DRAFT)
+                .build())
+                .isInstanceOf(DomainException.class)
+                .hasMessageContaining("Invoice must have at least one item");
     }
 
     @Test
-    void markAsPaid_ShouldThrowExceptionWhenInvoiceIsCanceled() {
-        Invoice invoice = Invoice.create(NUMERO_FACTURA, FECHA_EMISION, FECHA_VENCIMIENTO, SUBTOTAL, IMPUESTOS, PATIENT_ID);
-        invoice.cancel();
-
-        IllegalStateException exception = assertThrows(IllegalStateException.class,
-                () -> invoice.markAsPaid(PaymentMethod.TARJETA));
-
-        assertEquals("No se puede pagar una factura cancelada", exception.getMessage());
+    void givenEmptyItemsList_whenCreatingInvoice_thenThrowsDomainException() {
+        assertThatThrownBy(() -> Invoice.builder()
+                .id(VALID_INVOICE_ID)
+                .patientId(VALID_PATIENT_ID)
+                .invoiceNumber(VALID_INVOICE_NUMBER)
+                .issueDate(TODAY)
+                .dueDate(TOMORROW)
+                .items(List.of())
+                .subtotal(VALID_SUBTOTAL)
+                .tax(VALID_TAX)
+                .total(VALID_TOTAL)
+                .status(InvoiceStatus.DRAFT)
+                .build())
+                .isInstanceOf(DomainException.class)
+                .hasMessageContaining("Invoice must have at least one item");
     }
 
     @Test
-    void markAsPaid_ShouldThrowExceptionWhenMetodoPagoIsNull() {
-        Invoice invoice = Invoice.create(NUMERO_FACTURA, FECHA_EMISION, FECHA_VENCIMIENTO, SUBTOTAL, IMPUESTOS, PATIENT_ID);
-
-        NullPointerException exception = assertThrows(NullPointerException.class,
-                () -> invoice.markAsPaid(null));
-
-        assertEquals("Método de pago no puede ser nulo", exception.getMessage());
+    void givenNullSubtotal_whenCreatingInvoice_thenThrowsDomainException() {
+        assertThatThrownBy(() -> Invoice.builder()
+                .id(VALID_INVOICE_ID)
+                .patientId(VALID_PATIENT_ID)
+                .invoiceNumber(VALID_INVOICE_NUMBER)
+                .issueDate(TODAY)
+                .dueDate(TOMORROW)
+                .items(VALID_ITEMS)
+                .subtotal(null)
+                .tax(VALID_TAX)
+                .total(VALID_TOTAL)
+                .status(InvoiceStatus.DRAFT)
+                .build())
+                .isInstanceOf(DomainException.class)
+                .hasMessageContaining("Subtotal cannot be null");
     }
 
     @Test
-    void markAsOverdue_ShouldSetEstadoToVencidaWhenDateIsAfterVencimiento() {
-        LocalDate fechaVencimientoPasada = LocalDate.now().minusDays(1);
-        Invoice invoice = Invoice.create(NUMERO_FACTURA, FECHA_EMISION, fechaVencimientoPasada, SUBTOTAL, IMPUESTOS, PATIENT_ID);
-
-        invoice.markAsOverdue();
-
-        assertEquals(InvoiceStatus.VENCIDA, invoice.getEstado());
+    void givenNegativeSubtotal_whenCreatingInvoice_thenThrowsDomainException() {
+        assertThatThrownBy(() -> Invoice.builder()
+                .id(VALID_INVOICE_ID)
+                .patientId(VALID_PATIENT_ID)
+                .invoiceNumber(VALID_INVOICE_NUMBER)
+                .issueDate(TODAY)
+                .dueDate(TOMORROW)
+                .items(VALID_ITEMS)
+                .subtotal(new BigDecimal("-10.00"))
+                .tax(VALID_TAX)
+                .total(VALID_TOTAL)
+                .status(InvoiceStatus.DRAFT)
+                .build())
+                .isInstanceOf(DomainException.class)
+                .hasMessageContaining("Subtotal cannot be negative");
     }
 
     @Test
-    void markAsOverdue_ShouldNotChangeEstadoWhenInvoiceIsPaid() {
-        Invoice invoice = Invoice.create(NUMERO_FACTURA, FECHA_EMISION, FECHA_VENCIMIENTO, SUBTOTAL, IMPUESTOS, PATIENT_ID);
-        invoice.markAsPaid(PaymentMethod.EFECTIVO);
-        InvoiceStatus estadoAnterior = invoice.getEstado();
-
-        invoice.markAsOverdue();
-
-        assertEquals(estadoAnterior, invoice.getEstado());
+    void givenNullTax_whenCreatingInvoice_thenThrowsDomainException() {
+        assertThatThrownBy(() -> Invoice.builder()
+                .id(VALID_INVOICE_ID)
+                .patientId(VALID_PATIENT_ID)
+                .invoiceNumber(VALID_INVOICE_NUMBER)
+                .issueDate(TODAY)
+                .dueDate(TOMORROW)
+                .items(VALID_ITEMS)
+                .subtotal(VALID_SUBTOTAL)
+                .tax(null)
+                .total(VALID_TOTAL)
+                .status(InvoiceStatus.DRAFT)
+                .build())
+                .isInstanceOf(DomainException.class)
+                .hasMessageContaining("Tax cannot be null");
     }
 
     @Test
-    void markAsOverdue_ShouldNotChangeEstadoWhenInvoiceIsCanceled() {
-        Invoice invoice = Invoice.create(NUMERO_FACTURA, FECHA_EMISION, FECHA_VENCIMIENTO, SUBTOTAL, IMPUESTOS, PATIENT_ID);
-        invoice.cancel();
-        InvoiceStatus estadoAnterior = invoice.getEstado();
-
-        invoice.markAsOverdue();
-
-        assertEquals(estadoAnterior, invoice.getEstado());
+    void givenNegativeTax_whenCreatingInvoice_thenThrowsDomainException() {
+        assertThatThrownBy(() -> Invoice.builder()
+                .id(VALID_INVOICE_ID)
+                .patientId(VALID_PATIENT_ID)
+                .invoiceNumber(VALID_INVOICE_NUMBER)
+                .issueDate(TODAY)
+                .dueDate(TOMORROW)
+                .items(VALID_ITEMS)
+                .subtotal(VALID_SUBTOTAL)
+                .tax(new BigDecimal("-5.00"))
+                .total(VALID_TOTAL)
+                .status(InvoiceStatus.DRAFT)
+                .build())
+                .isInstanceOf(DomainException.class)
+                .hasMessageContaining("Tax cannot be negative");
     }
 
     @Test
-    void cancel_ShouldSetEstadoToCancelada() {
-        Invoice invoice = Invoice.create(NUMERO_FACTURA, FECHA_EMISION, FECHA_VENCIMIENTO, SUBTOTAL, IMPUESTOS, PATIENT_ID);
-
-        invoice.cancel();
-
-        assertEquals(InvoiceStatus.CANCELADA, invoice.getEstado());
+    void givenNullTotal_whenCreatingInvoice_thenThrowsDomainException() {
+        assertThatThrownBy(() -> Invoice.builder()
+                .id(VALID_INVOICE_ID)
+                .patientId(VALID_PATIENT_ID)
+                .invoiceNumber(VALID_INVOICE_NUMBER)
+                .issueDate(TODAY)
+                .dueDate(TOMORROW)
+                .items(VALID_ITEMS)
+                .subtotal(VALID_SUBTOTAL)
+                .tax(VALID_TAX)
+                .total(null)
+                .status(InvoiceStatus.DRAFT)
+                .build())
+                .isInstanceOf(DomainException.class)
+                .hasMessageContaining("Total cannot be null");
     }
 
     @Test
-    void cancel_ShouldThrowExceptionWhenInvoiceIsPaid() {
-        Invoice invoice = Invoice.create(NUMERO_FACTURA, FECHA_EMISION, FECHA_VENCIMIENTO, SUBTOTAL, IMPUESTOS, PATIENT_ID);
-        invoice.markAsPaid(PaymentMethod.TARJETA);
-
-        IllegalStateException exception = assertThrows(IllegalStateException.class,
-                () -> invoice.cancel());
-
-        assertEquals("No se puede cancelar una factura ya pagada", exception.getMessage());
+    void givenNegativeTotal_whenCreatingInvoice_thenThrowsDomainException() {
+        assertThatThrownBy(() -> Invoice.builder()
+                .id(VALID_INVOICE_ID)
+                .patientId(VALID_PATIENT_ID)
+                .invoiceNumber(VALID_INVOICE_NUMBER)
+                .issueDate(TODAY)
+                .dueDate(TOMORROW)
+                .items(VALID_ITEMS)
+                .subtotal(VALID_SUBTOTAL)
+                .tax(VALID_TAX)
+                .total(new BigDecimal("-165.00"))
+                .status(InvoiceStatus.DRAFT)
+                .build())
+                .isInstanceOf(DomainException.class)
+                .hasMessageContaining("Total cannot be negative");
     }
 
     @Test
-    void applyDiscount_ShouldReduceSubtotalAndRecalculateTotal() {
-        Invoice invoice = Invoice.create(NUMERO_FACTURA, FECHA_EMISION, FECHA_VENCIMIENTO, SUBTOTAL, IMPUESTOS, PATIENT_ID);
-        BigDecimal discountPercentage = new BigDecimal("10.00");
-        BigDecimal expectedSubtotal = new BigDecimal("900.00");
-        BigDecimal expectedTotal = new BigDecimal("1110.00");
-
-        invoice.applyDiscount(discountPercentage);
-
-        assertEquals(expectedSubtotal, invoice.getSubtotal());
-        assertEquals(expectedTotal, invoice.getTotal());
+    void givenNullStatus_whenCreatingInvoice_thenThrowsException() {
+        assertThatThrownBy(() -> Invoice.builder()
+                .id(VALID_INVOICE_ID)
+                .patientId(VALID_PATIENT_ID)
+                .invoiceNumber(VALID_INVOICE_NUMBER)
+                .issueDate(TODAY)
+                .dueDate(TOMORROW)
+                .items(VALID_ITEMS)
+                .subtotal(VALID_SUBTOTAL)
+                .tax(VALID_TAX)
+                .total(VALID_TOTAL)
+                .status(null)
+                .build())
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("Status cannot be null");
     }
 
     @Test
-    void applyDiscount_ShouldThrowExceptionWhenDiscountPercentageIsNegative() {
-        Invoice invoice = Invoice.create(NUMERO_FACTURA, FECHA_EMISION, FECHA_VENCIMIENTO, SUBTOTAL, IMPUESTOS, PATIENT_ID);
-        BigDecimal discountPercentage = new BigDecimal("-5.00");
+    void givenSubtotalNotMatchingSumOfItems_whenCreatingInvoice_thenThrowsDomainException() {
+        BigDecimal incorrectSubtotal = new BigDecimal("200.00");
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> invoice.applyDiscount(discountPercentage));
-
-        assertEquals("El porcentaje de descuento debe estar entre 0 y 100", exception.getMessage());
+        assertThatThrownBy(() -> Invoice.builder()
+                .id(VALID_INVOICE_ID)
+                .patientId(VALID_PATIENT_ID)
+                .invoiceNumber(VALID_INVOICE_NUMBER)
+                .issueDate(TODAY)
+                .dueDate(TOMORROW)
+                .items(VALID_ITEMS)
+                .subtotal(incorrectSubtotal)
+                .tax(VALID_TAX)
+                .total(VALID_TOTAL)
+                .status(InvoiceStatus.DRAFT)
+                .build())
+                .isInstanceOf(DomainException.class)
+                .hasMessageContaining("Invoice subtotal must equal sum of item amounts");
     }
 
     @Test
-    void applyDiscount_ShouldThrowExceptionWhenDiscountPercentageIsGreaterThan100() {
-        Invoice invoice = Invoice.create(NUMERO_FACTURA, FECHA_EMISION, FECHA_VENCIMIENTO, SUBTOTAL, IMPUESTOS, PATIENT_ID);
-        BigDecimal discountPercentage = new BigDecimal("150.00");
+    void givenTotalNotMatchingSubtotalPlusTax_whenCreatingInvoice_thenThrowsDomainException() {
+        BigDecimal incorrectTotal = new BigDecimal("200.00");
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> invoice.applyDiscount(discountPercentage));
-
-        assertEquals("El porcentaje de descuento debe estar entre 0 y 100", exception.getMessage());
+        assertThatThrownBy(() -> Invoice.builder()
+                .id(VALID_INVOICE_ID)
+                .patientId(VALID_PATIENT_ID)
+                .invoiceNumber(VALID_INVOICE_NUMBER)
+                .issueDate(TODAY)
+                .dueDate(TOMORROW)
+                .items(VALID_ITEMS)
+                .subtotal(VALID_SUBTOTAL)
+                .tax(VALID_TAX)
+                .total(incorrectTotal)
+                .status(InvoiceStatus.DRAFT)
+                .build())
+                .isInstanceOf(DomainException.class)
+                .hasMessageContaining("Invoice total must equal subtotal + tax");
     }
 
     @Test
-    void applyDiscount_ShouldThrowExceptionWhenInvoiceIsNotPending() {
-        Invoice invoice = Invoice.create(NUMERO_FACTURA, FECHA_EMISION, FECHA_VENCIMIENTO, SUBTOTAL, IMPUESTOS, PATIENT_ID);
-        invoice.markAsPaid(PaymentMethod.EFECTIVO);
-        BigDecimal discountPercentage = new BigDecimal("10.00");
+    void givenDraftInvoice_whenIssuing_thenStatusBecomesIssued() {
+        Invoice invoice = createDraftInvoice();
 
-        IllegalStateException exception = assertThrows(IllegalStateException.class,
-                () -> invoice.applyDiscount(discountPercentage));
+        invoice.issue();
 
-        assertEquals("Solo se puede aplicar descuento a facturas pendientes", exception.getMessage());
+        assertThat(invoice.getStatus()).isEqualTo(InvoiceStatus.ISSUED);
     }
 
     @Test
-    void isOverdue_ShouldReturnTrueWhenEstadoIsVencida() {
-        Invoice invoice = Invoice.create(NUMERO_FACTURA, FECHA_EMISION, FECHA_VENCIMIENTO, SUBTOTAL, IMPUESTOS, PATIENT_ID);
-        invoice.markAsOverdue();
+    void givenNonDraftInvoice_whenIssuing_thenThrowsDomainException() {
+        Invoice issuedInvoice = createIssuedInvoice();
 
-        assertTrue(invoice.isOverdue());
+        assertThatThrownBy(issuedInvoice::issue)
+                .isInstanceOf(DomainException.class)
+                .hasMessageContaining("Only DRAFT invoices can be issued");
     }
 
     @Test
-    void isOverdue_ShouldReturnFalseWhenEstadoIsNotVencida() {
-        Invoice invoice = Invoice.create(NUMERO_FACTURA, FECHA_EMISION, FECHA_VENCIMIENTO, SUBTOTAL, IMPUESTOS, PATIENT_ID);
+    void givenDraftInvoiceWithDueDateBeforeIssueDate_whenIssuing_thenThrowsDomainException() {
+        Invoice invoice = Invoice.builder()
+                .id(VALID_INVOICE_ID)
+                .patientId(VALID_PATIENT_ID)
+                .invoiceNumber(VALID_INVOICE_NUMBER)
+                .issueDate(TODAY)
+                .dueDate(YESTERDAY)
+                .items(VALID_ITEMS)
+                .subtotal(VALID_SUBTOTAL)
+                .tax(VALID_TAX)
+                .total(VALID_TOTAL)
+                .status(InvoiceStatus.DRAFT)
+                .build();
 
-        assertFalse(invoice.isOverdue());
-    }
-
-    @Test
-    void canApplyPayment_ShouldReturnTrueWhenEstadoIsPending() {
-        Invoice invoice = Invoice.create(NUMERO_FACTURA, FECHA_EMISION, FECHA_VENCIMIENTO, SUBTOTAL, IMPUESTOS, PATIENT_ID);
-
-        assertTrue(invoice.canApplyPayment());
-    }
-
-    @Test
-    void canApplyPayment_ShouldReturnTrueWhenEstadoIsVencida() {
-        Invoice invoice = Invoice.create(NUMERO_FACTURA, FECHA_EMISION, FECHA_VENCIMIENTO, SUBTOTAL, IMPUESTOS, PATIENT_ID);
-        invoice.markAsOverdue();
-
-        assertTrue(invoice.canApplyPayment());
-    }
-
-    @Test
-    void canApplyPayment_ShouldReturnFalseWhenEstadoIsPaid() {
-        Invoice invoice = Invoice.create(NUMERO_FACTURA, FECHA_EMISION, FECHA_VENCIMIENTO, SUBTOTAL, IMPUESTOS, PATIENT_ID);
-        invoice.markAsPaid(PaymentMethod.TRANSFERENCIA);
-
-        assertFalse(invoice.canApplyPayment());
-    }
-
-    @Test
-    void canApplyPayment_ShouldReturnFalseWhenEstadoIsCanceled() {
-        Invoice invoice = Invoice.create(NUMERO_FACTURA, FECHA_EMISION, FECHA_VENCIMIENTO, SUBTOTAL, IMPUESTOS, PATIENT_ID);
-        invoice.cancel();
-
-        assertFalse(invoice.canApplyPayment());
-    }
-}
+        assertThatThrownBy(invoice::issue

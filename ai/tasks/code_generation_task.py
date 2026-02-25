@@ -1,10 +1,6 @@
 # ai/tasks/code_generation_task.py
 
 def build_code_generation_task(path, context_data=None, **kwargs):
-    """
-    Elite Task Generator: Enforces strict architectural boundaries and 
-    prevents common AI package hallucinations.
-    """
     description = kwargs.get('description') or kwargs.get('desc') or "Generate domain-driven logic."
     ctx = context_data or ""
     base_package = kwargs.get('base_package', 'com.application')
@@ -12,27 +8,26 @@ def build_code_generation_task(path, context_data=None, **kwargs):
     return {
         "agent": "backend_builder",
         "description": f"""
-        TASK: Implement the high-quality Java 17 source code for: '{path}'
+        TASK: Implement high-quality Java 17 source code for the file: '{path}'
         OBJECTIVE: {description}
-        
-        PROJECT ARCHITECTURE & IMPORT MAP:
-        {ctx}
-        
-        STRICT PACKAGE & IMPORT RULES:
-        1. BASE CLASSES: Entity, ValueObject, and EntityRepository are located in '{base_package}.domain.shared'. 
-           NEVER import from '{base_package}.domain.base', '.common', or '.core'.
-        2. INTERNAL IMPORTS: You MUST use the PROJECT_FILE_MAP above to find the correct package for any internal class.
-        3. CONSISTENCY: Ensure the 'package' declaration matches the file path exactly in lowercase.
 
-        STRICT LAYER RULES:
-        - IF PATH CONTAINS '/domain/': Generate PURE JAVA. NO JPA (@Entity, @Table) allowed. Use Lombok @SuperBuilder, @Getter, and @ToString.
-        - IF PATH CONTAINS '/infrastructure/': Generate PERSISTENCE code. Use JPA annotations (@Entity, @Table, @Column).
-        - IF PATH CONTAINS '/mapper/': Generate MapStruct interfaces to bridge Domain and JpaEntity.
-        
-        SINTAX RULES (Java 17):
-        - VALUE OBJECTS & IDs: Use 'public record' and 'implements ValueObject'.
-        - ENTITIES: Use 'public class' and 'extends Entity<ID>'.
-        - GENERICS: In diamonds <>, always use 'extends' (e.g., <ID extends ValueObject>).
+        PROJECT IMPORT MAP (USE THIS FOR YOUR IMPORTS):
+        {ctx}
+
+        STRICT ARCHITECTURAL RULES:
+        1. PACKAGE DECLARATION: Must exactly match the directory structure. 
+           Example: If path is '.../domain/model/User.java', package MUST be 'package {base_package}.domain.model;'
+        2. BASE CLASSES (SHARED KERNEL): 
+           - Entity, ValueObject, and EntityRepository ARE located in '{base_package}.domain.shared'.
+           - NEVER use '{base_package}.domain.base', '.common', or '.core'.
+        3. SINGLE RESPONSIBILITY: Only one public class/record per file.
+        4. JAVA 17+ STANDARDS:
+           - Use 'public record' for all IDs and ValueObjects.
+           - Records MUST implement 'ValueObject'. Example: 'public record PatientId(UUID value) implements ValueObject {{}}'
+        5. LOMBOK: Use @Getter, @SuperBuilder, and @NoArgsConstructor(access=AccessLevel.PROTECTED) for Entities.
+        6. NO JPA IN DOMAIN: Use only pure Java and Lombok in the domain layer.
+
+        OUTPUT ONLY THE SOURCE CODE. NO EXPLANATIONS. NO MARKDOWN WRAPPERS IF POSSIBLE.
         """,
-        "expected_output": "Full, compilable Java 17 source code with verified imports and correct layer annotations."
+        "expected_output": "Impeccable and compilable Java 17 source code."
     }

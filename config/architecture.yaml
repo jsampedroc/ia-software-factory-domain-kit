@@ -1,6 +1,6 @@
-
 project:
-  name: "application"
+  name: "DentalClinic" # Tu paquete base será com.dentalclinic
+  version: "1.0.0"
 
 backend:
   language: "java"
@@ -11,20 +11,14 @@ backend:
   orm: "jpa"
   dtoMapper: "mapstruct"
   lombok: true
-  security: "spring-security"
   logging: "logback"
   testing:
-    unit: "junit"
-    integration: "spring-boot-test"
-
-frontend:
-  framework: "react"
-  stateManagement: "zustand"
-  uiLibrary: "material-ui"
+    unit: "junit-5"
+    mocking: "mockito"
+    coverage: "jacoco"
 
 infrastructure:
   containerization: "docker"
   orchestration: "docker-compose"
   ci_cd: "github-actions"
-
-pattern: "Hexagonal Architecture with Ports and Adapters"
+  monitoring: "elk-stack"

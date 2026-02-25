@@ -53,27 +53,47 @@ class SoftwareFactory:
         match = re.search(pattern, text, re.DOTALL)
         return match.group(1).strip() if match else text.strip()
 
-    def sanitize_java_code(self, content):
-        """Elite syntax sanitizer using Regex to prevent common AI hallucinations."""
-        content = content.replace(f"{self.base_package}.domain.base", f"{self.base_package}.domain.shared")
-        content = content.replace(f"{self.base_package}.domain.common", f"{self.base_package}.domain.shared")
+
+
+    def sanitize_java_code(self, content, relative_path):
+        """Elite syntax sanitizer: Forces correct package and fixes common LLM hallucinations."""
+        # 1. Extract expected package from path
+        # From: backend/src/main/java/com/app/domain/model/User.java 
+        # To: com.app.domain.model
+        parts = str(relative_path).replace("backend/src/main/java/", "").split('/')
+        expected_package = ".".join(parts[:-1]).lower()
+        
         lines = content.split('\n')
-        for i, line in enumerate(lines):
+        new_lines = []
+        package_fixed = False
+        
+        for line in lines:
             clean_l = line.strip()
-            if clean_l.startswith('package '): lines[i] = clean_l.lower()
-            if clean_l.startswith(f'import {self.base_package.split(".")[0]}'):
-                parts = clean_l.split(' ')
-                if len(parts) > 1:
-                    path_parts = parts[1].split('.')
-                    class_name = path_parts[-1].replace(';', '')
-                    package_parts = [p.lower() for p in path_parts[:-1]]
-                    lines[i] = f"import {'.'.join(package_parts)}.{class_name};"
-        full_content = '\n'.join(lines)
-        full_content = re.sub(r'(class|record)\s+(\w+)\s+extends\s+ValueObject', r'\1 \2 implements ValueObject', full_content, flags=re.IGNORECASE)
-        full_content = full_content.replace('<ID implements ValueObject>', '<ID extends ValueObject>')
+            # Force the correct package
+            if clean_l.startswith('package '):
+                new_lines.append(f"package {expected_package};")
+                package_fixed = True
+                continue
+            
+            # Fix hallucinated imports
+            if "domain.base" in clean_l: line = line.replace("domain.base", "domain.shared")
+            if "domain.common" in clean_l: line = line.replace("domain.common", "domain.shared")
+            
+            new_lines.append(line)
+        
+        # If no package line was found, prepend it
+        if not package_fixed:
+            new_lines.insert(0, f"package {expected_package};")
+            
+        full_content = '\n'.join(new_lines)
+        
+        # Final polish (Regex for records and generics)
+        full_content = re.sub(r'public record (\w+) implements ValueObject', r'public record \1() implements ValueObject', full_content)
         full_content = full_content.replace('ID implements ValueObject', 'ID extends ValueObject')
-        full_content = re.sub(r'implements\s+Entity', 'extends Entity', full_content, flags=re.IGNORECASE)
+        
         return full_content
+    
+
 
     def save_to_disk(self, relative_path, content, is_skeleton=False):
         p = Path(relative_path)
@@ -81,7 +101,8 @@ class SoftwareFactory:
             filename = p.name
             parent = str(p.parent).lower()
             full_path = self.out_dir / parent / filename
-            content = self.sanitize_java_code(content)
+            # LLAMADA ACTUALIZADA:
+            content = self.sanitize_java_code(content, relative_path)
         else:
             full_path = self.out_dir / relative_path
         full_path.parent.mkdir(parents=True, exist_ok=True)
@@ -90,21 +111,38 @@ class SoftwareFactory:
             self.state.generated_files.append(str(relative_path))
             StateManager.save_specs(self.spec_file, self.state.domain_model, self.state.architecture, self.state.generated_files)
 
+
+
     def run_command(self, cmd, cwd=None):
         try:
             res = subprocess.run(cmd, cwd=cwd or self.out_dir, capture_output=True, text=True, timeout=300)
             return None if res.returncode == 0 else res.stdout + res.stderr
         except Exception as e: return str(e)
 
-    def run_maven_test(self):
-        """Runs Maven and filters for errors. Optimized to be used in healing loops."""
+    def run_maven_test(self, current_file_path=None):
+        """Optimized Maven check: Only reports errors related to the current file or critical infra."""
         backend_path = self.out_dir / "backend"
         if not (backend_path / "pom.xml").exists(): return "POM_MISSING"
-        # We use mvn compile to avoid the overhead of full clean every time in loops
+        
         raw_log = self.run_command(["mvn", "compile"], cwd=backend_path)
         if raw_log:
-            error_lines = [line for line in raw_log.split('\n') if "[ERROR]" in line]
-            return "\n".join(error_lines) if error_lines else None
+            lines = raw_log.split('\n')
+            relevant_errors = []
+            
+            # Si pasamos un path, buscamos errores solo de ese archivo
+            # O errores generales de paquetes/símbolos que afecten al flujo
+            filename = Path(current_file_path).name if current_file_path else ""
+            
+            for line in lines:
+                if "[ERROR]" in line:
+                    # Solo nos importa si el error es del archivo actual 
+                    # o si es un error de "package does not exist" que bloquea todo
+                    if filename and filename in line:
+                        relevant_errors.append(line)
+                    elif "package" in line and "does not exist" in line:
+                        relevant_errors.append(line)
+            
+            return "\n".join(relevant_errors) if relevant_errors else None
         return None
 
     def run_massive_healing(self, error_log):
@@ -184,6 +222,7 @@ class SoftwareFactory:
                     self.save_to_disk(path, sk_code, is_skeleton=True)
 
             # 4. MANUFACTURING PASS 2 (Logic + Healing + Git)
+            # 4. MANUFACTURING PASS 2 (Logic + Healing + Git)
             print(f"\n🧠 PASS 2: Business Logic Injection...")
             for index, file_info in enumerate(inventory, 1):
                 path, desc = file_info['path'], file_info['description']
@@ -192,22 +231,21 @@ class SoftwareFactory:
                 print(f"   [{index}/{len(inventory)}] 👉 Generating: {path}")
                 ctx = f"{self.SHARED_KERNEL_CONTEXT}\nIMPORT_MAP:\n{import_map}\nDOMAIN_KIT:\n{self.state.domain_model}"
                 
-                # Logic Injection
                 code = self.clean_llm_output(self.executor.run_task("write_code", context_data=ctx, path=path, desc=desc, base_package=self.base_package))
                 self.save_to_disk(path, code, is_skeleton=False)
 
-                # HEALING LOOP
-                err = self.run_maven_test()
-                for attempt in range(2): # Solo 2 intentos de cura individual
-                    if not err: break
-                    print(f"      🩹 Individual Healing attempt {attempt + 1}...")
-                    code = self.clean_llm_output(self.executor.run_task("heal_code", context_data=code, error_log=err, path=path, base_package=self.base_package))
-                    self.save_to_disk(path, code, is_skeleton=False)
-                    err = self.run_maven_test()
+                # HEALING LOOP: Solo para archivos que NO sean simples IDs/ValueObjects
+                if "valueobject" not in path.lower():
+                    err = self.run_maven_test(current_file_path=path) # Pasamos el path actual
+                    for attempt in range(2): 
+                        if not err: break
+                        print(f"      🩹 Individual Healing attempt {attempt + 1} for {Path(path).name}...")
+                        code = self.clean_llm_output(self.executor.run_task("heal_code", context_data=code, error_log=err, path=path, base_package=self.base_package))
+                        self.save_to_disk(path, code, is_skeleton=False)
+                        err = self.run_maven_test(current_file_path=path)
                 
-                # REPARACIÓN MASIVA SI HAY CAOS
-                if err and err.count("[ERROR]") > 10:
-                    self.run_massive_healing(err)
+                    if err and err.count("[ERROR]") > 10:
+                        self.run_massive_healing(err)
                 
                 self.run_command(["git", "add", "."]); self.run_command(["git", "commit", "-m", f"feat: add {Path(path).name}"])
 

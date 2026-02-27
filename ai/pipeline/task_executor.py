@@ -1,5 +1,7 @@
 # ai/pipeline/task_executor.py
 import os
+import sys
+import time
 from ai.llm.llm_config import build_llm_client, get_model_config
 from ai.llm.grounding import build_grounded_prompt
 
@@ -9,49 +11,47 @@ import ai.agents as agents
 class TaskExecutor:
     def __init__(self):
         """
-        Initializes the AI client once to reuse the connection.
-        In an industrial factory, connection pooling is vital for performance.
+        Industrial Task Executor. 
+        Dynamic client initialization per call to support hybrid providers (OpenAI/DeepSeek).
         """
-        self.client = build_llm_client()
+        pass
 
     def run_task(self, task_key, context_data="", agent_override=None, **kwargs):
         """
-        Executes a task by dynamically resolving the agent and the task 
-        specification from individual files in ai/agents/ and ai/tasks/.
+        Executes an AI task with auto-retry logic and response validation.
         """
-        # Late import to prevent circular dependency issues during initialization
+        # Late import to prevent circular dependency
         import ai.tasks as tasks
         
-        # 1. TASK MAPPING (Resolves logic from ai/tasks/ folder)
+        # 1. TASK MAPPING (Sincronizado con tus nombres de archivos)
         task_map = {
             "model_domain": tasks.build_domain_model_task,
             "create_inventory": tasks.build_architecture_task,
             "write_code": tasks.build_code_generation_task,
             "write_tests": tasks.build_write_tests_task,
-            "audit_code": tasks.build_audit_code_task,
+            "audit_code": tasks.build_audit_task,  # Sincronizado con audit_task.py
             "heal_code": tasks.build_heal_code_task,
             "project_debug": tasks.build_project_debug_task,
             "create_skeleton": tasks.build_create_skeleton_task,
-            "arbitration": tasks.build_arbitration_task
+            "arbitration": tasks.build_arbitration_task,
+            "write_mapper": tasks.build_mapper_task, # Sincronizado con mapper_task.py
+            "identify_shared_types": tasks.build_shared_types_task,
+            "generate_systemic_fix": tasks.build_systemic_fix_task, # Sincronizado con systemic_fix_task.py
         }
 
         if task_key not in task_map:
             raise ValueError(f"❌ Task '{task_key}' is not mapped in TaskExecutor.")
 
-        # 2. ARGUMENT SYNCHRONIZATION (Critical for Auto-Healing)
-        # We ensure context_data is passed down as 'domain_kit' or 'context_data'
-        # and kwargs like 'error_log' are preserved for the task builders.
+        # 2. ARGUMENT SYNCHRONIZATION
         task_args = kwargs.copy()
         task_args['context_data'] = context_data
         if 'domain_kit' not in task_args:
             task_args['domain_kit'] = context_data
 
         # 3. BUILD TASK DEFINITION
-        # This calls functions like build_heal_code_task(**task_args)
         task_def = task_map[task_key](**task_args)
         
         # 4. AGENT RESOLUTION
-        # Use override if provided (e.g. SRE for infra); otherwise, use task default
         role_key = agent_override if agent_override else task_def['agent']
         
         agent_map = {
@@ -65,36 +65,54 @@ class TaskExecutor:
         }
         
         if role_key not in agent_map:
-            raise ValueError(f"❌ Agent '{role_key}' is not defined in ai.agents.")
+            raise ValueError(f"❌ Agent '{role_key}' is not defined.")
             
         agent_config = agent_map[role_key]()
         
-        # 5. SYSTEM RULES CONSOLIDATION (Support for both formats)
-        system_rules = agent_config.get('system') or f"You are a {agent_config['role']}. {agent_config['backstory']}"
-        
-        # 6. LLM CONFIGURATION (Smart vs. Cheap)
+        # 5. LLM CONFIGURATION (Smart vs. Cheap)
         model_params = get_model_config(agent_config["tier"])
+        provider = model_params.pop("provider") # Extraemos provider para build_llm_client
+        
+        # 6. CLIENT INITIALIZATION
+        client = build_llm_client(provider=provider)
         
         # 7. GROUNDED PROMPT CONSTRUCTION
+        system_rules = agent_config.get('system') or f"You are a {agent_config['role']}. {agent_config['backstory']}"
         full_prompt = build_grounded_prompt(
             system_rules=system_rules,
             context_data=context_data,
             task_prompt=task_def['description']
         )
 
-        # 8. API INVOCATION
-        try:
-            print(f"   [LLM] Running '{task_key}' via '{role_key}' ({agent_config['tier']})...")
-            response = self.client.chat.completions.create(
-                messages=[{"role": "user", "content": full_prompt}],
-                **model_params
-            )
-            
-            content = response.choices[0].message.content
-            if not content:
-                raise ValueError("The AI returned an empty response.")
+        # 8. API INVOCATION WITH RETRIES AND VALIDATION
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                print(f"   [LLM] {task_key} via {role_key} ({provider}/{model_params['model']})...")
+                response = client.chat.completions.create(
+                    messages=[{"role": "user", "content": full_prompt}],
+                    **model_params
+                )
                 
-            return content
+                # VALIDACIÓN CRÍTICA CONTRA EL ERROR NoneType
+                if response and response.choices and len(response.choices) > 0:
+                    content = response.choices[0].message.content
+                    if content:
+                        return content
+                
+                print(f"   ⚠️ Received empty response from {provider}. Retrying...")
+                
+            except Exception as e:
+                err_msg = str(e).lower()
+                # Manejo de límites de cuota y velocidad
+                if "rate limit" in err_msg or "429" in err_msg or "quota" in err_msg:
+                    wait_time = 30 * (attempt + 1)
+                    print(f"\n⏳ API LIMIT REACHED ({provider}). Waiting {wait_time}s before retry {attempt+1}/{max_retries}...")
+                    time.sleep(wait_time)
+                    continue
+                
+                print(f"\n🚫 CRITICAL API ERROR ({provider}): {str(e)}")
+                sys.exit(1)
 
-        except Exception as e:
-            return f"❌ TaskExecutor Error: {str(e)}"
+        print(f"❌ Task '{task_key}' failed after {max_retries} attempts.")
+        sys.exit(1)

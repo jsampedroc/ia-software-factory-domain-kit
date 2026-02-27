@@ -1,46 +1,37 @@
 # ai/llm/llm_config.py
 import os
+from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
 
 def get_model_config(tier="cheap"):
     """
-    Tier-based model configuration for optimized performance and cost.
-    
-    'smart' Tier: Optimized for high-level reasoning, complex architecture design, 
-                  and domain modeling (8000 token limit).
-    'cheap' Tier: Optimized for high-volume source code generation, 
-                  ensuring full Java class completion (4000 token limit).
+    Tier-based configuration:
+    - 'smart': For Architecture and Auditing (OpenAI GPT-4o)
+    - 'cheap': For massive Code Generation (DeepSeek)
     """
     if tier == "smart":
         return {
-            "model": os.getenv("AI_SMART_MODEL", "deepseek-chat"),
-            "max_tokens": 8000,
-            "temperature": 0.2
+            "model": os.getenv("AI_SMART_MODEL", "gpt-4o"), # Usamos gpt-4o para el Auditor
+            "max_tokens": 4096,
+            "temperature": 0.2,
+            "provider": "openai"
         }
     else:
-        # Default tier for heavy code generation tasks
         return {
-            "model": os.getenv("AI_CHEAP_MODEL", "deepseek-chat"),
-            "max_tokens": 4000, 
-            "temperature": 0.1
+            "model": os.getenv("AI_CHEAP_MODEL", "deepseek-chat"), # DeepSeek para el grueso del código
+            "max_tokens": 4096,
+            "temperature": 0.1,
+            "provider": "deepseek"
         }
 
-def build_llm_client():
-    """
-    Initializes and returns an OpenAI-compatible client for API communication.
-    Supports DeepSeek, OpenAI, or local endpoints via environment variables.
-    """
-    from openai import OpenAI
-    
-    base_url = os.getenv("AI_BASE_URL", "https://api.deepseek.com/v1")
-    api_key = os.getenv("DEEPSEEK_API_KEY")
-
-    if not api_key:
-        raise RuntimeError("❌ ERROR: DEEPSEEK_API_KEY is missing from the .env file.")
-
-    return OpenAI(
-        api_key=api_key,
-        base_url=base_url
-    )
+def build_llm_client(provider="deepseek"):
+    """Returns the correct client based on the provider."""
+    if provider == "openai":
+        return OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    else:
+        return OpenAI(
+            api_key=os.getenv("DEEPSEEK_API_KEY"),
+            base_url=os.getenv("AI_BASE_URL", "https://api.deepseek.com/v1")
+        )

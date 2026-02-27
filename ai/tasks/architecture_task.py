@@ -1,30 +1,34 @@
 # ai/tasks/architecture_task.py
 
 def build_architecture_task(domain_kit="", **kwargs):
-    dk = domain_kit if domain_kit else kwargs.get('context_data', '')
-    base_package = kwargs.get('base_package', 'com.application')
-    base_package_path = kwargs.get('base_package_path', 'com/application')
-
+    dk = domain_kit
     return {
         "agent": "architect",
         "description": f"""
-        Based on this Domain Model: {dk}
+        ACT AS A SENIOR LEAD ARCHITECT. 
+        Analyze Domain Model: {dk}
         
-        TASK: Design the file inventory for a Flat Hexagonal Architecture.
+        TASK: Design a COMPLETE Flat Hexagonal inventory. 
         
-        INVENTORY RULES:
-        1. IDENTIFIERS: Create a specific 'record' file for every Entity ID in '{base_package}.domain.valueobject'.
-        2. MODELS: Entities and Enums in '{base_package}.domain.model'.
-        3. REPOSITORIES: Interfaces in '{base_package}.domain.repository'.
-        4. APPLICATION: Services in '{base_package}.application.service' and DTOs in '{base_package}.application.dto'.
+        STRICT RULES FOR PATHS (TOKEN SAVING):
+        Output ONLY the relative path. DO NOT include 'backend/src/main/java/...' prefix.
         
-        IMPORTANT: Exclude Shared Kernel classes (Entity, ValueObject) as they are pre-injected.
+        EXAMPLES OF ALLOWED PATHS:
+        - domain/model/EntityName.java
+        - domain/valueobject/EntityNameId.java
+        - application/service/EntityNameService.java
+        - application/dto/EntityNameRequest.java
+        - application/dto/EntityNameResponse.java
+        - application/mapper/EntityNameMapper.java
+        - infrastructure/rest/EntityNameController.java
+        - infrastructure/persistence/JpaEntityNameRepository.java
+        - test/application/service/EntityNameServiceTest.java
         
-        REQUIRED JSON FORMAT:
-        [
-          {{"path": "backend/src/main/java/{base_package_path}/domain/valueobject/PatientId.java", "description": "ID record for Patient entity"}},
-          {{"path": "backend/src/main/java/{base_package_path}/domain/model/Patient.java", "description": "Core Patient entity"}}
-        ]
+        REQUIRED COMPLETENESS:
+        For EVERY Entity identified, generate ALL 9 layers listed above.
+        
+        CRITICAL: I expect 150+ entries. Use 1-word descriptions (e.g. 'Entity').
+        Return ONLY a raw JSON list of dictionaries: [{{"path": "...", "description": "..."}}]
         """,
-        "expected_output": "Strict JSON list of file paths following Maven conventions."
+        "expected_output": "Massive relative-path JSON inventory."
     }

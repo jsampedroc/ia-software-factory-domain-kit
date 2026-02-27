@@ -8,6 +8,10 @@ from .heal_code_task import build_heal_code_task
 from .project_debug_task import build_project_debug_task
 from .create_skeleton_task import build_create_skeleton_task
 from .arbitration_task import build_arbitration_task
+from .mapper_task import build_mapper_task
+from .shared_types_task import build_shared_types_task
+from .audit_task import build_audit_task
+from .systemic_fix_task import build_systemic_fix_task
 
 __all__ = [
     "build_domain_model_task",
@@ -18,5 +22,9 @@ __all__ = [
     "build_heal_code_task",
     "build_project_debug_task",
     "build_create_skeleton_task",
-    "build_arbitration_task"
+    "build_arbitration_task",
+    "build_mapper_task",
+    "build_shared_types_task",
+    "build_audit_task",
+    "build_systemic_fix_task"
 ]

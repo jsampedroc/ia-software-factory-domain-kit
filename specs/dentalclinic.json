@@ -1,0 +1,638 @@
+{
+    "domain_model": "# Domain Kit for Dental Clinic Management System\n\n## Ubiquitous Language (Glossary)\n\n- **Patient**: An individual receiving dental care.\n- **Profile**: A collection of personal and medical information about a Patient.\n- **MedicalAlert**: A notification about a Patient's medical condition or allergy.\n- **Consent**: A record of a Patient's agreement to treatment.\n- **EHR (Electronic Health Record)**: A digital version of a Patient's paper chart.\n- **ClinicalNote**: A detailed note about a Patient's treatment or condition.\n- **Odontogram**: A graphical representation of a Patient's dental status.\n- **TreatmentLog**: A record of treatments provided to a Patient.\n- **Appointment**: A scheduled meeting between a Patient and a Dentist.\n- **Dentist**: A professional providing dental care.\n- **Invoice**: A bill for services rendered.\n- **PaymentPlan**: A structured payment schedule for an Invoice.\n- **InsuranceClaim**: A request for payment from an insurance company.\n- **Role**: A set of permissions assigned to a user (e.g., Receptionist, Dentist, Administrator).\n\n## Entities and Attributes\n\n- **Patient**\n  - `UUID id`\n  - `String name`\n  - `LocalDate dateOfBirth`\n  - `List<MedicalAlert> medicalAlerts`\n  - `List<Consent> consents`\n  - `Profile profile`\n\n- **Profile**\n  - `UUID id`\n  - `String address`\n  - `String phoneNumber`\n  - `String email`\n\n- **MedicalAlert**\n  - `UUID id`\n  - `String description`\n  - `LocalDate dateIssued`\n\n- **Consent**\n  - `UUID id`\n  - `String description`\n  - `LocalDate dateGiven`\n\n- **EHR**\n  - `UUID id`\n  - `Patient patient`\n  - `List<ClinicalNote> clinicalNotes`\n  - `Odontogram odontogram`\n  - `List<TreatmentLog> treatmentLogs`\n\n- **ClinicalNote**\n  - `UUID id`\n  - `String note`\n  - `LocalDate dateCreated`\n\n- **Odontogram**\n  - `UUID id`\n  - `Map<String, String> toothStatus`\n\n- **TreatmentLog**\n  - `UUID id`\n  - `String treatmentDescription`\n  - `LocalDate dateOfTreatment`\n\n- **Appointment**\n  - `UUID id`\n  - `Patient patient`\n  - `Dentist dentist`\n  - `LocalDateTime scheduledTime`\n  - `AppointmentStatus status`\n\n- **Dentist**\n  - `UUID id`\n  - `String name`\n  - `List<Appointment> appointments`\n\n- **Invoice**\n  - `UUID id`\n  - `Patient patient`\n  - `BigDecimal amount`\n  - `List<PaymentPlan> paymentPlans`\n  - `List<InsuranceClaim> insuranceClaims`\n\n- **PaymentPlan**\n  - `UUID id`\n  - `BigDecimal installmentAmount`\n  - `LocalDate dueDate`\n\n- **InsuranceClaim**\n  - `UUID id`\n  - `String claimNumber`\n  - `BigDecimal claimAmount`\n  - `ClaimStatus status`\n\n- **Role**\n  - `UUID id`\n  - `String roleName`\n  - `List<User> users`\n\n## Relationships\n\n- **Patient** 1:N **MedicalAlert**\n- **Patient** 1:N **Consent**\n- **Patient** 1:1 **Profile**\n- **Patient** 1:1 **EHR**\n- **EHR** 1:N **ClinicalNote**\n- **EHR** 1:1 **Odontogram**\n- **EHR** 1:N **TreatmentLog**\n- **Patient** 1:N **Appointment**\n- **Dentist** 1:N **Appointment**\n- **Patient** 1:N **Invoice**\n- **Invoice** 1:N **PaymentPlan**\n- **Invoice** 1:N **InsuranceClaim**\n- **Role** 1:N **User**\n\n## Critical Business Rules and Invariants\n\n- A **Patient** must have a unique **Profile**.\n- An **Appointment** cannot be in the status of \"Completed\" if it has not been \"Confirmed\".\n- An **Invoice** must have a total amount equal to the sum of its **PaymentPlans**.\n- A **MedicalAlert** must be associated with a **Patient** and cannot exist independently.\n- A **Consent** must be recorded before any treatment is logged in the **TreatmentLog**.\n- **Role-based access control** must ensure that only users with the appropriate **Role** can access specific functionalities.",
+    "architecture": {
+        "file_inventory": [
+            {
+                "path": "domain/model/Patient.java",
+                "description": "Entity"
+            },
+            {
+                "path": "domain/valueobject/PatientId.java",
+                "description": "ValueObject"
+            },
+            {
+                "path": "application/service/PatientService.java",
+                "description": "Service"
+            },
+            {
+                "path": "application/dto/PatientRequest.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/dto/PatientResponse.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/mapper/PatientMapper.java",
+                "description": "Mapper"
+            },
+            {
+                "path": "infrastructure/rest/PatientController.java",
+                "description": "Controller"
+            },
+            {
+                "path": "infrastructure/persistence/JpaPatientRepository.java",
+                "description": "Repository"
+            },
+            {
+                "path": "test/application/service/PatientServiceTest.java",
+                "description": "Test"
+            },
+            {
+                "path": "domain/model/Profile.java",
+                "description": "Entity"
+            },
+            {
+                "path": "domain/valueobject/ProfileId.java",
+                "description": "ValueObject"
+            },
+            {
+                "path": "application/service/ProfileService.java",
+                "description": "Service"
+            },
+            {
+                "path": "application/dto/ProfileRequest.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/dto/ProfileResponse.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/mapper/ProfileMapper.java",
+                "description": "Mapper"
+            },
+            {
+                "path": "infrastructure/rest/ProfileController.java",
+                "description": "Controller"
+            },
+            {
+                "path": "infrastructure/persistence/JpaProfileRepository.java",
+                "description": "Repository"
+            },
+            {
+                "path": "test/application/service/ProfileServiceTest.java",
+                "description": "Test"
+            },
+            {
+                "path": "domain/model/MedicalAlert.java",
+                "description": "Entity"
+            },
+            {
+                "path": "domain/valueobject/MedicalAlertId.java",
+                "description": "ValueObject"
+            },
+            {
+                "path": "application/service/MedicalAlertService.java",
+                "description": "Service"
+            },
+            {
+                "path": "application/dto/MedicalAlertRequest.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/dto/MedicalAlertResponse.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/mapper/MedicalAlertMapper.java",
+                "description": "Mapper"
+            },
+            {
+                "path": "infrastructure/rest/MedicalAlertController.java",
+                "description": "Controller"
+            },
+            {
+                "path": "infrastructure/persistence/JpaMedicalAlertRepository.java",
+                "description": "Repository"
+            },
+            {
+                "path": "test/application/service/MedicalAlertServiceTest.java",
+                "description": "Test"
+            },
+            {
+                "path": "domain/model/Consent.java",
+                "description": "Entity"
+            },
+            {
+                "path": "domain/valueobject/ConsentId.java",
+                "description": "ValueObject"
+            },
+            {
+                "path": "application/service/ConsentService.java",
+                "description": "Service"
+            },
+            {
+                "path": "application/dto/ConsentRequest.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/dto/ConsentResponse.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/mapper/ConsentMapper.java",
+                "description": "Mapper"
+            },
+            {
+                "path": "infrastructure/rest/ConsentController.java",
+                "description": "Controller"
+            },
+            {
+                "path": "infrastructure/persistence/JpaConsentRepository.java",
+                "description": "Repository"
+            },
+            {
+                "path": "test/application/service/ConsentServiceTest.java",
+                "description": "Test"
+            },
+            {
+                "path": "domain/model/EHR.java",
+                "description": "Entity"
+            },
+            {
+                "path": "domain/valueobject/EHRId.java",
+                "description": "ValueObject"
+            },
+            {
+                "path": "application/service/EHRService.java",
+                "description": "Service"
+            },
+            {
+                "path": "application/dto/EHRRequest.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/dto/EHRResponse.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/mapper/EHRMapper.java",
+                "description": "Mapper"
+            },
+            {
+                "path": "infrastructure/rest/EHRController.java",
+                "description": "Controller"
+            },
+            {
+                "path": "infrastructure/persistence/JpaEHRRepository.java",
+                "description": "Repository"
+            },
+            {
+                "path": "test/application/service/EHRServiceTest.java",
+                "description": "Test"
+            },
+            {
+                "path": "domain/model/ClinicalNote.java",
+                "description": "Entity"
+            },
+            {
+                "path": "domain/valueobject/ClinicalNoteId.java",
+                "description": "ValueObject"
+            },
+            {
+                "path": "application/service/ClinicalNoteService.java",
+                "description": "Service"
+            },
+            {
+                "path": "application/dto/ClinicalNoteRequest.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/dto/ClinicalNoteResponse.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/mapper/ClinicalNoteMapper.java",
+                "description": "Mapper"
+            },
+            {
+                "path": "infrastructure/rest/ClinicalNoteController.java",
+                "description": "Controller"
+            },
+            {
+                "path": "infrastructure/persistence/JpaClinicalNoteRepository.java",
+                "description": "Repository"
+            },
+            {
+                "path": "test/application/service/ClinicalNoteServiceTest.java",
+                "description": "Test"
+            },
+            {
+                "path": "domain/model/Odontogram.java",
+                "description": "Entity"
+            },
+            {
+                "path": "domain/valueobject/OdontogramId.java",
+                "description": "ValueObject"
+            },
+            {
+                "path": "application/service/OdontogramService.java",
+                "description": "Service"
+            },
+            {
+                "path": "application/dto/OdontogramRequest.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/dto/OdontogramResponse.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/mapper/OdontogramMapper.java",
+                "description": "Mapper"
+            },
+            {
+                "path": "infrastructure/rest/OdontogramController.java",
+                "description": "Controller"
+            },
+            {
+                "path": "infrastructure/persistence/JpaOdontogramRepository.java",
+                "description": "Repository"
+            },
+            {
+                "path": "test/application/service/OdontogramServiceTest.java",
+                "description": "Test"
+            },
+            {
+                "path": "domain/model/TreatmentLog.java",
+                "description": "Entity"
+            },
+            {
+                "path": "domain/valueobject/TreatmentLogId.java",
+                "description": "ValueObject"
+            },
+            {
+                "path": "application/service/TreatmentLogService.java",
+                "description": "Service"
+            },
+            {
+                "path": "application/dto/TreatmentLogRequest.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/dto/TreatmentLogResponse.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/mapper/TreatmentLogMapper.java",
+                "description": "Mapper"
+            },
+            {
+                "path": "infrastructure/rest/TreatmentLogController.java",
+                "description": "Controller"
+            },
+            {
+                "path": "infrastructure/persistence/JpaTreatmentLogRepository.java",
+                "description": "Repository"
+            },
+            {
+                "path": "test/application/service/TreatmentLogServiceTest.java",
+                "description": "Test"
+            },
+            {
+                "path": "domain/model/Appointment.java",
+                "description": "Entity"
+            },
+            {
+                "path": "domain/valueobject/AppointmentId.java",
+                "description": "ValueObject"
+            },
+            {
+                "path": "application/service/AppointmentService.java",
+                "description": "Service"
+            },
+            {
+                "path": "application/dto/AppointmentRequest.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/dto/AppointmentResponse.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/mapper/AppointmentMapper.java",
+                "description": "Mapper"
+            },
+            {
+                "path": "infrastructure/rest/AppointmentController.java",
+                "description": "Controller"
+            },
+            {
+                "path": "infrastructure/persistence/JpaAppointmentRepository.java",
+                "description": "Repository"
+            },
+            {
+                "path": "test/application/service/AppointmentServiceTest.java",
+                "description": "Test"
+            },
+            {
+                "path": "domain/model/Dentist.java",
+                "description": "Entity"
+            },
+            {
+                "path": "domain/valueobject/DentistId.java",
+                "description": "ValueObject"
+            },
+            {
+                "path": "application/service/DentistService.java",
+                "description": "Service"
+            },
+            {
+                "path": "application/dto/DentistRequest.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/dto/DentistResponse.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/mapper/DentistMapper.java",
+                "description": "Mapper"
+            },
+            {
+                "path": "infrastructure/rest/DentistController.java",
+                "description": "Controller"
+            },
+            {
+                "path": "infrastructure/persistence/JpaDentistRepository.java",
+                "description": "Repository"
+            },
+            {
+                "path": "test/application/service/DentistServiceTest.java",
+                "description": "Test"
+            },
+            {
+                "path": "domain/model/Invoice.java",
+                "description": "Entity"
+            },
+            {
+                "path": "domain/valueobject/InvoiceId.java",
+                "description": "ValueObject"
+            },
+            {
+                "path": "application/service/InvoiceService.java",
+                "description": "Service"
+            },
+            {
+                "path": "application/dto/InvoiceRequest.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/dto/InvoiceResponse.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/mapper/InvoiceMapper.java",
+                "description": "Mapper"
+            },
+            {
+                "path": "infrastructure/rest/InvoiceController.java",
+                "description": "Controller"
+            },
+            {
+                "path": "infrastructure/persistence/JpaInvoiceRepository.java",
+                "description": "Repository"
+            },
+            {
+                "path": "test/application/service/InvoiceServiceTest.java",
+                "description": "Test"
+            },
+            {
+                "path": "domain/model/PaymentPlan.java",
+                "description": "Entity"
+            },
+            {
+                "path": "domain/valueobject/PaymentPlanId.java",
+                "description": "ValueObject"
+            },
+            {
+                "path": "application/service/PaymentPlanService.java",
+                "description": "Service"
+            },
+            {
+                "path": "application/dto/PaymentPlanRequest.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/dto/PaymentPlanResponse.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/mapper/PaymentPlanMapper.java",
+                "description": "Mapper"
+            },
+            {
+                "path": "infrastructure/rest/PaymentPlanController.java",
+                "description": "Controller"
+            },
+            {
+                "path": "infrastructure/persistence/JpaPaymentPlanRepository.java",
+                "description": "Repository"
+            },
+            {
+                "path": "test/application/service/PaymentPlanServiceTest.java",
+                "description": "Test"
+            },
+            {
+                "path": "domain/model/InsuranceClaim.java",
+                "description": "Entity"
+            },
+            {
+                "path": "domain/valueobject/InsuranceClaimId.java",
+                "description": "ValueObject"
+            },
+            {
+                "path": "application/service/InsuranceClaimService.java",
+                "description": "Service"
+            },
+            {
+                "path": "application/dto/InsuranceClaimRequest.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/dto/InsuranceClaimResponse.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/mapper/InsuranceClaimMapper.java",
+                "description": "Mapper"
+            },
+            {
+                "path": "infrastructure/rest/InsuranceClaimController.java",
+                "description": "Controller"
+            },
+            {
+                "path": "infrastructure/persistence/JpaInsuranceClaimRepository.java",
+                "description": "Repository"
+            },
+            {
+                "path": "test/application/service/InsuranceClaimServiceTest.java",
+                "description": "Test"
+            },
+            {
+                "path": "domain/model/Role.java",
+                "description": "Entity"
+            },
+            {
+                "path": "domain/valueobject/RoleId.java",
+                "description": "ValueObject"
+            },
+            {
+                "path": "application/service/RoleService.java",
+                "description": "Service"
+            },
+            {
+                "path": "application/dto/RoleRequest.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/dto/RoleResponse.java",
+                "description": "DTO"
+            },
+            {
+                "path": "application/mapper/RoleMapper.java",
+                "description": "Mapper"
+            },
+            {
+                "path": "infrastructure/rest/RoleController.java",
+                "description": "Controller"
+            },
+            {
+                "path": "infrastructure/persistence/JpaRoleRepository.java",
+                "description": "Repository"
+            },
+            {
+                "path": "test/application/service/RoleServiceTest.java",
+                "description": "Test"
+            }
+        ]
+    },
+    "generated_files": [
+        "backend/pom.xml",
+        "backend/src/main/java/com/dentalclinic/domain/shared/AppointmentStatus.java",
+        "backend/src/main/java/com/dentalclinic/domain/shared/ClaimStatus.java",
+        "backend/src/main/java/com/dentalclinic/domain/shared/Address.java",
+        "backend/src/main/java/com/dentalclinic/domain/shared/ContactInfo.java",
+        "domain/model/Patient.java",
+        "domain/valueobject/PatientId.java",
+        "application/service/PatientService.java",
+        "application/dto/PatientRequest.java",
+        "application/dto/PatientResponse.java",
+        "infrastructure/rest/PatientController.java",
+        "infrastructure/persistence/JpaPatientRepository.java",
+        "domain/model/Profile.java",
+        "domain/valueobject/ProfileId.java",
+        "application/service/ProfileService.java",
+        "application/dto/ProfileRequest.java",
+        "application/dto/ProfileResponse.java",
+        "infrastructure/rest/ProfileController.java",
+        "infrastructure/persistence/JpaProfileRepository.java",
+        "domain/model/MedicalAlert.java",
+        "domain/valueobject/MedicalAlertId.java",
+        "application/service/MedicalAlertService.java",
+        "application/dto/MedicalAlertRequest.java",
+        "application/dto/MedicalAlertResponse.java",
+        "infrastructure/rest/MedicalAlertController.java",
+        "infrastructure/persistence/JpaMedicalAlertRepository.java",
+        "domain/model/Consent.java",
+        "domain/valueobject/ConsentId.java",
+        "application/service/ConsentService.java",
+        "application/dto/ConsentRequest.java",
+        "application/dto/ConsentResponse.java",
+        "infrastructure/rest/ConsentController.java",
+        "infrastructure/persistence/JpaConsentRepository.java",
+        "domain/model/EHR.java",
+        "domain/valueobject/EHRId.java",
+        "application/service/EHRService.java",
+        "application/dto/EHRRequest.java",
+        "application/dto/EHRResponse.java",
+        "infrastructure/rest/EHRController.java",
+        "infrastructure/persistence/JpaEHRRepository.java",
+        "domain/model/ClinicalNote.java",
+        "domain/valueobject/ClinicalNoteId.java",
+        "application/service/ClinicalNoteService.java",
+        "application/dto/ClinicalNoteRequest.java",
+        "application/dto/ClinicalNoteResponse.java",
+        "infrastructure/rest/ClinicalNoteController.java",
+        "infrastructure/persistence/JpaClinicalNoteRepository.java",
+        "domain/model/Odontogram.java",
+        "domain/valueobject/OdontogramId.java",
+        "application/service/OdontogramService.java",
+        "application/dto/OdontogramRequest.java",
+        "application/dto/OdontogramResponse.java",
+        "infrastructure/rest/OdontogramController.java",
+        "infrastructure/persistence/JpaOdontogramRepository.java",
+        "domain/model/TreatmentLog.java",
+        "domain/valueobject/TreatmentLogId.java",
+        "application/service/TreatmentLogService.java",
+        "application/dto/TreatmentLogRequest.java",
+        "application/dto/TreatmentLogResponse.java",
+        "infrastructure/rest/TreatmentLogController.java",
+        "infrastructure/persistence/JpaTreatmentLogRepository.java",
+        "domain/model/Appointment.java",
+        "domain/valueobject/AppointmentId.java",
+        "application/service/AppointmentService.java",
+        "application/dto/AppointmentRequest.java",
+        "application/dto/AppointmentResponse.java",
+        "infrastructure/rest/AppointmentController.java",
+        "infrastructure/persistence/JpaAppointmentRepository.java",
+        "domain/model/Dentist.java",
+        "domain/valueobject/DentistId.java",
+        "application/service/DentistService.java",
+        "application/dto/DentistRequest.java",
+        "application/dto/DentistResponse.java",
+        "infrastructure/rest/DentistController.java",
+        "infrastructure/persistence/JpaDentistRepository.java",
+        "domain/model/Invoice.java",
+        "domain/valueobject/InvoiceId.java",
+        "application/service/InvoiceService.java",
+        "application/dto/InvoiceRequest.java",
+        "application/dto/InvoiceResponse.java",
+        "infrastructure/rest/InvoiceController.java",
+        "infrastructure/persistence/JpaInvoiceRepository.java",
+        "domain/model/PaymentPlan.java",
+        "domain/valueobject/PaymentPlanId.java",
+        "application/service/PaymentPlanService.java",
+        "application/dto/PaymentPlanRequest.java",
+        "application/dto/PaymentPlanResponse.java",
+        "infrastructure/rest/PaymentPlanController.java",
+        "infrastructure/persistence/JpaPaymentPlanRepository.java",
+        "domain/model/InsuranceClaim.java",
+        "domain/valueobject/InsuranceClaimId.java",
+        "application/service/InsuranceClaimService.java",
+        "application/dto/InsuranceClaimRequest.java",
+        "application/dto/InsuranceClaimResponse.java",
+        "infrastructure/rest/InsuranceClaimController.java",
+        "infrastructure/persistence/JpaInsuranceClaimRepository.java",
+        "domain/model/Role.java",
+        "domain/valueobject/RoleId.java",
+        "application/service/RoleService.java",
+        "application/dto/RoleRequest.java",
+        "application/dto/RoleResponse.java",
+        "infrastructure/rest/RoleController.java",
+        "infrastructure/persistence/JpaRoleRepository.java",
+        "application/mapper/PatientMapper.java",
+        "application/mapper/ProfileMapper.java",
+        "application/mapper/MedicalAlertMapper.java",
+        "application/mapper/ConsentMapper.java",
+        "application/mapper/EHRMapper.java",
+        "application/mapper/ClinicalNoteMapper.java",
+        "application/mapper/OdontogramMapper.java",
+        "application/mapper/TreatmentLogMapper.java",
+        "application/mapper/AppointmentMapper.java",
+        "application/mapper/DentistMapper.java",
+        "application/mapper/InvoiceMapper.java",
+        "application/mapper/PaymentPlanMapper.java",
+        "application/mapper/InsuranceClaimMapper.java",
+        "application/mapper/RoleMapper.java",
+        "application/service/PatientServiceTest.java",
+        "infrastructure/rest/PatientControllerTest.java",
+        "application/service/ProfileServiceTest.java",
+        "infrastructure/rest/ProfileControllerTest.java",
+        "application/service/MedicalAlertServiceTest.java",
+        "infrastructure/rest/MedicalAlertControllerTest.java",
+        "application/service/ConsentServiceTest.java",
+        "infrastructure/rest/ConsentControllerTest.java"
+    ]
+}
